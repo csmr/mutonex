@@ -1,0 +1,22 @@
+ZECURFOES PROJECT GUIDE
+20210831 Casimir Pohjanraito
+
+Welcome!
+* Please read CONDUCT.txt first.
+* Introduction to game project is ./res/docs/project/Zecurfoes-Introdoc.txt.
+
+Project Status
+* If the Intro is interesting, please find near-future ROADMAP.txt, project
+  design-docs, and latest ISSUES.txt filed under ./res/docs/project/. 
+
+Mindset
+* Ruthless prioritization: focus on Roadmap items.
+* Coding style: Don't Repeat Yourself, Keep It Super Simple, Autoformat!
+
+Iteration
+* Roadmap contains features to work on.
+* Contributions in repo flow from developers-branch to RC-branch to Master.
+* Bugs and problems go into ./res/docs/project/ISSUES.txt.
+
+* Project Owner/maintainer: CP - contact & contribs at libera.chat ##zecurfoes.
+

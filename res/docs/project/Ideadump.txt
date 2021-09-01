@@ -1,0 +1,7 @@
+baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traffic.
+
+baribal> Documentation goes into your repo, and readthedocs will autogenerate a web page for it.
+
+TJ-> cAMP: "be nice; stick to technical issues"
+
+	 

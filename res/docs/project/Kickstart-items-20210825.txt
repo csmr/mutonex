@@ -1,0 +1,10 @@
+CURRENT MISSION
+Week 35 & 36
+
+Game spec draft.
+Project document store and source hosting.
+Project channel init.
+Looking for participants.
+World EGM data conversion into a 40x40 grid (oceans, continents, mountains, 
+glaciers, aerospace)
+

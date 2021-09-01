@@ -1,0 +1,28 @@
+ROADMAP
+
+Project Kickstart Aug-Sep '21
+
+Game draft spec into Project Docs.
+Simple game rule calculator in ruby code.
+Planet Simulation Class started.
+Scetches and vision of a basic graphical representation approach.
+Game ruleset engine - TFG game is turn-based computation of game rules.
+Weekly project session time? MON/TUE/FRI? 20:00 CET
+License map - game documents, game assets, source code
+
+Roadmap Wishlist:
+* How-to for participants
+* Gameplay spec - ruleset and storyline & background.
+* Turn Based gameplay. Turn Based turns are realtime, 20 s, 12 h and 24h.
+* Players client. Browser client the lowest hanging fruit?
+* Sector model for the planetary sphere.
+* Generative equidistantial fractal terrain for game instances
+* Game Server engine
+* Community: Who are the audience, and where can they be engaged?
+* Project participants bounty system? Dynamic equity style? Per-commit-unit-pie?
+* How to generate crypto to players? From donations? computation? subscriptions or sponsors.
+* Online Multiplayer Game
+* Multiplayer Auth Server
+* Multiplayer Game Server swarm
+* Hosting for auth and game server
+____
