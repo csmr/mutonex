@@ -1,7 +1,117 @@
-baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traffic.
+SORT THIS ALPHABETICALLY
+
+Casimir Pohjanraito 20210902 Licensed for reuse with Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License.
+
+
+___A
+
+Unit Action Cost
+Preset cost for different actions units may choose. This corresponds to time action takes.
+
+Aerospace
+A map one level above the Sector terrain. Costs to control. Easy to lose.
+
+Commander Alliance #allies
+Commander Units can request a CVM with other Commander Units to vote on/vote down Alliance. The Commanders that agree, will join Alliance = can share sight, cannot attack each other.
+
+
+___B
+
+Basic Universal Force: Entropy #simulation #gameplay #entropy
+- add noise to signals: Noise Probability Modifier = in practice low chance of signal being lost, command, radar updare or meeting invitation doesn't reach player or target.
+- high solar activity count from sim multiplies Noise Probability Modifier (NPM).
+
+
+____C
+
+Chess
+Zecurfoes is the RTS-equivalent of chess on a 40x40 sector board.
+
+Commander
+Every faction has one commander, who has Allies or Followers. Commander is an Unit object,
+but commanders actions must be determined manually.
+
+Commander Video Meeting CVM
+- Commander can request allied/follower units into video meeting to set their Unit Follower Policy UFP.
+- CVM happens in one turn, and is subject to noise, equal to NPM. If NPM test not passed, the target of the invitation will not arrive to meeting, in effect the Commander cannot set their FAP.
+- CVM starts with invitee board&table, and a dialog to set UFP for target invitees. Invitees then set Charming test on every other invitee - followers can be lost to invitees.
+
+
+____D
 
 baribal> Documentation goes into your repo, and readthedocs will autogenerate a web page for it.
 
+Terrain Distance Function
+- Terrain distance function is cost for Action&traveling in current Ssector for each Subsector.
+- f: elevation *  (temperature celcius degrees from 22 C) * actioncost
+
+___F
+
+Fauna
+These units are invisible but do stuff.
+
+___M
+
+#marketing #publicity #PR
+baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traffic.
+
+
+___P
+
+Earth Planet Sphere EPS is the whole planet as represented by 40x40 sector grid.
+
+
+___S
+
+Sector
+Each sector is a 30x30 grid of Subsectors.
+- Sectors receive certain Solar, Meteorological and Natural multipliers.
+- amount of solar insolation
+- rainfall, storms/icestorms, earthquakes/volcanos.
+- average temperature
+
+
+Subsector
+
+Each Subsector has a terrain type (ocean/water, desert, plains, forest, mountain), elevation, fauna, and structure properties.  A subsector corresponds roughly to a 300 km x 300 km parcel of real land.
+
+
+___U
+
+UI is a spherically "perspective" distorted 15x15 grid-representation of the 40x40 sector EPS that comprises the Zecurfoes Earth surface. The 15 sector distance is equal to Commander Sight Distance  CSD of the player. Player must travel or share view with allied/follower units to see outside base CSD. Some units may have distance modifiers.
+
+Unit
+Unit is the basic actionable entity in Zecurfoes.
+- Unit Sight Distance.
+- Unit Follower Function for determining action this round
+. Unit Follower Policy: for commanding units to behave in certain fashion.
+- Elevation limit (negative: marine maxdepth, positive: terran Max Elevation)
+
+Unit Followers, Allied Units #gameplay
+- units behave autonomous with distance function logic,
+  at set radius Unit Sight Distance.
+- units are part of structures: Powerstructure, or locale, and behave there.
+- one can however send units invitation to commander video meeting  (CVM)
+- followers are gained by Charming and Powerstructure magnitude (attraction vector).
+
+Unit Follower Function
+- Unit Follower determines action by policy*sight radius*terrain pathfinder costfunction.
+- Followers will automatically Charm adjacent units, if its not in attack mode.
+- Actions may have maximum cost. If surpassed, pass or next.
+
+Unit Follower Policy #commanding #units
+- UFP is 4 setting policy: 
+	neutral (will only defend 1x1)
+	dominate (attacks all in 5x5 grid around),
+	defend (3x3 sector)
+	fallback (run away from borders and units).
+- Some units may not have all settings.
+
+Unit Sight Distance #fogofwar #ui
+- Every commander can only see their location radius of the Planetary Sphere, 15x15 grid.
+
+
+Conduct
 TJ-> cAMP: "be nice; stick to technical issues"
 
-	 

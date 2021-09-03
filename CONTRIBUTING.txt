@@ -4,6 +4,8 @@ ZECURFOES PROJECT GUIDE
 Welcome!
 * Please read CONDUCT.txt first.
 * Introduction to game project is ./res/docs/project/Zecurfoes-Introdoc.txt.
+* Contributions to game project are Open Source. Read what this means in
+  ./res/docs/License-guide-for-Zecurfoez.txt
 
 Project Status
 * If the Intro is interesting, please find near-future ROADMAP.txt, project

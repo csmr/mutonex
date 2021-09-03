@@ -1,10 +1,14 @@
 CURRENT MISSION
 Week 35 & 36
 
-Game spec draft.
-Project document store and source hosting.
-Project channel init.
+Game spec draft:
+  - Ideadumps: Gathering ideas
+  - Game mechanics
+  - Design doc write
+X Project document store and source hosting.
+X Project channel init @ Libera ##Zecurfoez
 Looking for participants.
+Game ruleset calculator init.
 World EGM data conversion into a 40x40 grid (oceans, continents, mountains, 
 glaciers, aerospace)
 
