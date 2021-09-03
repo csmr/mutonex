@@ -6,14 +6,8 @@ Attribution-NonCommercial-ShareAlike 4.0 International License.
 
 ___A
 
-Unit Action Cost
-Preset cost for different actions units may choose. This corresponds to time action takes.
-
 Aerospace
-A map one level above the Sector terrain. Costs to control. Easy to lose.
-
-Commander Alliance #allies
-Commander Units can request a CVM with other Commander Units to vote on/vote down Alliance. The Commanders that agree, will join Alliance = can share sight, cannot attack each other.
+A map one level above the Sector terrain. Costs to control. Easy to lose. Adds another layer to strategic game.
 
 
 ___B
@@ -23,7 +17,10 @@ Basic Universal Force: Entropy #simulation #gameplay #entropy
 - high solar activity count from sim multiplies Noise Probability Modifier (NPM).
 
 
-____C
+___C
+
+Charming test #socialdynamics
+Unit can gain followers by Charming other units.
 
 Chess
 Zecurfoes is the RTS-equivalent of chess on a 40x40 sector board.
@@ -37,49 +34,95 @@ Commander Video Meeting CVM
 - CVM happens in one turn, and is subject to noise, equal to NPM. If NPM test not passed, the target of the invitation will not arrive to meeting, in effect the Commander cannot set their FAP.
 - CVM starts with invitee board&table, and a dialog to set UFP for target invitees. Invitees then set Charming test on every other invitee - followers can be lost to invitees.
 
+Commander Alliance #allies
+Commander Units can request a CVM with other Commander Units to vote on/vote down Alliance. The Commanders that agree, will join Alliance = can share sight, cannot attack each other.
 
-____D
+
+
+___D
 
 baribal> Documentation goes into your repo, and readthedocs will autogenerate a web page for it.
 
-Terrain Distance Function
-- Terrain distance function is cost for Action&traveling in current Ssector for each Subsector.
-- f: elevation *  (temperature celcius degrees from 22 C) * actioncost
+
+___E
+
+Earth Planet Sphere EPS is the planet simulation representation
+- can be a simple 40x40 sector grid.
+- hexagonal sphere?
+
 
 ___F
 
 Fauna
-These units are invisible but do stuff.
+Biosphere animal- and plantlife. These units are invisible on map, but do stuff (actions), and the Subsector natural resources equal their Powerstructure.
+
+Followers - see Unit Followers
+
+___G
+
+Game Genre #strategy #simulation #multiplayer
+- Real Time Strategy in simulated Earth environment.
+
+___H
+
+Hexagonal Planet Sphere
+  sakasama> Why not use hexagonal tiles on a sphere? They won't be perfect hexagons, but it would be a slight and
+  consistent distortion. The hexagonal system is straightforward though when the tiles are clustered as parallelograms;
+  merely taking the three axis system, then using only two axii for coordinates since the third is redundant.
+  boggles> https://github.com/vraid/earthgen-old
+
+___L
+
+Lost In Transmission #nature #entropy
+Most signals Units and Player can receive are subject to natural entropy.
+- entropy is calculated from solar simulation.
+- This entropy determines if player receives signal, if sight includes signal.
+
 
 ___M
 
 #marketing #publicity #PR
 baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traffic.
 
+Micromanaging #alert
+Aargh no micromanaging! You cannot micromanage anything in real life!
+- Units, even followers are autonomous and make their own mind.
 
 ___P
 
-Earth Planet Sphere EPS is the whole planet as represented by 40x40 sector grid.
-
+Planet Simulation #logic #gamelogic #entropy
+- computation to procure realistic natural planetary phenomena of sunshine, rain and earthquakes.
 
 ___S
 
 Sector
-Each sector is a 30x30 grid of Subsectors.
+Divisions of Earth into roughly 300*300 sqkm parcels.
+- Default sector is a 30x30 grid of Subsectors.
 - Sectors receive certain Solar, Meteorological and Natural multipliers.
+- properties sampled from Earth geodata.
 - amount of solar insolation
 - rainfall, storms/icestorms, earthquakes/volcanos.
 - average temperature
 
-
 Subsector
+Each Subsector has a terrain type (ocean/water, desert, plains, forest, mountain), elevation, fauna, and structure properties. 
+- corresponds roughly to a 3 km x 3 km parcel of real land.
+- Unit interactions and travel calculations sampled from Subsectors.
 
-Each Subsector has a terrain type (ocean/water, desert, plains, forest, mountain), elevation, fauna, and structure properties.  A subsector corresponds roughly to a 300 km x 300 km parcel of real land.
+___T
 
+Terrain Distance Function TDS
+- Terrain distance function is cost for Action&traveling in current Ssector for each Subsector.
+- f: elevation *  (temperature celcius degrees from 22 C) * actioncost
+
+Triangular Tile on a Polyhedron
+  jimbzy> A geodesic polyhedron is probably the easiest way to go and most consistent.
+  https://en.wikipedia.org/wiki/Geodesic_polyhedron
 
 ___U
 
-UI is a spherically "perspective" distorted 15x15 grid-representation of the 40x40 sector EPS that comprises the Zecurfoes Earth surface. The 15 sector distance is equal to Commander Sight Distance  CSD of the player. Player must travel or share view with allied/follower units to see outside base CSD. Some units may have distance modifiers.
+UI
+A spherically "perspective" distorted 15x15 grid-representation of the 40x40 sector EPS that comprises the Zecurfoes Earth surface. The 15 sector distance is equal to Commander Sight Distance  CSD of the player. Player must travel or share view with allied/follower units to see outside base CSD. Some units may have distance modifiers.
 
 Unit
 Unit is the basic actionable entity in Zecurfoes.
@@ -87,6 +130,9 @@ Unit is the basic actionable entity in Zecurfoes.
 - Unit Follower Function for determining action this round
 . Unit Follower Policy: for commanding units to behave in certain fashion.
 - Elevation limit (negative: marine maxdepth, positive: terran Max Elevation)
+
+Unit Action Cost
+Preset cost for different actions units may choose. This corresponds to time action takes. Action cost may be multiplied by TDS or other factors.
 
 Unit Followers, Allied Units #gameplay
 - units behave autonomous with distance function logic,
@@ -110,6 +156,7 @@ Unit Follower Policy #commanding #units
 
 Unit Sight Distance #fogofwar #ui
 - Every commander can only see their location radius of the Planetary Sphere, 15x15 grid.
+- Unit Sight can be shared between allies. Shared Sight is subject to Basic Universal Force, ie. can be lost in transmission.
 
 
 Conduct
