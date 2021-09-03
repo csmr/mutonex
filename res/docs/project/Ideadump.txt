@@ -31,12 +31,14 @@ but commanders actions must be determined manually.
 
 Commander Video Meeting CVM
 - Commander can request allied/follower units into video meeting to set their Unit Follower Policy UFP.
-- CVM happens in one turn, and is subject to noise, equal to NPM. If NPM test not passed, the target of the invitation will not arrive to meeting, in effect the Commander cannot set their FAP.
+- CVM happens in one turn, and is subject to noise, equal to NPM. If NPM test not passed, the target of the invitation will not arrive to meeting, in effect the Commander cannot set their UFP.
 - CVM starts with invitee board&table, and a dialog to set UFP for target invitees. Invitees then set Charming test on every other invitee - followers can be lost to invitees.
 
 Commander Alliance #allies
 Commander Units can request a CVM with other Commander Units to vote on/vote down Alliance. The Commanders that agree, will join Alliance = can share sight, cannot attack each other.
 
+Credit #project
+Contributors are identified per contributions in repository master.
 
 
 ___D
@@ -76,7 +78,7 @@ ___L
 Lost In Transmission #nature #entropy
 Most signals Units and Player can receive are subject to natural entropy.
 - entropy is calculated from solar simulation.
-- This entropy determines if player receives signal, if sight includes signal.
+- This entropy determines if player receives signal, if current sight radius adds signal.
 
 
 ___M
@@ -87,11 +89,24 @@ baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traff
 Micromanaging #alert
 Aargh no micromanaging! You cannot micromanage anything in real life!
 - Units, even followers are autonomous and make their own mind.
+- Player only controls their own unit, and can give commands. Laws? Policy?
+
+Open Source
+Its better for you
 
 ___P
 
 Planet Simulation #logic #gamelogic #entropy
 - computation to procure realistic natural planetary phenomena of sunshine, rain and earthquakes.
+- EPS computes effects from planet simulation
+
+Project Equity
+All project contributors gain CoCo's (from contribution coins) from their contributions.
+- a kind of symbolic sweat equity.
+- If possible, project may later create a way to exchange contribcoins.
+- total CoCo's = total commits and merges into Master?
+- user CoCo's = total merges into master?
+
 
 ___S
 
@@ -148,14 +163,14 @@ Unit Follower Function
 
 Unit Follower Policy #commanding #units
 - UFP is 4 setting policy: 
-	neutral (will only defend 1x1)
-	dominate (attacks all in 5x5 grid around),
-	defend (3x3 sector)
-	fallback (run away from borders and units).
+   dominate: unit attacks within 30x30 grid around, charm
+   defend: unit attacks in 10x10, charm
+   neutral: unit will only defend 3x3 perimeter, nocharm
+   hide: run away from borders and units, nocharm.
 - Some units may not have all settings.
 
 Unit Sight Distance #fogofwar #ui
-- Every commander can only see their location radius of the Planetary Sphere, 15x15 grid.
+- Every commander can only see their location radius of the Planetary Sphere, ~15x15 grid, ie. 2200 km sight radius.
 - Unit Sight can be shared between allies. Shared Sight is subject to Basic Universal Force, ie. can be lost in transmission.
 
 
