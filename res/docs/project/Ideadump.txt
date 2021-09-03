@@ -13,14 +13,14 @@ A map one level above the Sector terrain. Costs to control. Easy to lose. Adds a
 ___B
 
 Basic Universal Force: Entropy #simulation #gameplay #entropy
-- add noise to signals: Noise Probability Modifier = in practice low chance of signal being lost, command, radar updare or meeting invitation doesn't reach player or target.
+- add noise to signals: Noise Probability Modifier = in practice low chance of signal being lost, command, radar update or meeting invitation doesn't reach player or target.
 - high solar activity count from sim multiplies Noise Probability Modifier (NPM).
 
 
 ___C
 
-Charming test #socialdynamics
-Unit can gain followers by Charming other units.
+Charming test #socialdynamics #gameplay
+Unit can gain followers by Charming other units. Player can lose followers to Commanders and Unit Followers they invite or ally.
 
 Chess
 Zecurfoes is the RTS-equivalent of chess on a 40x40 sector board.
@@ -56,7 +56,7 @@ Earth Planet Sphere EPS is the planet simulation representation
 ___F
 
 Fauna
-Biosphere animal- and plantlife. These units are invisible on map, but do stuff (actions), and the Subsector natural resources equal their Powerstructure.
+Biosphere animal and plant life. These units are invisible on map, but do stuff (actions), and the Subsector natural resources equal their Powerstructure.
 
 Followers - see Unit Followers
 
