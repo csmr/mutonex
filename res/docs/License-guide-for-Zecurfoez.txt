@@ -1,0 +1,33 @@
+License Map for Zecurfoez
+
+This document attempts to specify:
+- Which license should Zecurfoez contribution have?
+- How does project provide attribution & credit to contributors?
+
+SOURCE CODE LICENSES
+For source code the project license is GPLv3, so thats for all game logic
+and scripts: https://www.gnu.org/licenses/gpl-3.0.en.html
+
+In effect the contribs in this repository are already covered by ./LICENSE.
+
+
+ARTWORK, GRAPHIC DESIGNS, MUSIC, AUDIO, WRITTEN WORKS
+Currently project contributors should use GPLv3 or Creative Commons 
+
+Where contributors so desire, or where GPLv3 otherwise invalid, contributions
+may be licensed for free reuse in opensource projects, but, without license
+for commercial use, without explicit license permission from author/copyright
+holder: http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Mark these files with: "Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International License."Implication may be these contributions will be 
+hosted outside this repository.
+
+
+CONTRIBUTOR ATTRIBUTION AND CREDIT
+Currently the Zecurfoez repository branch Master at
+Github.com/csmr/zecurfoez is the source of truth for contributions.
+
+All contributors will be mentioned in title credits. Contributor list is
+sourced from the repository committers and will (can) be compiled with
+./src/make-contributor-list.sh, which will create ./res/contrib-list.txt. 
