@@ -1,7 +1,12 @@
 #!/bin/bash
 
-CRED_PATH="../temp/credits.txt"
+CRED_PATH="../temp"
+CRED_FILE="CREDITS"
 
-printf "ZECURFOEZ CREDITS\n" > $CRED_PATH
-git shortlog -n -s >> $CRED_PATH
+if [ ! -d "$CRED_PATH" ]; then
+  mkdir $CRED_PATH
+fi
 
+TGT="$CRED_PATH/$CRED_FILE"
+printf "ZECURFOEZ CREDITS\n" > "$TGT"
+git shortlog -n -s >> "$TGT" 

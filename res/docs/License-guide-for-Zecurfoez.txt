@@ -38,5 +38,5 @@ reuse license within GPLv3 licensing rules.
 
 All contributors will be mentioned in title credits. Contributor list is
 sourced from the repository committers and will (can) be compiled with
-'$ bash ./src/make-contributor-list.sh', which will create list in 
-./temp/contrib-list.txt.
+'$ bash ./src/make-credits.sh', which will create list in 
+./temp/CREDITS.
