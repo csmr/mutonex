@@ -1,4 +1,4 @@
-SORT THIS ALPHABETICALLY
+﻿SORT THIS ALPHABETICALLY
 
 Casimir Pohjanraito 20210902 Licensed for reuse with Creative Commons
 Attribution-NonCommercial-ShareAlike 4.0 International License.
@@ -13,7 +13,9 @@ A map one level above the Sector terrain. Costs to control. Easy to lose. Adds a
 ___B
 
 Basic Universal Force: Entropy #simulation #gameplay #entropy
-- add noise to signals: Noise Probability Modifier = in practice low chance of signal being lost, command, radar update or meeting invitation doesn't reach player or target.
+- add noise to signals: Noise Probability Modifier = in practice a low chance of signal being lost.
+- effects commands, radar updates and meeting invitation = doesn't reach player or target.
+- has a chance of giving static feedback (a “hiccup”), so the player knows what has occurred.
 - high solar activity count from sim multiplies Noise Probability Modifier (NPM).
 
 
@@ -23,7 +25,7 @@ Charming test #socialdynamics #gameplay
 Unit can gain followers by Charming other units. Player can lose followers to Commanders and Unit Followers they invite or ally.
 
 Chess
-Zecurfoes is the RTS-equivalent of chess on a 40x40 sector board.
+Zecurfoez is the RTS-equivalent of chess on a 40x40 sector board.
 
 Commander
 Every faction has one commander, who has Allies or Followers. Commander is an Unit object,
@@ -52,11 +54,14 @@ Earth Planet Sphere EPS is the planet simulation representation
 - can be a simple 40x40 sector grid.
 - see Hexagonal Planet Sphere, Triangular
 
+EPS-Server
+Actual instance of the running planet simulation.
+
 
 ___F
 
 Fauna
-Biosphere animal and plant life. These units are invisible on map, but do stuff (actions), and the Subsector natural resources equal their Powerstructure.
+Biosphere animal and plant life. These units are invisible on map, but do stuff (actions), and the Sub-sector natural resources equal their Power-structure.
 
 Followers - see Unit Followers
 
@@ -65,14 +70,39 @@ ___G
 Game Genre #strategy #simulation #multiplayer
 - Real Time Strategy in simulated Earth environment.
 
+Game Authentication Server
+- for Client session keys
+
+Game Engine Server
+Where game instances run whenever a game round starts.
+- Connected to GAS for access-control.
+- runs Sector physics effects instance requested from EPS
+- runs Game Instance Indices and indice-sanity-checker (BB) (Index DB).
+- History Index: previous games "bones files" from Power-structures.
+
+Game Client
+A (browser) client for logging players into the Zecurfoez game, browsing Game Lobby.
+
+Game Instance
+- A one multiplayer game, running in a Game Engine Server.
+- Maintains game instance state: index of players and game units, and their move-vectors (spatial or logical moves).
+- Runs periodic BB-checks on all units to ensure clients are not cheating.
+- Shares (some of) the game instances state with clients.
+
+Graphic Design
+Graphical style is called "Laser Radar Scan Lines": spatial reconstruction of the horizontally scanning laser beam.  See Orange for theme color. 
+
 ___H
 
 Hexagonal Planet Sphere
   sakasama> Why not use hexagonal tiles on a sphere? They won't be perfect hexagons, but it would be a slight and
   consistent distortion. The hexagonal system is straightforward though when the tiles are clustered as parallelograms;
-  merely taking the three axis system, then using only two axii for coordinates since the third is redundant.
+  merely taking the three axis system, then using only two axis for coordinates since the third is redundant.
   boggles> https://github.com/vraid/earthgen-old
   Math solution in python https://stackoverflow.com/a/47043459
+
+History in Planet Sphere
+All magnificent power-structures are persisted on planet environment, but "bought" by locale peoples.
 
 ___L
 
@@ -92,8 +122,15 @@ Aargh no micromanaging! You cannot micromanage anything in real life!
 - Units, even followers are autonomous and make their own mind.
 - Player only controls their own unit, and can give commands. Laws? Policy?
 
+___O
+
 Open Source
 Its better for you
+
+Orange
+The main theme color of Zecurfoez game is Zecurfoez orange: a dusty sunset -orange of clouds on the horizon.
+- 2400 K color temperature.
+
 
 ___P
 
@@ -112,24 +149,26 @@ All project contributors gain CoCo's (from contribution coins) from their contri
 ___S
 
 Sector
-Divisions of Earth into roughly 300*300 sqkm parcels.
-- Default sector is a 30x30 grid of Subsectors.
+Divisions of Earth into roughly 300*300 sq-km parcels.
+- Default sector is a 30x30 grid of Sub-sectors.
 - Sectors receive certain Solar, Meteorological and Natural multipliers.
 - properties sampled from Earth geodata.
 - amount of solar insolation
-- rainfall, storms/icestorms, earthquakes/volcanos.
+- rainfall, storms/ice storms, earthquakes/volcanoes.
 - average temperature
+- tribes of peoples in sector, as in 2021 Linux language locales /usr/share/i18n/SUPPORTED + refugee/nomadic peoples for generating history, names and ethnic background for units
 
-Subsector
-Each Subsector has a terrain type (ocean/water, desert, plains, forest, mountain), elevation, fauna, and structure properties. 
+
+Sub-sector
+Each Sub-sector has a terrain type (ocean/water, desert, plains, forest, mountain), elevation, fauna, and structure properties. 
 - corresponds roughly to a 3 km x 3 km parcel of real land.
-- Unit interactions and travel calculations sampled from Subsectors.
+- Unit interactions and travel calculations sampled from Sub-sectors.
 
 ___T
 
 Terrain Distance Function TDS
-- Terrain distance function is cost for Action&traveling in current Ssector for each Subsector.
-- f: elevation *  (temperature celcius degrees from 22 C) * actioncost
+- Terrain distance function is cost for Action&traveling in current Sector for each Sub-sector.
+- f: elevation *  (temperature celcius degrees from 22 C) * action cost
 
 Triangular Tile on a Polyhedron
   jimbzy> A geodesic polyhedron is probably the easiest way to go and most consistent.
@@ -138,14 +177,19 @@ Triangular Tile on a Polyhedron
 ___U
 
 UI
-A spherically "perspective" distorted 15x15 grid-representation of the 40x40 sector EPS that comprises the Zecurfoes Earth surface. The 15 sector distance is equal to Commander Sight Distance  CSD of the player. Player must travel or share view with allied/follower units to see outside base CSD. Some units may have distance modifiers.
+A spherically "perspective" distorted 15x15 grid-representation of the 40x40 sector EPS that comprises the Zecurfoez Earth surface. The 15 sector distance is equal to Commander Sight Distance  CSD of the player. Player must travel or share view with allied/follower units to see outside base CSD. Some units may have distance modifiers.
+
+UI Terminal Radar
+The local mini-map and mini-state can be printed as a view. Same noise as for graphical UI.
 
 Unit
-Unit is the basic actionable entity in Zecurfoes.
+Unit is the basic actionable entity in Zecurfoez.
 - Unit Sight Distance.
 - Unit Follower Function for determining action this round
 . Unit Follower Policy: for commanding units to behave in certain fashion.
-- Elevation limit (negative: marine maxdepth, positive: terran Max Elevation)
+- Elevation limit (negative: marine max-depth, positive: Terran Max Elevation)
+- origin Power-structure.
+- Unit history: procedural recombination of 
 
 Unit Action Cost
 Preset cost for different actions units may choose. This corresponds to time action takes. Action cost may be multiplied by TDS or other factors.
@@ -153,12 +197,12 @@ Preset cost for different actions units may choose. This corresponds to time act
 Unit Followers, Allied Units #gameplay
 - units behave autonomous with distance function logic,
   at set radius Unit Sight Distance.
-- units are part of structures: Powerstructure, or locale, and behave there.
+- units are part of structures: Power-structure., or locale, and behave there.
 - one can however send units invitation to commander video meeting  (CVM)
-- followers are gained by Charming and Powerstructure magnitude (attraction vector).
+- followers are gained by Charming and Power-structure. magnitude (attraction vector).
 
 Unit Follower Function
-- Unit Follower determines action by policy*sight radius*terrain pathfinder costfunction.
+- Unit Follower determines action by policy*sight radius*terrain pathfinder cost-function.
 - Followers will automatically Charm adjacent units, if its not in attack mode.
 - Actions may have maximum cost. If surpassed, pass or next.
 
@@ -166,8 +210,8 @@ Unit Follower Policy #commanding #units
 - UFP is 4 setting policy: 
    dominate: unit attacks within 30x30 grid around, charm
    defend: unit attacks in 10x10, charm
-   neutral: unit will only defend 3x3 perimeter, nocharm
-   hide: run away from borders and units, nocharm.
+   neutral: unit will only defend 3x3 perimeter, no-charm
+   hide: run away from borders and units, no-charm.
 - Some units may not have all settings.
 
 Unit Sight Distance #fogofwar #ui
