@@ -9,6 +9,14 @@ ___A
 Aerospace
 A map one level above the Sector terrain. Costs to control. Easy to lose. Adds another layer to strategic game.
 
+Accessibility
+Zecurfoez is an accessible game, inclusive to people with reduced vision.
+- Large fonts (16pt/92dpi), clear bold graphics and menus.
+- W3 WCAG 2.1.
+- Custom Color Picker Player, Follower/Ally, Hostile Unit halo.
+- https://www.color-blindness.com/coblis-color-blindness-simulator/
+- Subtitles for hearing impaired/deaf.
+
 
 ___B
 
@@ -39,6 +47,10 @@ Commander Video Meeting CVM
 Commander Alliance #allies
 Commander Units can request a CVM with other Commander Units to vote on/vote down Alliance. The Commanders that agree, will join Alliance = can share sight, cannot attack each other.
 
+
+Conduct
+TJ-> cAMP: "be nice; stick to technical issues"
+
 Credit #project
 Contributors are identified per contributions in repository master.
 
@@ -46,6 +58,10 @@ Contributors are identified per contributions in repository master.
 ___D
 
 baribal> Documentation goes into your repo, and readthedocs will autogenerate a web page for it.
+
+Debts
+Code and features are debt, and require maintenance and updating. Any and all
+effort must initially focus on simplifying the features and implementation.
 
 
 ___E
@@ -69,6 +85,7 @@ ___G
 
 Game Genre #strategy #simulation #multiplayer
 - Real Time Strategy in simulated Earth environment.
+- Or Turn Based, Re: Chess
 
 Game Authentication Server
 - for Client session keys
@@ -81,7 +98,8 @@ Where game instances run whenever a game round starts.
 - History Index: previous games "bones files" from Power-structures.
 
 Game Client
-A (browser) client for logging players into the Zecurfoez game, browsing Game Lobby.
+A (browser) client for logging players into the Zecurfoez Game Server, browsing & joining
+Game Lobbies.
 
 Game Instance
 - A one multiplayer game, running in a Game Engine Server.
@@ -90,7 +108,13 @@ Game Instance
 - Shares (some of) the game instances state with clients.
 
 Graphic Design
-Graphical style is called "Laser Radar Scan Lines": spatial reconstruction of the horizontally scanning laser beam.  See Orange for theme color. 
+Graphic style is "Laser Radar Scan Line": 2D-reconstruction of horizontally scanning laser beam. As in https://en.wikipedia.org/wiki/Lidar.
+- See Orange for theme color.
+- Bold and clear graphics. See also Accessibility.
+- Spatially organized silhouette-symbols, with hori-Lidar-fx on top.
+- To recap: Chess board influence, with Sight Distance and spherical
+  perspective.
+- Conversely, no numeral scores, button lists or green tiny text inside boxes.
 
 ___H
 
@@ -103,6 +127,8 @@ Hexagonal Planet Sphere
 
 History in Planet Sphere
 All magnificent power-structures are persisted on planet environment, but "bought" by locale peoples.
+- persisted in History Index.
+
 
 ___L
 
@@ -116,6 +142,14 @@ ___M
 
 #marketing #publicity #PR
 baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traffic.
+
+Meaning #myth #history #art
+Zecurfoez generates history, meaning, and possibly virtual currency.
+- Game-play history collected in History Index of the Game Server.
+- What other outcomes could a game have?
+- How can Zecurfoez become meaningful artistically or socially for players?
+- From authoritarian dominance hierarchy power-structure into egalitarian co-experience, resulting in artistic structure?
+- Dominant brain micro-tubule frequency from megahertz to terahertz range?
 
 Micromanaging #alert
 Aargh no micromanaging! You cannot micromanage anything in real life!
@@ -136,11 +170,19 @@ ___P
 
 Planet Simulation #logic #gamelogic #entropy
 - computation to procure realistic natural planetary phenomena of sunshine, rain and earthquakes.
-- EPS computes effects from planet simulation
+- EPS computes effects from planet simulation.
+
+Power-structure
+The home-construct of each unit: a shed, cabin or a magnificent palace. Center point for physical unit and resource interaction. Power structure is the configuration of players game plan, whether it means trumping others structures, or cohesive aligned interaction with others.
+- resource flows
+- unit policies
+- sight and defensive perimeter
+
 
 Project Equity
 All project contributors gain CoCo's (from contribution coins) from their contributions.
 - a kind of symbolic sweat equity.
+- contribcoins equal votes whenever project direction is discussed? Per quarter?
 - If possible, project may later create a way to exchange contribcoins.
 - total CoCo's = total commits and merges into Master?
 - user CoCo's = total merges into master?
@@ -177,10 +219,14 @@ Triangular Tile on a Polyhedron
 ___U
 
 UI
-A spherically "perspective" distorted 15x15 grid-representation of the 40x40 sector EPS that comprises the Zecurfoez Earth surface. The 15 sector distance is equal to Commander Sight Distance  CSD of the player. Player must travel or share view with allied/follower units to see outside base CSD. Some units may have distance modifiers.
+A spherically "perspective" distorted representation of Earth Sectors.
+- N*N grid-representation of the 40x40 sector EPS surface. The grid size N is equal to Commander Sight Distance CSD.
+- Player Unit must travel or share view with allied/follower units to see outside base CSD.
+- Some units/structures may have distance modifiers.
+- Alternative explanation: an isometric view with perspective distortion.
 
 UI Terminal Radar
-The local mini-map and mini-state can be printed as a view. Same noise as for graphical UI.
+The local mini-map and mini-state can be printfed. Same entropy as for graphical UI.
 
 Unit
 Unit is the basic actionable entity in Zecurfoez.
@@ -219,6 +265,4 @@ Unit Sight Distance #fogofwar #ui
 - Unit Sight can be shared between allies. Shared Sight is subject to Basic Universal Force, ie. can be lost in transmission.
 
 
-Conduct
-TJ-> cAMP: "be nice; stick to technical issues"
 
