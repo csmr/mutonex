@@ -22,12 +22,18 @@ ___B
 
 Basic Universal Force: Entropy #simulation #gameplay #entropy
 - add noise to signals: Noise Probability Modifier = in practice a low chance of signal being lost.
-- effects commands, radar updates and meeting invitation = doesn't reach player or target.
+- effects commands, radar updates (sight), resource resolution and meeting invitation (doesn't reach player or target).
 - has a chance of giving static feedback (a “hiccup”), so the player knows what has occurred.
 - high solar activity count from sim multiplies Noise Probability Modifier (NPM).
 
 
 ___C
+
+Carbon
+All natural reserves have been depleted, and all the air is full of thick black carbon. Only the best LIDAR scanners can cut through the dark carbon clouds.
+- explains why only solar power is available.
+-  Lidar upgrades improve the players visibility. Visibility has 3 render modes: point cloud, line cloud, and the best resolution: vertical laser sweep!
+- Lidar upgrades must be bought - or received from allied units or players.
 
 Charming test #socialdynamics #gameplay
 Unit can gain followers by Charming other units. Player can lose followers to Commanders and Unit Followers they invite or ally.
@@ -46,6 +52,7 @@ Commander Video Meeting CVM
 
 Commander Alliance #allies
 Commander Units can request a CVM with other Commander Units to vote on/vote down Alliance. The Commanders that agree, will join Alliance = can share sight, cannot attack each other.
+- Lidar upgrades from allied units. 8 per game? 4?
 
 
 Conduct
@@ -86,6 +93,25 @@ ___G
 Game Genre #strategy #simulation #multiplayer
 - Real Time Strategy in simulated Earth environment.
 - Or Turn Based, Re: Chess
+- " We are all Kings: in our corporeal Realm - And the World mere band of rebels, whether part of our Realm or not. "
+-
+
+Game Play
+At start of game instance, wait & chat in lobby, players have about 5-10 moves to form a
+network out of power-structure, resources and local followers units (through allying requests). In the simplest scenario, the magnitude of power-structure combined with the formation of allies
+forms the territory and the charm of the player.
+- the vision into the game world is effervescent due to LIDAR.
+- allies gain a posture by setting a policy.
+- policy will make them patrol a certain area at a certain risk.
+- Larger the area to patrol, highler the risk they will fall, if hostile units attack? Resource flow from the ally units network also affects the risk.
+- potential allies distributed randomly around the player unit with an equidistance algoritm.
+- once the player has scrambled to set up their Power-structures network around the spawn spot, the game pace goes to second phase: interactions.
+- interactions include allying with other players, recruiting more allies to expand network, to conquer.
+- each player mostly sees the others network, not the Power-Structure, as allies view-distance is smaller?
+- in other words player doesn't as much send units to run around the map, as they seek to control sectors units, either by allying or conquering.
+- the allied units run around in their territory, and one attempts to form a defensive and offensive networks from the allies, terrain and resources.
+- Game pace further effected by the fact that a 360 degree LIDAR "read" of the surrounding territory takes 20 seconds (also includes errors from entropy).
+- Units and structures in network know if attacked - even if you don't have a LIDAR reading of their (sub?)sector.
 
 Game Authentication Server
 - for Client session keys
@@ -137,6 +163,22 @@ Most signals Units and Player can receive are subject to natural entropy.
 - entropy is calculated from solar simulation.
 - This entropy determines if player receives signal, if current sight radius adds signal.
 
+Lidar Scanlines
+The rendering style for UI. Terrain/object surface scan lines at distance intervals. 
+- lidar fog-of-war is part of the tactical gameplay, to form a dramatic effect.
+- 3 lidar render methods (point cloud, scanline, vertical 360 sweep): upgrades must be bought or given by allied units.
+- For example similar to Lidar scan gfx at:  https://www.researchgate.net/profile/Gerald-Steinbauer-Wagner/publication/304987927/figure/fig14/AS:381116545552385@1467876673156/3D-laser-scan-left-taken-with-a-HDL-64E-LiDAR-from-Velodyne-right-Photo-credit-IST.png
+- even interval or increasing subsequent interval?
+- https://blender.stackexchange.com/questions/104579/script-to-select-all-vertices-in-an-object-and-assign-new-vertex-group
+- circuitbone> https://www.shadertoy.com/view/MltXWn
+
+L-Tree
+Power-structures are procedurally generated with each player having unique angle and primitive assigned for them.
+- L-tree angle determines the angle at which the branches grow.
+- L-tree angle ratio to full circle inversely related to branch "size".
+- Branch primitives are ball, pyramid, cylinder and block of equal base circumference but varying height due to "size".
+- number of L-generations signals the Power-structure magnitude (eg. 1-7).
+
 
 ___M
 
@@ -156,6 +198,14 @@ Aargh no micromanaging! You cannot micromanage anything in real life!
 - Units, even followers are autonomous and make their own mind.
 - Player only controls their own unit, and can give commands. Laws? Policy?
 
+
+___N
+
+Next Level Gameplay
+Typical strategy game follows outline of an Aristotelian tragedy: a mythos where players seek to negate or damage the other to assert their own character.
+- To transcend tragedy, player must avoid this
+- social interaction enables Next Level Gameplay that is not possible with Unit management & strategy alone.
+
 ___O
 
 Open Source
@@ -171,6 +221,7 @@ ___P
 Planet Simulation #logic #gamelogic #entropy
 - computation to procure realistic natural planetary phenomena of sunshine, rain and earthquakes.
 - EPS computes effects from planet simulation.
+- https://www.qgis.org/en/site/
 
 Power-structure
 The home-construct of each unit: a shed, cabin or a magnificent palace. Center point for physical unit and resource interaction. Power structure is the configuration of players game plan, whether it means trumping others structures, or cohesive aligned interaction with others.
@@ -215,6 +266,15 @@ Terrain Distance Function TDS
 Triangular Tile on a Polyhedron
   jimbzy> A geodesic polyhedron is probably the easiest way to go and most consistent.
   https://en.wikipedia.org/wiki/Geodesic_polyhedron
+  
+Tragedy #gameplay #classicRTS #TheNextLevel
+German philosopher Hegel believed that tragedy consists of a conflict between two positions, both equally justified, and both wrong.
+- they don’t see the justification of the other position
+- and they must/seek to negate or damage the other to assert their own character.
+- The only resolution is the death of the hero.
+- Tragedy, unless player can transcend into social gameplay dynamics.
+- The Next Level gameplay is of course player who transcends this game strategy into social co-operation.
+
 
 ___U
 
