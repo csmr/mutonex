@@ -29,12 +29,6 @@ Basic Universal Force: Entropy #simulation #gameplay #entropy
 
 ___C
 
-Carbon
-All natural reserves have been depleted, and all the air is full of thick black carbon. Only the best LIDAR scanners can cut through the dark carbon clouds.
-- explains why only solar power is available.
--  Lidar upgrades improve the players visibility. Visibility has 3 render modes: point cloud, line cloud, and the best resolution: vertical laser sweep!
-- Lidar upgrades must be bought - or received from allied units or players.
-
 Charming test #socialdynamics #gameplay
 Unit can gain followers by Charming other units. Player can lose followers to Commanders and Unit Followers they invite or ally.
 

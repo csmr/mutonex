@@ -1,18 +1,11 @@
 ROADMAP
 
-Project Kickstart Aug-Sep '21
-
-Game draft spec into Project Docs.
 Simple game rule calculator in ruby code.
 Planet Simulation Class started.
-Scetches and vision of a basic graphical representation approach.
 Game ruleset engine - TFG game is turn-based computation of game rules.
-X Weekly project session time window? MON/TUE/FRI 20:00 CET @ Libera ##Zecurfoez
-X License map - game documents, game assets, source code
-X How-to for participants
+
 
 Roadmap Wishlist:
-* Gameplay spec - ruleset and storyline & background.
 * Turn Based gameplay. Turn Based turns are realtime, 20 s, 12 h and 24h.
 * Players client. Browser client the lowest hanging fruit?
 * Sector model for the planetary sphere.

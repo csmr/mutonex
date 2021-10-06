@@ -13,6 +13,7 @@ Project Status
 
 Mindset
 * Ruthless prioritization: focus on Roadmap items.
+* Code is Debt: simplify
 * Coding style: Don't Repeat Yourself, Keep It Super Simple, Autoformat!
 
 Iteration
