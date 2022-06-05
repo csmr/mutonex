@@ -3,13 +3,13 @@ ZECURFOES PROJECT GUIDE
 
 Welcome!
 * Please read CONDUCT.txt first.
-* Introduction to game project is ./res/docs/project/Zecurfoes-Introdoc.txt.
+* The introduction to the game is ./res/docs/project/Zecurfoes-Design-Doc.pdf.
 * Contributions to game project are Open Source. Read what this means in
   ./res/docs/License-guide-for-Zecurfoez.txt
 
 Project Status
-* If the Intro is interesting, please find near-future ROADMAP.txt, project
-  design-docs, and latest ISSUES.txt filed under ./res/docs/project/. 
+* If the Intro is interesting, please see under ./res/docs/project/ for
+  a ROADMAP.txt. 
 
 Mindset
 * Ruthless prioritization: focus on Roadmap items.
@@ -21,5 +21,5 @@ Iteration
 * Contributions in repo flow from developers-branch to RC-branch to Master.
 * Bugs and problems go into ./res/docs/project/ISSUES.txt.
 
-* Project Owner/maintainer: CP - contact & contribs at libera.chat ##zecurfoes.
+* Project Owner/maintainer: CP - contact at libera.chat ##zecurfoes.
 
