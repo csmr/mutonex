@@ -3,4 +3,4 @@ MUTONEX PROJECT CONDUCT
 
 * This is Just For Fun Open Source project.
 * Compassionate Freedom: do what you want, but don't do harm.
-* Contributors are Your team: be polite, helful and kind.
+* Contributors are Your team: be polite, helpful and kind.

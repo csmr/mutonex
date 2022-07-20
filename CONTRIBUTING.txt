@@ -1,5 +1,5 @@
 MUTONEX PROJECT GUIDE
-20210831 Casimir Pohjanraito
+20220921 Casimir Pohjanraito
 
 Welcome!
 * Please read CONDUCT.txt first.
@@ -21,5 +21,5 @@ Iteration
 * Contributions in repo flow from developers-branch to RC-branch to Master.
 * Bugs and problems go into ./res/docs/project/ISSUES.txt.
 
-* Project Owner/maintainer: CP - contact at libera.chat ##Mutonex.
+* Project Owner/maintainer: CP - contact at libera.chat #mutonex.
 
