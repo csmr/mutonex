@@ -1,6 +1,6 @@
-=== Zecurfoes ===
+=== Mutiny On Exoplanet ===
 
-Zecurfoes is a Just For Fun, Free Open Source (JFF FOS) project to create fun
+Mutonex is a Just For Fun, Free Open Source (JFF FOS) project to create fun
 turn-based Earth-simulation multiplayer strategy game, where players generate
 virtual currency.
 

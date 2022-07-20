@@ -10,7 +10,7 @@ Aerospace
 A map one level above the Sector terrain. Costs to control. Easy to lose. Adds another layer to strategic game.
 
 Accessibility
-Zecurfoez is an accessible game, inclusive to people with reduced vision.
+Mutonex is an accessible game, inclusive to people with reduced vision.
 - Large fonts (16pt/92dpi), clear bold graphics and menus.
 - W3 WCAG 2.1.
 - Custom Color Picker Player, Follower/Ally, Hostile Unit halo.
@@ -33,7 +33,7 @@ Charming test #socialdynamics #gameplay
 Unit can gain followers by Charming other units. Player can lose followers to Commanders and Unit Followers they invite or ally.
 
 Chess
-Zecurfoez is the RTS-equivalent of chess on a 40x40 sector board.
+Mutonex is the RTS-equivalent of chess on a 40x40 sector board.
 
 Commander
 Every faction has one commander, who has Allies or Followers. Commander is an Unit object,
@@ -118,7 +118,7 @@ Where game instances run whenever a game round starts.
 - History Index: previous games "bones files" from Power-structures.
 
 Game Client
-A (browser) client for logging players into the Zecurfoez Game Server, browsing & joining
+A (browser) client for logging players into the Mutonex Game Server, browsing & joining
 Game Lobbies.
 
 Game Instance
@@ -180,10 +180,10 @@ ___M
 baribal> Oh, and if it's a web game, put it on itch.io, that'll also drive traffic.
 
 Meaning #myth #history #art
-Zecurfoez generates history, meaning, and possibly virtual currency.
+Mutonex generates history, meaning, and possibly virtual currency.
 - Game-play history collected in History Index of the Game Server.
 - What other outcomes could a game have?
-- How can Zecurfoez become meaningful artistically or socially for players?
+- How can Mutonex become meaningful artistically or socially for players?
 - From authoritarian dominance hierarchy power-structure into egalitarian co-experience, resulting in artistic structure?
 - Dominant brain micro-tubule frequency from megahertz to terahertz range?
 
@@ -206,7 +206,7 @@ Open Source
 Its better for you
 
 Orange
-The main theme color of Zecurfoez game is Zecurfoez orange: a dusty sunset -orange of clouds on the horizon.
+The main theme color of Mutonex game is Mutonex orange: a dusty sunset -orange of clouds on the horizon.
 - 2400 K color temperature.
 
 
@@ -283,7 +283,7 @@ UI Terminal Radar
 The local mini-map and mini-state can be printfed. Same entropy as for graphical UI.
 
 Unit
-Unit is the basic actionable entity in Zecurfoez.
+Unit is the basic actionable entity in Mutonex.
 - Unit Sight Distance.
 - Unit Follower Function for determining action this round
 . Unit Follower Policy: for commanding units to behave in certain fashion.
