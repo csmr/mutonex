@@ -59,9 +59,10 @@ head = Unit.new("Head", nil, 14, 120)
 puts "RESULTS"
 puts "Iteration 1 result: sector size mapped on a World globe is a wack idea. Since the scenario is post-mini-apocalypse, and tech-tree doesn't allow fast travel, gameplay should not be based on units traveling a lot of ground. Emphasis on lidar & network capacities, charm ability and social dynamic, plus reducing entropy."
 puts "Sectors should simply represent some angle of the World globe. For arena subdivision, 18x18 might be enough, 10 degree. Further, the sectors area is smaller towards the polar caps. The DD and rule calculator should be updated to represent this."
+puts "Iteration 2 result: Blockchain spec obsoleted, not a good fit for a in-game score board, as 1. clients are known and 2. the game server is the score authority. So instead: a scoreboard on the server."
 puts "_"
 puts "DD 4.1.1. - time/moves required for equatorial sectors"
-sectors = spec[:sector_grid]**2 
+sectors = spec[:sector_grid]**2
 sector_side_km = worlds[:medium][:circumference_km]/spec[:sector_grid]
 sector_visit_min = sectors * limits[:sectors_visited_min]
 travel_min_km = sector_side_km * sector_visit_min 
@@ -84,3 +85,4 @@ puts "Minimum number of turns #{turns_min} for limits."
 #  memory & cpu req
 #  rule sanity score
 #  game_winnable
+

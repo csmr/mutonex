@@ -12,8 +12,7 @@ Roadmap Wishlist:
 * Generative equidistantial fractal terrain for game instances
 * Game Server engine
 * Community: Who are the audience, and where can they be engaged?
-* Project participants bounty system? Dynamic equity style? Per-commit-unit-pie?
-* How to generate crypto to players? From donations? computation? subscriptions or sponsors.
+* Project participants bounty system
 * Online Multiplayer Game
 * Multiplayer Auth Server
 * Multiplayer Game Server swarm
