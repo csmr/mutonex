@@ -1,5 +1,11 @@
 # Changelog
 
+## 2023-05-15
+
+### Changed
+- Clean up ruleset.
+
+
 ## 2022-11-03
 
 ### Added
