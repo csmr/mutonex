@@ -1,9 +1,10 @@
 # Changelog
 
-## 2023-05-15
+## 2023-05-15 to 2023-05-16
 
 ### Changed
 - Clean up ruleset.
+- Add limits logic to rule-calculator.
 
 
 ## 2022-11-03
