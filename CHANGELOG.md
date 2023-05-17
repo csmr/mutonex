@@ -2,6 +2,9 @@
 
 ## 2023-05-15 to 2023-05-16
 
+### Added
+- Add simtellus/planet.rb.
+
 ### Changed
 - Clean up ruleset.
 - Add limits logic to rule-calculator.

@@ -69,7 +69,7 @@ Unit = Struct.new(:type, :society, :work_hours, :velocity_kmh)
 # Instance mocks
 exoplanet = World.new(40000, 6356)
 
-# DD 4.3.2.
+# Mock DD 4.3.2.
 head = Unit.new("Head", "Headsociety", 14, 120)
 
 os << "# RESULTS"

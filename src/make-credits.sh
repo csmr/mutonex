@@ -8,5 +8,5 @@ if [ ! -d "$CRED_PATH" ]; then
 fi
 
 TGT="$CRED_PATH/$CRED_FILE"
-printf "ZECURFOEZ CREDITS\n" > "$TGT"
+printf "MUTONEX CREDITS\n" > "$TGT"
 git shortlog -n -s >> "$TGT" 
