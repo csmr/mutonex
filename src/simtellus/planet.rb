@@ -6,10 +6,10 @@ module Planet
   # TODO render svg graph for year 2017 and 2017-2037 year periods
 
   # Physical Constants
-  G = 9.80665 # gravitational acceleration at sea-level, m/s²
+  G     = 9.80665 # gravitational acceleration at sea-level, m/s²
   M_air = 0.0289644 # air molar mass, kg/mol
   P_air = 1013.25 # air pressure at sea-level, hectoPascals
-  R = 8.31432 # gas constant, Nm/molK
+  R     = 8.31432 # gas constant, Nm/molK
 
   # Sine cycle helper method
   # starts from median towards maxima, then minima
@@ -38,6 +38,7 @@ module Planet
       # cycle of 10.66 years
       # last maxima july 1990, feb 2001 -> next maxima 2011 
       # SolarConstant + sinus2range( days % 10.66, 10.66, -SolarConstantVariance,SolarConstantVariance ) # todo normalize to nearest maxima
+      p "EMField.solar_cycle is static sunspot mock."
       0.999
     end
 
@@ -72,7 +73,7 @@ module Planet
     end
 
     def uv_influx yearday, long, lat, elevation
-      p "uv multiplier mock is static"
+      p "EMField.uv multiplier mock is static"
       uv_multiplier = 1
       insolation(yearday, long, lat, elevation) * uv_multiplier
     end
@@ -155,8 +156,9 @@ module Planet
       1 - AtmosphericAbsorbance - AtmosphericScatter
     end
 
-    # Air pressure at elevation = P_sealevel * exp(-g_acc*air_molar_mass*h/R_gasconst*temperature), in units of P_sealevel
-    # returns hectopascals
+    # Air pressure at elevation
+    #  P_sealevel * exp(-g_acc*air_molar_mass*h/R_gasconst*temperature)
+    # returns hectopascals, if P_air is in hPa.
     def airpressure yearday, lat, elev
       P_air * Math.exp( G*M_air*elev / R * temp( yearday, lat, elev, 1) )
     end
@@ -195,7 +197,6 @@ module Planet
     # self.biomes = _world.Universe.Earth.biomes
 
     # Returns a multiplier for args biome and type of adjustment
-    #	See Lecture-3 -file in spyops asset dir. http://www.ucmp.berkeley.edu/glossary/gloss5/biome/ '
     def self.biome_adjust biome_code, type
       if type == "insolation"
       elsif type == "temp"
@@ -218,8 +219,8 @@ module Planet
   module Tests
 
     # Run tests with '$ ruby planet.rb'.
-    # run_tests will execute these test_* methods.
-    
+    # run_tests method executes all test_* methods.
+
     def test_sinus2range
       [[0, 1], [0.75, 3], [1.5, 1], [2.25, -1], [3, 1]].all? { |n|
         _res = sinus2range(n[0], 3, 3, -1).round(3)

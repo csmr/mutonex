@@ -1,17 +1,17 @@
 ROADMAP
 
-Simple game rule calculator in ruby code.
-Planet Simulation Class started.
+Simple game rule calculator.
+Planet simulation simtellus.
 Game ruleset engine - TFG game is turn-based computation of game rules.
 
 
 Roadmap Wishlist:
-* Turn Based gameplay. Turn Based turns are realtime, 20 s, 12 h and 24h.
+* Sector model for the planet globe.
 * Players client. Browser client the lowest hanging fruit?
-* Sector model for the planetary sphere.
 * Generative equidistantial fractal terrain for game instances
-* Game Server engine
-* Community: Who are the audience, and where can they be engaged?
+* Turn Based gameplay. Turn Based turns are realtime, 20 s, 12 h and 24h.
+* Community: where can the audience be engaged?
+* Game Engine Server
 * Project participants bounty system
 * Online Multiplayer Game
 * Multiplayer Auth Server
