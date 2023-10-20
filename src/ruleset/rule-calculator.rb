@@ -82,7 +82,7 @@ travel_min_km = sector_side_km * sector_visit_min
 travel_time_min_d = travel_min_km / (head[:work_hours] * head[:velocity_kmh])
 travel_time_min_turns = (travel_time_min_d/spec[:time_days_per_turn]).to_int
 os << "Head-unit time to travel #{sector_visit_min.to_int} of #{sectors} sectors (no elevation/lati multi):"
-os << "In-game #{travel_time_min_d.to_int} days / #{travel_time_min_turns} turns, realtime #{(spec[:time_turn_len_s]*travel_time_min_turns)/60} minutes."
+os << ["In-game #{travel_time_min_d.to_int} days / #{travel_time_min_turns} turns,", "realtime #{(spec[:time_turn_len_s]*travel_time_min_turns)/60} minutes."]
 
 os << "DD 4.1.1. - Polar movement cost, ie. declination"
 os << "On a globe, sector physical size decreases proportional to distance from equator. Optimally travel time for every #{360/spec[:sector_grid]} degree sector is similar, explained by harsher environments."
@@ -104,11 +104,13 @@ os << "✓ DD 4.1.1 & DD 4.9 PASS."
 #      Society.new(players_head, building)
 
 os << "# RULE SCORE"
-unit_travel = (turns_max/travel_time_min_turns).floor
-req_mem = req_cpu = 20 * 0
-rule_sanity = 10 * 0
-game_winnable_bool = 20 * 0
-os << (unit_travel + req_mem + req_cpu + rule_sanity + game_winnable_bool).to_s + " % / 100 %"
+score_percent = {
+  :unit_travel => (turns_max/travel_time_min_turns).floor,
+  :req_mem => req_cpu = 20 * 0,
+  :rule_sanity => 10 * 0,
+  :game_winnable_bool => 20 * 0
+}
+os << score_percent.values.sum.to_s + " % / 100 %"
 
 # Print results
 puts os

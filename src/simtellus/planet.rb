@@ -9,7 +9,11 @@ module Planet
   G     = 9.80665 # gravitational acceleration at sea-level, m/s²
   M_air = 0.0289644 # air molar mass, kg/mol
   P_air = 1013.25 # air pressure at sea-level, hectoPascals
-  R     = 8.31432 # gas constant, Nm/molK
+  R_air = 8.31432 # gas constant, Nm/molK
+  C_p_air = 2.37789552 # specific heat capacity Jkg/K
+  
+  # into space
+  Energy_Exradiation_IR_Total    = 239.9 # Wm²
 
   # Sine cycle helper method
   # starts from median towards maxima, then minima
@@ -24,9 +28,23 @@ module Planet
     y_min + (1+val)/2 * dist
   end
 
+  # Net energy available on surface
+  def self.energy_transmitted yearday, lat
+    # U_delta(yd, e, l) kWh/sqm
+    # = Insolation with atmospheric losses
+    # + In_atmospheric_convection (adjacent sectors)
+    # + In_geosphere_thermal_radiation (constant 12%)
+    # - Out_atmospheric_convection (adjacent sectors)
+    # - Out_atmospheric_radiation to space
+    # + biome_temp_multiplier -1..1
+    # + weather_extreme_enabled_bool
+    u_delta = insolation(yearday, lat) *
+              (1 - (Atmos::A_InsolationReduction + Atmos::A_Exradiation_IR_Atmos))
+    u_delta += Geosphere::GeosphericEmission
+  end
+
   module EMField
     # The actual direct solar irradiance at the top of the atmosphere fluctuates by about 6.9% during a year (from 1.412 kW/m² in early January to 1.321 kW/m² in early July) due to the Earth's varying distance from the Sun, and typically by much less than 0.1% from day to day.
-    # about 13% of that solar radiation may be absorbed by the atmosphere and 13% scattered.
 
     SolarConstant = 1367 # W/m2
     SolarConstantVariance = 1 # solar minima+ / maxima-
@@ -52,24 +70,22 @@ module Planet
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
     # arg yearday 1..365
     # returns kWh/d
-    def solar_irradiance yearday, lat
+    def solar_irradiance_kwh yearday, lat
       # the average incoming solar radiation, taking into account the angle at which the rays strike and that at any one moment half the planet does not receive any solar radiation, is one-fourth the solar constant (approximately 340 W/m²)
       # the daily average irradiance for the Earth is approximately 250 W/m2 (i.e., a daily irradiation of 6 kWh/m2)
       #  solar irradiance does vary with distinct periodicities such as: 11 years (Schwabe), 88 years (Gleisberg cycle), 208 years (DeVries cycle) and 1,000 years (Eddy cycle)
       si_24h_kWh = SolarConstant.to_f * 24/1000.0
-
       si_24h_kWh *
         solar_cycle(yearday) * 
         orbital_effect(yearday) * 
         axis_tilt_daylength_effect(lat, yearday) * 
-        incident_angle_effect(lat, yearday) *
-        atmospheric_insolation_reduction
+        incident_angle_effect(lat, yearday)
     end
 
     def insolation yearday, lat
       p "L" + lat.to_s + " yd " + yearday.to_s
       # https://en.wikipedia.org/wiki/File:Insolation.png
-      solar_irradiance(yearday, lat)
+      solar_irradiance_kwh(yearday, lat)
     end
 
     def uv_influx yearday, long, lat, elevation
@@ -147,21 +163,23 @@ module Planet
 
   module Atmos
 
-    AtmosphericAbsorbance = 0.23 # lost, of total of 1
-    AtmosphericScatter = 0.13 
+    # Primitive troposphere model
+    # * 13% of that solar radiation may be absorbed by the atmosphere and 13% scattered.
 
-    # Effect of atmosphere on irradiation influx
-    # multiplier
-    def atmospheric_insolation_reduction
-      1 - AtmosphericAbsorbance - AtmosphericScatter
-    end
+    # source https://en.wikipedia.org/wiki/Earth%27s_energy_budget#/media/File:The-NASA-Earth's-Energy-Budget-Poster-Radiant-Energy-System-satellite-infrared-radiation-fluxes.jpg
+    # Planetary sphere surface flux, Wm²
+    A_SolarInflux           = 340.4 # Wm²
+    A_SolarInflux_Reflected = 99.9
+    A_Transmission          = 240.5
+    A_Reflection_Atmos      = 77.0 # into space
+    A_Absorbance_Influx     = 77.1
+    A_Absorbance_Geosp_IR   = 358.2
+    A_Exradiation_IR_Atmos  = 169.9
+    A_Exradiation_IR_Clouds = 29.9
+    A_Exradiation_IR_Geosp  = 40.1
 
-    # Air pressure at elevation
-    #  P_sealevel * exp(-g_acc*air_molar_mass*h/R_gasconst*temperature)
-    # returns hectopascals, if P_air is in hPa.
-    def airpressure yearday, lat, elev
-      P_air * Math.exp( G*M_air*elev / R * temp( yearday, lat, elev, 1) )
-    end
+   # Effect of atmosphere on irradiation influx
+    A_InsolationReduction = A_SolarInflux - A_Transmission
 
     # Returns average C deg
     def temp yearday, lat, elev, biome
@@ -169,10 +187,33 @@ module Planet
       # Low Vostok -89.2 C, High Lut Desert 70.7 C
       # -> +-60C norm, if weather extreme, multiply by 1.25
       # -> +-80C max
-      # https://en.wikipedia.org/wiki/Potential_temperature
-      # norm + (vari * insolation - elevation - biome_adjust)
-      p "Atmos.temp is static mock."
+      temp_absolute_kelvin = 273.15
+      # elev loss
+      # biome
+      p "Atmos.temp is wip @ 15 C"
       15
+    end
+
+    # Atmosphere itself absorbs some solar/thermal
+    # effects air temperature
+    # returns kWh/m² :) -> troposphere lowest 17 km
+    def energy_absorbed yearday, lat
+       GeosphericEmission + GeosphericThermalRadiation + insolation(yearday, lat) * A_Absorbance_Influx
+    end
+
+    # Energy through atmosphere
+    # returns kWh/m² :) -> biome/geosphere
+    def energy_transmitted yearday, lat
+      # ratio of momentary to average influx times avg transmission
+      ((insolation(yearday, lat)* 0.25)/A_SolarInflux) * A_Transmission
+    end
+
+    # Air pressure at elevation
+    # returns hectopascals, (P_air units is hPa).
+    def pressure yearday, lat, elev
+      # from https://www.omnicalculator.com/physics/air-pressure-at-altitude
+      # theta temp should be cald'd
+      P_air * Math.exp( -G*elev*M_air / (R_air * (273 + temp( yearday, lat, elev, 1))) )
     end
 
     # Returns mm/sqkm
@@ -186,9 +227,20 @@ module Planet
       1
     end
 
-    def weather_extremes yearday
-      # has?
+    def weather_extreme_bool
+      false
     end
+
+  end
+
+  module Geosphere
+  
+    # Wm²
+    GeosphericAbsorbance = 163.3 # solar influx absorbed
+    Geospheric_Reflection_Surface      = 22.9
+    GeosphericThermalRadiation = 398.2 # into atmos
+    G_SolarInflux_Net = 0.6 # Wm² absorbed
+
   end
 
   module Biome
@@ -229,6 +281,11 @@ module Planet
       }
     end
 
+    def test_energy_transmitted
+      p "make test for energy_transmitted"
+      energy_transmitted(rand * 365, -90 + rand*180).class == Float
+    end
+
     def test_solar_cycle
       _res = solar_cycle(rand * 365)
       _res.class == Float && _res <= 2 && _res >= 0
@@ -255,8 +312,8 @@ module Planet
     end
 
     def test_solar_irradiance
-      _res = solar_irradiance( rand * 365, rand * 90 )
-      p _res
+      _res = solar_irradiance_kwh( rand * 365, rand * 90 )
+      p "solar irradiance: #{_res} kwh"
       _res.class == Float && _res >= 0 && _res < (Planet::EMField::SolarConstant * 20)/1000
     end
 
@@ -270,7 +327,16 @@ module Planet
     # def test_orbital_effect yearday
     # def test_atmospheric_effect
     # def test_atmospheric_tide yearday
-    # def test_airpressure yearday, lat, elev, biome
+    def test_pressure
+      _res = pressure( rand * 365, -90 + rand*180, rand*11000 )
+      p "Airpressure: #{_res} hPA is placeholder test."
+      (
+       # hPa @ Typhoon Tip, Pacific 12.10.1979.
+       _res > 870 &&
+       # hPa @ Tosontsengel, Mongolia 19.12.2001.
+      _res < 1085 )
+    end
+
     # def test_temp yearday, lat, elev, biome
     # def test_rain yearday, lat, elev, biome
     # def test_weather_extremes yearday
@@ -282,13 +348,13 @@ module Planet
     private 
     def run_tests
       puts "Testrun for " + name
-      res = Tests.instance_methods.all?{|m| _r = send(m); puts m.to_s + " pass: " + _r.to_s; _r } 
+      res = Tests.instance_methods.all?{|m| _r = send(m); puts ">> " + m.to_s + " pass: " + _r.to_s; _r } 
       puts (res ? "Super! Tests pass." : "Fail!!! Test(s) not passing.")
     end
 
   end
 
-  extend EMField, Orbit, Atmos, Biome, Tests
+  extend EMField, Orbit, Atmos, Biome, Geosphere, Tests
   #require 'pry'#binding.pry
   run_tests
 

@@ -2,7 +2,7 @@
 
 # Set absolute base paths
 DEV_TGT=$(readlink -f ../temp)
-#PROD_TGT=$(readlink -f ~/zecurfoez)
+#PROD_TGT=$(readlink -f ~/mutonex)
 
 # Setup base paths
 BASE_DIR="$DEV_TGT/build"
