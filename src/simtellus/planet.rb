@@ -1,16 +1,13 @@
 # encoding: utf-8
 
 module Planet
-
+  
+  # Collection of modules to approximate planetary energy fluxes in ISO units.
   # TODO test suite
   # TODO render svg graph for year 2017 and 2017-2037 year periods
 
   # Physical Constants
   G     = 9.80665 # gravitational acceleration at sea-level, m/s²
-  M_air = 0.0289644 # air molar mass, kg/mol
-  P_air = 1013.25 # air pressure at sea-level, hectoPascals
-  R_air = 8.31432 # gas constant, Nm/molK
-  C_p_air = 2.37789552 # specific heat capacity Jkg/K
   
   # into space
   Energy_Exradiation_IR_Total    = 239.9 # Wm²
@@ -29,22 +26,16 @@ module Planet
   end
 
   # Net energy available on surface
+  # Wm²
   def self.energy_transmitted yearday, lat
-    # U_delta(yd, e, l) kWh/sqm
-    # = Insolation with atmospheric losses
-    # + In_atmospheric_convection (adjacent sectors)
-    # + In_geosphere_thermal_radiation (constant 12%)
-    # - Out_atmospheric_convection (adjacent sectors)
-    # - Out_atmospheric_radiation to space
-    # + biome_temp_multiplier -1..1
-    # + weather_extreme_enabled_bool
-    u_delta = insolation(yearday, lat) *
-              (1 - (Atmos::A_InsolationReduction + Atmos::A_Exradiation_IR_Atmos))
-    u_delta += Geosphere::GeosphericEmission
+    Atmos::Solar_Transmission * insolation_multiplier(yearday, lat)
   end
 
   module EMField
-    # The actual direct solar irradiance at the top of the atmosphere fluctuates by about 6.9% during a year (from 1.412 kW/m² in early January to 1.321 kW/m² in early July) due to the Earth's varying distance from the Sun, and typically by much less than 0.1% from day to day.
+    # The actual direct solar irradiance at the top of the atmosphere fluctuates by
+    # about 6.9% during a year (from 1.412 kW/m² in early January to 1.321 kW/m² in 
+    # early July) due to the Earth's varying distance from the Sun, and typically
+    # by much less than 0.1% from day to day.
 
     SolarConstant = 1367 # W/m2
     SolarConstantVariance = 1 # solar minima+ / maxima-
@@ -52,10 +43,11 @@ module Planet
     # yearday is the day of the year 1..365
     # returns multiplier 0..2
     def solar_cycle yearday
-      #sunspots
-      # cycle of 10.66 years
+      # Schwabe cycle of 10.66 a, Gleisberg 88 a, Devries 208 a, Eddy 1000 a
       # last maxima july 1990, feb 2001 -> next maxima 2011 
-      # SolarConstant + sinus2range( days % 10.66, 10.66, -SolarConstantVariance,SolarConstantVariance ) # todo normalize to nearest maxima
+      # SolarConstant + sinus2range( days % 10.66, 10.66, -SolarConstantVariance,
+      # SolarConstantVariance )
+      # todo normalize to nearest maxima
       p "EMField.solar_cycle is static sunspot mock."
       0.999
     end
@@ -69,12 +61,9 @@ module Planet
 
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
     # arg yearday 1..365
-    # returns kWh/d
+    # returns kWh/d/m²
     def solar_irradiance_kwh yearday, lat
-      # the average incoming solar radiation, taking into account the angle at which the rays strike and that at any one moment half the planet does not receive any solar radiation, is one-fourth the solar constant (approximately 340 W/m²)
-      # the daily average irradiance for the Earth is approximately 250 W/m2 (i.e., a daily irradiation of 6 kWh/m2)
-      #  solar irradiance does vary with distinct periodicities such as: 11 years (Schwabe), 88 years (Gleisberg cycle), 208 years (DeVries cycle) and 1,000 years (Eddy cycle)
-      si_24h_kWh = SolarConstant.to_f * 24/1000.0
+      si_24h_kWh = (24 * SolarConstant.to_f)/1000.0
       si_24h_kWh *
         solar_cycle(yearday) * 
         orbital_effect(yearday) * 
@@ -82,7 +71,8 @@ module Planet
         incident_angle_effect(lat, yearday)
     end
 
-    def insolation yearday, lat
+
+    def insolation_multiplier yearday, lat
       p "L" + lat.to_s + " yd " + yearday.to_s
       # https://en.wikipedia.org/wiki/File:Insolation.png
       solar_irradiance_kwh(yearday, lat)
@@ -123,15 +113,19 @@ module Planet
       # note: offset results by substracting from yearday
       require 'date'
 
-      days_to_solar_equinox_from_new_years = Date.civil(2020, 03, 20).yday # equinox on Mar 20th 
+      # equinox on Mar 20th 
+      days_to_solar_equinox_from_new_years = Date.civil(2020, 03, 20).yday
 
       # Sinus Offset
-      # sinus peaks at first quarter of the scale, summer peaks at halfway (NH) or end (SH) of the scale
-      yearday_adjusted = (yearday - days_to_solar_equinox_from_new_years) % 365 # offset for sinus func (max in jun)
+      # sinus peaks at first quarter of the scale, summer peaks at halfway (NH) or
+      # end (SH) of the scale
+      # offset for sinus func (max in jun)
+      yearday_adjusted = (yearday - days_to_solar_equinox_from_new_years) % 365
 
       # Determine start of year for latitude - days begin to longen (start of sinus)
       hemisphere_multi = (lat > 0 ? 0 : 1)
-      yearday_adjusted = hemisphere_multi * -182.5 + yearday_adjusted # offset for lat (summer in dec on antarctica)
+      # offset for lat (summer in dec on antarctica)
+      yearday_adjusted = hemisphere_multi * -182.5 + yearday_adjusted
 
       # Determine daylength extremes
       lat_arctic_circle = 66.533 # 66 deg 32 min
@@ -146,16 +140,6 @@ module Planet
     end
 
     def incident_angle_effect lat, yearday
-      # -- From http://www.itacanet.org/the-sun-as-a-source-of-energy/part-2-solar-energy-reaching-the-earths-surface/:
-      # -- the irradiance intensity on the horizontal plane can be calculated from: I_0h = cos theta_Z (2.2)
-      # -- theta_Z = declination (solar zenith angle)
-      # -- I_0h = extraterrestial irradiance intensity
-      # Polar caps get about one quarter of the irradiation the equator does.
-      axis_tilt_angle_rad = 23.45 * ( Math::PI/180 )
-
-      solar_declination_angle_rad = axis_tilt_angle_rad * Math.cos( (2*Math::PI*360)/365 * (19+yearday) ) # for day
-
-      # angle_of_incident = alt-angle-sine - declination-sine * latitude-sine / declination-cos * latitude-cos
       1 - sinus2range( lat.abs.to_f, 360, 0.9, 0 ) # ruff approx
     end
 
@@ -164,22 +148,25 @@ module Planet
   module Atmos
 
     # Primitive troposphere model
-    # * 13% of that solar radiation may be absorbed by the atmosphere and 13% scattered.
 
-    # source https://en.wikipedia.org/wiki/Earth%27s_energy_budget#/media/File:The-NASA-Earth's-Energy-Budget-Poster-Radiant-Energy-System-satellite-infrared-radiation-fluxes.jpg
+    M_air = 0.0289644 # air molar mass, kg/mol
+    P_air = 1013.25 # air pressure at sea-level, hectoPascals
+    R_air = 8.31432 # gas constant, Nm/molK
+    C_p_air = 2.37789552 # specific heat capacity Jkg/K
+
+    # source NP-2010-05-265-LaRC
     # Planetary sphere surface flux, Wm²
-    A_SolarInflux           = 340.4 # Wm²
-    A_SolarInflux_Reflected = 99.9
-    A_Transmission          = 240.5
-    A_Reflection_Atmos      = 77.0 # into space
-    A_Absorbance_Influx     = 77.1
-    A_Absorbance_Geosp_IR   = 358.2
-    A_Exradiation_IR_Atmos  = 169.9
-    A_Exradiation_IR_Clouds = 29.9
-    A_Exradiation_IR_Geosp  = 40.1
+    Solar_Influx            = 340.4
+    Solar_Influx_Reflected  = 99.9 # into space
+    Solar_Transmission      = 240.5 # source ?
+    Reflection_Atmos        = 77.0 
+    Absorption_Influx       = 77.1 
+    Absorption_Geosp_IR     = 358.2
 
-   # Effect of atmosphere on irradiation influx
-    A_InsolationReduction = A_SolarInflux - A_Transmission
+    # Outgoing Longwave Radiation
+    Exradiation_IR_Atmos    = 169.9
+    Exradiation_IR_Clouds   = 29.9
+    Exradiation_IR_Geosp    = 40.1
 
     # Returns average C deg
     def temp yearday, lat, elev, biome
@@ -187,25 +174,10 @@ module Planet
       # Low Vostok -89.2 C, High Lut Desert 70.7 C
       # -> +-60C norm, if weather extreme, multiply by 1.25
       # -> +-80C max
-      temp_absolute_kelvin = 273.15
       # elev loss
       # biome
       p "Atmos.temp is wip @ 15 C"
       15
-    end
-
-    # Atmosphere itself absorbs some solar/thermal
-    # effects air temperature
-    # returns kWh/m² :) -> troposphere lowest 17 km
-    def energy_absorbed yearday, lat
-       GeosphericEmission + GeosphericThermalRadiation + insolation(yearday, lat) * A_Absorbance_Influx
-    end
-
-    # Energy through atmosphere
-    # returns kWh/m² :) -> biome/geosphere
-    def energy_transmitted yearday, lat
-      # ratio of momentary to average influx times avg transmission
-      ((insolation(yearday, lat)* 0.25)/A_SolarInflux) * A_Transmission
     end
 
     # Air pressure at elevation
@@ -213,14 +185,17 @@ module Planet
     def pressure yearday, lat, elev
       # from https://www.omnicalculator.com/physics/air-pressure-at-altitude
       # theta temp should be cald'd
-      P_air * Math.exp( -G*elev*M_air / (R_air * (273 + temp( yearday, lat, elev, 1))) )
+      kelvin_zero = 273.15
+      t_K = temp( yearday, lat, elev, 1) + kelvin_zero 
+      P_air * Math.exp( -G*elev*M_air / (R_air * t_K) )
     end
 
     # Returns mm/sqkm
     def rain yearday, lat, elev, biome
       # biome adjust
       # http://earthobservatory.nasa.gov/Experiments/Biome/
-      # dist from equator decreases http://www-das.uwyo.edu/~geerts/cwx/notes/chap10/global_precip.gif
+      # dist from equator decreases
+      # http://www-das.uwyo.edu/~geerts/cwx/notes/chap10/global_precip.gif
       # 10% bonus for southern hemi
       # low pressure gives rain
       p "Atmos.rain is static mock."
@@ -234,12 +209,19 @@ module Planet
   end
 
   module Geosphere
-  
+ 
+    # source NP-2010-05-265-LaRC
     # Wm²
-    GeosphericAbsorbance = 163.3 # solar influx absorbed
-    Geospheric_Reflection_Surface      = 22.9
-    GeosphericThermalRadiation = 398.2 # into atmos
-    G_SolarInflux_Net = 0.6 # Wm² absorbed
+    # into geosphere
+    Net_Absorption = 0.6 # Wm² absorbed
+    Solar_Influx_Absorption   = 163.3 # solar influx absorbed
+    Solar_Influx_Reflected    = 22.9
+    Atmospheric_Backradiation = 340.3  
+
+    # into atmos
+    Exradiation_Surface       = 398.2
+    Exconvection_Exconduction = 18.4
+    Ex_Latent_Heat            = 86.4
 
   end
 
@@ -307,19 +289,24 @@ module Planet
     end
 
     def test_incident_angle_effect
+      p "Incident angle effect test is mock."
       _res = incident_angle_effect( -90 + rand*180, 100000 )
       _res.class == Float && _res >= 0 && _res <= 1
     end
 
     def test_solar_irradiance
+      # the average incoming solar radiation, considering incident angle and half
+      # the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m²
+      # the daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d
+      # source?
       _res = solar_irradiance_kwh( rand * 365, rand * 90 )
       p "solar irradiance: #{_res} kwh"
       _res.class == Float && _res >= 0 && _res < (Planet::EMField::SolarConstant * 20)/1000
     end
 
-    def test_insolation
-      _res = insolation( rand * 365, -90 + rand*180)
-      p _res
+    def test_insolation_multiplier
+      _res = insolation_multiplier( rand * 365, -90 + rand*180)
+      p "insolation multiplier: #{_res}"
       _res.class == Float && _res >= 0 && _res < Planet::EMField::SolarConstant * 0.75
     end
 
@@ -328,13 +315,13 @@ module Planet
     # def test_atmospheric_effect
     # def test_atmospheric_tide yearday
     def test_pressure
-      _res = pressure( rand * 365, -90 + rand*180, rand*11000 )
-      p "Airpressure: #{_res} hPA is placeholder test."
-      (
-       # hPa @ Typhoon Tip, Pacific 12.10.1979.
+      _res = pressure( rand * 365, -90 + rand*180, rand*100 )
+      p "Airpressure: #{_res} hPA."
+      ( # hPa @ Typhoon Tip, Pacific 12.10.1979.
        _res > 870 &&
        # hPa @ Tosontsengel, Mongolia 19.12.2001.
-      _res < 1085 )
+      _res < 1085
+      )
     end
 
     # def test_temp yearday, lat, elev, biome
@@ -348,7 +335,11 @@ module Planet
     private 
     def run_tests
       puts "Testrun for " + name
-      res = Tests.instance_methods.all?{|m| _r = send(m); puts ">> " + m.to_s + " pass: " + _r.to_s; _r } 
+      res = Tests.instance_methods.all?{|m|
+        _r = send(m)
+        puts ">> #{m.to_s} pass: #{_r.to_s}"
+        _r 
+      } 
       puts (res ? "Super! Tests pass." : "Fail!!! Test(s) not passing.")
     end
 
