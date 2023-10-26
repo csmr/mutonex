@@ -1,7 +1,7 @@
 # encoding: utf-8
 
 module Planet
-  
+
   # Collection of modules to approximate planetary energy fluxes in ISO units.
   # TODO test suite
   # TODO render svg graph for year 2017 and 2017-2037 year periods
@@ -38,15 +38,15 @@ module Planet
     # by much less than 0.1% from day to day.
 
     Solar_Constant = 1367 # W/m2
-    Solar_Constant_Variance = 1.069 # solar minima+ / maxima-
+    Solar_Constant_Range = 1.069 # solar minima+ / maxima-
 
     # yearday is the day of the year 1..365
     # returns multiplier 0..2
     def solar_cycle yearday
       # Schwabe cycle of 10.66 a, Gleisberg 88 a, Devries 208 a, Eddy 1000 a
       # last maxima july 1990, feb 2001 -> next maxima 2011 
-      # Solar_Constant + sinus2range( days % 10.66, 10.66, -Solar_Constant_Variance,
-      # Solar_Constant_Variance )
+      # Solar_Constant + sinus2range( days % 10.66, 10.66, -Solar_Constant_Range,
+      # Solar_Constant_Range )
       # todo normalize to nearest maxima
       p "EMField.solar_cycle is static sunspot mock."
       0.999
@@ -102,7 +102,7 @@ module Planet
 
     # daylength, multiplier
     #	lat 90..0..-90 - southern latitudes negative
-    #	returns -1..1
+    #	returns 0..1, 0.5 == 12h ?
     def axis_tilt_daylength_effect lat, yearday
       # Causes season
       # Earth’s current tilt angle is approximately 23.5 degrees.
@@ -156,6 +156,7 @@ module Planet
     Solar_Influx            = 340.4
     Solar_Influx_Reflected  = 99.9 # into space
     Solar_Transmission      = 240.5 # source ?
+    Solar_Trans_Twilight    = 10 # source ?  
     Reflection_Atmos        = 77.0 
     Absorption_Influx       = 77.1 
     Absorption_Geosp_IR     = 358.2
@@ -261,12 +262,11 @@ module Planet
     end
 
     def test_energy_transmitted
-      et_max = EMField::Solar_Constant * EMField::Solar_Constant_Variance
-      et_min = 10 # twilight peak Wm² during Polar Night season 
-      _r_polar_night = energy_transmitted(275, 89) # 1. Oct, North Pole
+      et_max = EMField::Solar_Constant * EMField::Solar_Constant_Range
+      _r_polar_night = energy_transmitted(335, 90) # 1. Dec, North Pole
       _r = energy_transmitted(rand * 365, -90 + rand*180)
       p "energy transmitted #{_r.to_int} wm², < #{et_max.to_int}, polar night #{_r_polar_night.to_int}"
-      _r.class == Float && _r < et_max && _r_polar_night < et_min 
+      _r.class == Float && _r < et_max && _r_polar_night < Atmos::Solar_Trans_Twilight 
     end
 
     def test_solar_cycle
@@ -287,15 +287,34 @@ module Planet
     end
 
     def test_axis_tilt_daylength_effect
-      # Polar night, lenght < 1 h
-      # - North Pole: start 24. Sep, end on 22. Dec, Winter Solistice.
-      # - South Pole: start 22. Mar, end 20. Jun, Summer Solistice of N. hemisphere.
-      # Polar day, lenght > 23 h
-      # - North Pole 21.3 - 23.9
-      # - South 21.9. - 21.3.
-      # Equatorial day varies <5 minutes
-      _res = axis_tilt_daylength_effect( -90 + rand*180, rand * 365 )
-      _res.class == Float && _res >= 0 && _res <= 2
+      constraints = [ 
+        # < 1 h
+        [:polar_night, 1.to_f/24, [
+          # September 24 - December 22
+          { hemisphere: :north_pole, start: 268, end: 356, },
+          # March 22 - June 20
+          { hemisphere: :south_pole, start: 80, end: 170 }
+        ]],
+        # > 23 h
+        [:polar_day, 23,[
+          # March 21 - September 20
+          { hemisphere: :north_pole, start: 81, end: 264 },
+          # March 21 - September 20
+          { hemisphere: :south_pole, start: 81, end: 264 }
+        ]]
+      ]
+
+      latitudes = (-90..90).step(5).to_a
+      constraints.all? do |env, tlen, params|
+        params.each { |par|
+          (par[:start]...par[:end]).each { |yearday|
+            latitudes.each { |lat|
+              _res = axis_tilt_daylength_effect(lat, yearday)
+              _res.send((env == :polar_night ? :< : :>), tlen)
+            }
+          }
+        }
+      end
     end
 
     def test_incident_angle_effect
