@@ -7,10 +7,10 @@ module Planet
   # TODO render svg graph for year 2017 and 2017-2037 year periods
 
   # Physical Constants
-  G     = 9.80665 # gravitational acceleration at sea-level, m/s²
+  G = 9.80665 # gravitational acceleration at sea-level, m/s²
   
   # into space
-  Energy_Exradiation_IR_Total    = 239.9 # Wm²
+  Energy_Exradiation_IR_Total = 239.9 # Wm²
 
   # Sine cycle helper method
   # starts from median towards maxima, then minima
@@ -37,16 +37,16 @@ module Planet
     # early July) due to the Earth's varying distance from the Sun, and typically
     # by much less than 0.1% from day to day.
 
-    SolarConstant = 1367 # W/m2
-    SolarConstantVariance = 1 # solar minima+ / maxima-
+    Solar_Constant = 1367 # W/m2
+    Solar_Constant_Variance = 1.069 # solar minima+ / maxima-
 
     # yearday is the day of the year 1..365
     # returns multiplier 0..2
     def solar_cycle yearday
       # Schwabe cycle of 10.66 a, Gleisberg 88 a, Devries 208 a, Eddy 1000 a
       # last maxima july 1990, feb 2001 -> next maxima 2011 
-      # SolarConstant + sinus2range( days % 10.66, 10.66, -SolarConstantVariance,
-      # SolarConstantVariance )
+      # Solar_Constant + sinus2range( days % 10.66, 10.66, -Solar_Constant_Variance,
+      # Solar_Constant_Variance )
       # todo normalize to nearest maxima
       p "EMField.solar_cycle is static sunspot mock."
       0.999
@@ -61,13 +61,12 @@ module Planet
 
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
     # arg yearday 1..365
-    # returns kWh/d/m²
-    def solar_irradiance_kwh yearday, lat
-      si_24h_kWh = (24 * SolarConstant.to_f)/1000.0
-      si_24h_kWh *
+    # returns W/m²
+    def solar_irradiance_wm2 yearday, lat
+      Solar_Constant * 
         solar_cycle(yearday) * 
-        orbital_effect(yearday) * 
-        axis_tilt_daylength_effect(lat, yearday) * 
+        orbital_effect(yearday) *
+        axis_tilt_daylength_effect(lat, yearday) *
         incident_angle_effect(lat, yearday)
     end
 
@@ -75,7 +74,7 @@ module Planet
     def insolation_multiplier yearday, lat
       p "L" + lat.to_s + " yd " + yearday.to_s
       # https://en.wikipedia.org/wiki/File:Insolation.png
-      solar_irradiance_kwh(yearday, lat)
+      solar_irradiance_wm2(yearday, lat) / Atmos::Solar_Transmission
     end
 
     def uv_influx yearday, long, lat, elevation
@@ -134,8 +133,6 @@ module Planet
       day_max_len = 12 + 12 * lat_daylen_offset # 12..24
       day_min_len = 12 - 12 * lat_daylen_offset # 0..12
 
-      # Should return day length multiplier 0..1,
-      # - so case "10h/day" --> solar irradiance multiplier ~0.84 (shines most of day)
       sinus2range(yearday_adjusted, 365, day_max_len, day_min_len ) / 24
     end
 
@@ -264,8 +261,12 @@ module Planet
     end
 
     def test_energy_transmitted
-      p "make test for energy_transmitted"
-      energy_transmitted(rand * 365, -90 + rand*180).class == Float
+      et_max = EMField::Solar_Constant * EMField::Solar_Constant_Variance
+      et_min = 10 # twilight peak Wm² during Polar Night season 
+      _r_polar_night = energy_transmitted(275, 89) # 1. Oct, North Pole
+      _r = energy_transmitted(rand * 365, -90 + rand*180)
+      p "energy transmitted #{_r.to_int} wm², < #{et_max.to_int}, polar night #{_r_polar_night.to_int}"
+      _r.class == Float && _r < et_max && _r_polar_night < et_min 
     end
 
     def test_solar_cycle
@@ -279,11 +280,20 @@ module Planet
     end
 
     def test_orbital_effect
+      # Should return day length multiplier 0..1,
+      # - so case "10h/day" --> solar irradiance multiplier ~0.84 (shines most of day)
       _res = orbital_effect( rand * 365 )
       _res.class == Float && _res >= 1420.0/1440 && _res <= 1460.0/1440
     end
 
     def test_axis_tilt_daylength_effect
+      # Polar night, lenght < 1 h
+      # - North Pole: start 24. Sep, end on 22. Dec, Winter Solistice.
+      # - South Pole: start 22. Mar, end 20. Jun, Summer Solistice of N. hemisphere.
+      # Polar day, lenght > 23 h
+      # - North Pole 21.3 - 23.9
+      # - South 21.9. - 21.3.
+      # Equatorial day varies <5 minutes
       _res = axis_tilt_daylength_effect( -90 + rand*180, rand * 365 )
       _res.class == Float && _res >= 0 && _res <= 2
     end
@@ -299,15 +309,15 @@ module Planet
       # the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m²
       # the daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d
       # source?
-      _res = solar_irradiance_kwh( rand * 365, rand * 90 )
-      p "solar irradiance: #{_res} kwh"
-      _res.class == Float && _res >= 0 && _res < (Planet::EMField::SolarConstant * 20)/1000
+      _res = solar_irradiance_wm2( rand * 365, rand * 90 )
+      p "solar irradiance: #{_res} wm2"
+      _res.class == Float && _res >= 0 && _res < Planet::EMField::Solar_Constant * 1.2
     end
 
     def test_insolation_multiplier
       _res = insolation_multiplier( rand * 365, -90 + rand*180)
       p "insolation multiplier: #{_res}"
-      _res.class == Float && _res >= 0 && _res < Planet::EMField::SolarConstant * 0.75
+      _res.class == Float && _res >= 0 && _res < Planet::EMField::Solar_Constant * 0.75
     end
 
     # def test_uv_influx yearday, long, lat, elevation
