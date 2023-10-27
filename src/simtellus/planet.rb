@@ -48,7 +48,7 @@ module Planet
       # Solar_Constant + sinus2range( days % 10.66, 10.66, -Solar_Constant_Range,
       # Solar_Constant_Range )
       # todo normalize to nearest maxima
-      p "EMField.solar_cycle is static sunspot mock."
+      #p "EMField.solar_cycle is static sunspot mock."
       0.999
     end
 
@@ -72,7 +72,6 @@ module Planet
 
 
     def insolation_multiplier yearday, lat
-      p "L" + lat.to_s + " yd " + yearday.to_s
       # https://en.wikipedia.org/wiki/File:Insolation.png
       solar_irradiance_wm2(yearday, lat) / Atmos::Solar_Transmission
     end
@@ -102,7 +101,7 @@ module Planet
 
     # daylength, multiplier
     #	lat 90..0..-90 - southern latitudes negative
-    #	returns 0..1, 0.5 == 12h ?
+    #	returns 0..1, 0.5 == 12h
     def axis_tilt_daylength_effect lat, yearday
       # Causes season
       # Earth’s current tilt angle is approximately 23.5 degrees.
@@ -128,8 +127,7 @@ module Planet
 
       # Determine daylength extremes
       lat_arctic_circle = 66.533 # 66 deg 32 min
-      lat_daylen_offset = ( lat.to_f / lat_arctic_circle ).abs # 0...1.5
-      lat_daylen_offset = 1 unless lat_daylen_offset < 1 # 0..1
+      lat_daylen_offset = ( lat.to_f / lat_arctic_circle ).abs.floor # 0..1
       day_max_len = 12 + 12 * lat_daylen_offset # 12..24
       day_min_len = 12 - 12 * lat_daylen_offset # 0..12
 
@@ -262,11 +260,30 @@ module Planet
     end
 
     def test_energy_transmitted
-      et_max = EMField::Solar_Constant * EMField::Solar_Constant_Range
-      _r_polar_night = energy_transmitted(335, 90) # 1. Dec, North Pole
-      _r = energy_transmitted(rand * 365, -90 + rand*180)
-      p "energy transmitted #{_r.to_int} wm², < #{et_max.to_int}, polar night #{_r_polar_night.to_int}"
-      _r.class == Float && _r < et_max && _r_polar_night < Atmos::Solar_Trans_Twilight 
+      cases = [
+        [:non_polar_latitudes,
+         { :max => EMField::Solar_Constant * EMField::Solar_Constant_Range,
+           :latitudes => (0..66).step(6).to_a,
+           :dayrange => (1..365).step(5).to_a }],
+        [:antarctic,
+         { :max => Atmos::Solar_Trans_Twilight * 2,
+           :latitudes => (-90..-69).step(4).to_a,
+           :dayrange => (172..202).step(5).to_a }],
+        [:arctic,
+         { :max => Atmos::Solar_Trans_Twilight * 2,
+           :latitudes => (68..90).step(4).to_a,
+           :dayrange => (335..365).step(5).to_a }]
+      ]
+
+      cases.all? { |c, params|
+        params[:latitudes].all? { |lat|
+          params[:dayrange].all? { |d|
+            _r = energy_transmitted(d, lat)
+            p _r, lat, d, c unless _r < params[:max]
+            _r.class == Float && _r < params[:max]
+          }
+        }
+      }
     end
 
     def test_solar_cycle
@@ -290,28 +307,32 @@ module Planet
       constraints = [ 
         # < 1 h
         [:polar_night, 1.to_f/24, [
-          # September 24 - December 22
-          { hemisphere: :north_pole, start: 268, end: 356, },
-          # March 22 - June 20
-          { hemisphere: :south_pole, start: 80, end: 170 }
+          # North pole, September 24 - December 22
+          { lat: 90, start: 268, end: 357, },
+          # South pole, March 22 - June 20
+          { lat: -90, start: 82, end: 170 }
         ]],
         # > 23 h
         [:polar_day, 23,[
-          # March 21 - September 20
-          { hemisphere: :north_pole, start: 81, end: 264 },
-          # March 21 - September 20
-          { hemisphere: :south_pole, start: 81, end: 264 }
-        ]]
+          # North pole, March 22 - September 21
+          { lat: 90, start: 82, end: 265 },
+          # South pole, December 22 - December 30
+          { lat: -90, start: 357, end: 264 },
+          # South pole, January 1 - March 21
+          { lat: -90, start: 1, end: 82 }
+        ]],
+        # ~12 h
+        [:equatorial_day, 11,
+          # Equator, January 1 - June 30
+         [{ lat: 0, start: 1, end: 180 }]
+        ]
       ]
 
-      latitudes = (-90..90).step(5).to_a
       constraints.all? do |env, tlen, params|
         params.each { |par|
           (par[:start]...par[:end]).each { |yearday|
-            latitudes.each { |lat|
-              _res = axis_tilt_daylength_effect(lat, yearday)
+              _res = axis_tilt_daylength_effect(par[:lat], yearday)
               _res.send((env == :polar_night ? :< : :>), tlen)
-            }
           }
         }
       end
