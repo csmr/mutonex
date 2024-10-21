@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # Set absolute base paths
-DEV_TGT=$(readlink -f ../temp)
-#PROD_TGT=$(readlink -f ~/mutonex)
+
+# Set absolute base paths
+DEV_TGT=$(mktemp -d --tmpdir mutonex-dev-XXXXXX)  # mktemp for secure temp dir
+PROD_TGT="/opt/mutonex"
 
 # Setup base paths
 BASE_DIR="$DEV_TGT/build"
