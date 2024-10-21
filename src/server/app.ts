@@ -5,13 +5,12 @@ const app = new Application();
 const port = 8000;
 const router = new Router();
 
-const client = new Client({
-  user: "your_user",
-  database: "your_database",
-  hostname: "your_host",
-  password: "your_password",
-  port: 5432,
-});
+const databaseUrl = Deno.env.get("DATABASE_URL");
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL environment variable is not set");
+}
+
+const client = new Client(databaseUrl);
 
 await client.connect();
 
