@@ -22,3 +22,5 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgres://your_user:your_password@postgres:5432/your_database
+    ports:
+      - "8888:8888" 
