@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Install client-side dependencies
+deno cache "$BASE_DIR/client/deps.ts"
+
+# Build the client-side application
+deno bundle "$BASE_DIR/client/main.ts" "$RUNTIME_DIR/client/main.js"
+
+# Copy built files to the runtime directory
+cp "$BASE_DIR/client/index.html" "$RUNTIME_DIR/client/"
+cp "$BASE_DIR/client/styles.css" "$RUNTIME_DIR/client/"
+
+# Set up the server
+deno cache "$BASE_DIR/server/deps.ts"
+cp "$BASE_DIR/server/app.ts" "$RUNTIME_DIR/server/"
+cp -r "$BASE_DIR/server/routes" "$RUNTIME_DIR/server/"
+cp -r "$BASE_DIR/server/models" "$RUNTIME_DIR/server/"
+
+# Copy data files
+cp -r "$BASE_DIR/data" "$RUNTIME_DIR/data"
