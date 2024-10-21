@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # Set absolute base paths
 DEV_TGT=$(mktemp -d --tmpdir mutonex.XXXXXX)  # mktemp for secure temp dir
 #PROD_TGT="/opt/mutonex"
