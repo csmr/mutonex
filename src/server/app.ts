@@ -2,6 +2,7 @@ import { Application, Router } from "./deps.ts";
 import { Client } from "./deps.ts";
 
 const app = new Application();
+const port = 8000;
 const router = new Router();
 
 const client = new Client({
@@ -21,4 +22,5 @@ router.get("/", (ctx) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-app.listen({ port: 8000 });
+app.listen({ port });
+console.log(`Server running on http://localhost:${port}`);
