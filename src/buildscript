@@ -4,12 +4,12 @@
 DEV_TGT=$(mktemp -d --tmpdir mutonex.XXXXXX)  # mktemp for secure temp dir
 #PROD_TGT="/opt/mutonex"
 
-BASE_DIR="$DEV_TGT/build"
+BASE_DIR="$(realpath .)"
 RUNTIME_DIR="$DEV_TGT/build"
 DATA_HOME="$DEV_TGT/data"
 
 # Create directories if they do not exist
-mkdir -p "$BASE_DIR"
+mkdir -p "$RUNTIME_DIR"
 mkdir -p "$DATA_HOME"
 #mkdir -p "$PROD_TGT"
 #sudo chown $USER:$USER "$PROD_TGT"  # Ensure the user owns the directory
@@ -19,18 +19,11 @@ if ! command -v deno &> /dev/null; then
   curl -fsSL https://deno.land/x/install/install.sh | sh
 fi
 
-# Install client-side dependencies
-deno cache "$BASE_DIR/client/deps.ts"
-
 # Build the client-side application
 deno bundle "$BASE_DIR/client/main.ts" "$RUNTIME_DIR/client/main.js"
 
 # Copy built files to the runtime directory
-cp "$BASE_DIR/client/index.html" "$RUNTIME_DIR/client/"
-cp "$BASE_DIR/client/styles.css" "$RUNTIME_DIR/client/"
+cp "$BASE_DIR/client/mutonex.html" "$RUNTIME_DIR/client/"
 
 # Set up the server
 deno cache "$BASE_DIR/server/deps.ts"
-cp "$BASE_DIR/server/app.ts" "$RUNTIME_DIR/server/"
-cp -r "$BASE_DIR/server/routes" "$RUNTIME_DIR/server/"
-cp -r "$BASE_DIR/server/models" "$RUNTIME_DIR/server/"
