@@ -1,5 +1,20 @@
 # Changelog
 
+## 2024-10-21
+
+### Added
+- Add dependency installer.
+- Add dev-container config and runner.
+- Add bundler for client.
+
+
+## 2023-10-20 to 2024-11-15
+
+### Changed
+- Improve simtellus tests.
+- Add tests simtellus/planet_tests.rb.
+
+
 ## 2023-05-15 to 2023-05-16
 
 ### Added
