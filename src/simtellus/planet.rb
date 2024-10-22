@@ -24,9 +24,12 @@ module Planet
 
   # Net energy available on surface
   # Wm²
+  # the average incoming solar radiation, considering incident angle and half
+  # the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m²
+  # the daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d
   def self.energy_transmitted(yearday, lat)
     solar_irradiance_wm2(yearday) *
-      insolation_multiplier(yearday, lat)
+      weather_multiplier(yearday, lat)
   end
 
   module EMField
@@ -43,6 +46,7 @@ module Planet
     def solar_cycle(_yearday)
       # Schwabe cycle of 10.66 a, Gleisberg 88 a, Devries 208 a, Eddy 1000 a
       # last maxima july 1990, feb 2001 -> next maxima 2011
+      # 2025 maxima earlier in 2024
       # Solar_Constant + sinus2range( days % 10.66, 10.66, -Solar_Constant_Range,
       # Solar_Constant_Range )
       # todo normalize to nearest maxima
@@ -65,10 +69,12 @@ module Planet
         orbital_effect(yearday)
     end
 
-    def uv_influx(yearday, long, lat, elevation)
+    # returns Wm
+    def uv_influx(yearday, lat, elevation)
       p 'EMField.uv multiplier mock is static'
-      uv_multiplier = 1
-      insolation(yearday, long, lat, elevation) * uv_multiplier
+      altitude_effect = 0.08 # per 1000 m, Blumenthal 1997
+      uv_multiplier = (elevation / 1000) * altitude_effect
+      energy_transmitted(yearday, lat) * uv_multiplier
     end
   end
 
@@ -76,8 +82,53 @@ module Planet
   # todo memoization
   module Orbit
     require 'date'
+
     # equinox on Mar 20th
     EQUINOX_DAY_N = Date.civil(2020, 3, 20).yday
+    AXIAL_TILT = 23.5
+
+    # Axial tilt multiplier
+    # -> daylenght varies -> seasons, more sunshine in the summer
+    #	lat 90..0..-90 - southern latitudes negative
+    #	returns 0..1, 0.5 == 12h
+    def axial_tilt_daylength_effect(lat, yearday)
+      # Hat-top cycle ver 1:
+      # sine wave period of 365d, modulates day lenght by latitudal distance multi
+      # note: offset results by substracting from yearday
+
+      # offset for sinus func
+      # sinus peaks at first quarter of the scale, summer peaks at halfway (NH) or
+      # end (SH) of the scale
+      yearday_adjusted = (yearday - EQUINOX_DAY_N) % 365
+
+      # Determine start of year for latitude - days begin to longen (start of sinus)
+      hemisphere_multi = (lat.positive? ? 0 : 1)
+      # offset for lat (summer in dec on antarctica)
+      yearday_adjusted = hemisphere_multi * -182.5 + yearday_adjusted
+
+      # axial tilt effect follows sine
+      # tilt is 0 on equinox, 23.5 deg on solistice
+      t = ((180 - AXIAL_TILT) / 180) * hemisphere_multi
+      t_m = at * ((yearday%182) - EQUINOX_DAY_N)
+
+      # Determine daylength extremes
+      lat_arctic_circle = 66.533 # 66 deg 32 min
+      lat_daylen_offset = (lat.to_f / lat_arctic_circle).abs
+      lat_daylen_offset = 1 if lat_daylen_offset > 1 # 0..1
+      day_max_len = 12 + 12 * lat_daylen_offset # 12..24
+      day_min_len = 12 - 12 * lat_daylen_offset # 0..12
+
+      sinus2range(yearday_adjusted, 365, day_max_len, day_min_len) / 24
+    end
+
+    # Incident angle effect on insolation:
+    #   I = I_max * cos(θ)
+    # Returns 0..1, multi
+    def incident_angle_effect(lat, _yearday)
+      # ruff approx, sinus2range param always in first quarter of sine
+      # gives sinusoidal range 0-0.9
+      1 - sinus2range( lat.abs.to_f, 360, 0.99, 0 ) # ruff approx
+    end
 
     #	Calculates the daylength (compared to 1 = 24h)
     #	arg day of year 1..365
@@ -92,40 +143,53 @@ module Planet
       (orb_ecce + orb_obli) / (24 * 60) + 1
     end
 
-    # Daylength multiplier
-    # Earth’s current tilt angle is approximately 23.5 degrees.
-    # -> daylenght varies -> seasons, more sunshine in the summer
-    #	lat 90..0..-90 - southern latitudes negative
-    #	returns 0..1, 0.5 == 12h
-    def axis_tilt_daylength_effect(lat, yearday)
-      # Hat-top cycle ver 1:
-      # sine wave period of 365d, modulates day lenght by latitudal distance multi
-      # note: offset results by substracting from yearday
+  ############################ NEW CODE
 
-      # offset for sinus func
-      # sinus peaks at first quarter of the scale, summer peaks at halfway (NH) or
-      # end (SH) of the scale
-      yearday_adjusted = (yearday - EQUINOX_DAY_N) % 365
+    require 'numeric'
 
-      # Determine start of year for latitude - days begin to longen (start of sinus)
-      hemisphere_multi = (lat > 0 ? 0 : 1)
-      # offset for lat (summer in dec on antarctica)
-      yearday_adjusted = hemisphere_multi * -182.5 + yearday_adjusted
+    # Possibly refactor these to be closures to be passed into daily_insolation, if that improves computation
+    def declination_angle(yearday)
+      # Calculate the day of the year
+      day = Date.new(2023, 1, 1).yday + yearday
 
-      # Determine daylength extremes
-      lat_arctic_circle = 66.533 # 66 deg 32 min
-      lat_daylen_offset = (lat.to_f / lat_arctic_circle).abs.floor # 0..1
-      day_max_len = 12 + 12 * lat_daylen_offset # 12..24
-      day_min_len = 12 - 12 * lat_daylen_offset # 0..12
-
-      sinus2range(yearday_adjusted, 365, day_max_len, day_min_len) / 24
+      # Calculate the declination using the equation
+      calculate_orbit(day) + 0.0001
     end
 
-    # Returns 0..1
-    def incident_angle_effect(lat, _yearday)
-      0.5 - (lat.abs / 90)
-      # 1 - sinus2range( lat.abs.to_f, 360, 0.9, 0 ) # ruff approx
+    def calculate_orbit(yearday)
+      # Calculate the angle of Earth's orbit around the sun
+      angle = yearday * (2 * Math::PI) / 365.2422
+
+      # Normalize the angle to between 0 and 2π
+      angle %= (2 * Math::PI)
+
+      angle
     end
+
+    # return deg
+    def incident_angle(lat, yearday, hour)
+      declination_angle(lat, yearday) + hour
+    end
+
+    def daily_insolation(
+      latitude,
+      yearday,
+      time_resolution: 1,
+      baseline_solar_irradiation: 0.25
+    )
+      # cumulative flux
+      0..24.sum do |hour|
+        incident_deg = incident_angle(yearday, latitude)
+        # Skip twilight hours
+        next if incident_deg.negative?
+
+        solar_flux = (solar_irradiance_wm2 * weather_multiplier) * Math.cos(incident_angle(lat, yearday, hour))**2
+        solar_flux = 0 if solar_flux.abs < 0.01
+        solar_flux * (time_resolution / 2.0)
+      end
+    end
+
+
   end
 
   module Atmos
@@ -152,14 +216,14 @@ module Planet
     Exradiation_IR_Geosp    = 40.1
 
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
-    # returns 0..1
-    def insolation_multiplier(yearday, lat)
+    # returns 0..1, 0.5 is 12h at equator
+    def weather_multiplier(yearday, lat)
       # https://en.wikipedia.org/wiki/File:Insolation.png
       # weather *
       # extreme_weather *
       # biome *
-      incident_angle_effect(lat, yearday) *
-        axis_tilt_daylength_effect(lat, yearday)
+      p 'weather multiplier is mock'
+      1
     end
 
     # Returns average C deg
@@ -222,11 +286,6 @@ module Planet
 
     # Returns a multiplier for args biome and type of adjustment
     def biome_multiplier biome_code, type
-      if type == 'insolation'
-      elsif type == 'temp'
-      elsif type == 'rain'
-        # sea averages near 12C
-      end
     end
 
     # Returns biome adjustment object.
@@ -235,7 +294,6 @@ module Planet
     def biome_adjust_obj; end
 
     def fauna
-      # TODO
     end
   end
 
