@@ -5,7 +5,7 @@ DEV_TGT=$(mktemp -d --tmpdir mutonex.XXXXXX)  # mktemp for secure temp dir
 #PROD_TGT="/opt/mutonex"
 
 BASE_DIR="$(realpath .)"
-RUNTIME_DIR="$DEV_TGT/build"
+RUNTIME_DIR="$DEV_TGT/dist"
 DATA_HOME="$DEV_TGT/data"
 
 # Create directories if they do not exist
@@ -22,12 +22,7 @@ if ! command -v deno &> /dev/null; then
   export PATH="~/.deno/bin:$PATH" 
 fi
 
-# esbuild the client-side app
-#deno task build
-# --allow-read npm:esbuild
-
-# Copy built files to the runtime directory
-# cp "$BASE_DIR/client/mutonex.html" "$RUNTIME_DIR/client/"
-
-# Set up the server
-# deno cache "$BASE_DIR/server/deps.ts"
+# Install project deps and bundle client
+deno install
+deno task bundle-client
+cp "$BASE_DIR/client/mutonex.html" "$RUNTIME_DIR"
