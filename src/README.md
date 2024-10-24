@@ -10,3 +10,7 @@ See `deno.json` on the esbuild client code bundle.
 
 ## Server pack
 Not implemented yet.
+
+## Production env
+This is achieved via 'production' profile services in docker-compose.yml. Install certs (or certbot), and then you can start the production containers with:
+``$ docker-compose --profile production up``

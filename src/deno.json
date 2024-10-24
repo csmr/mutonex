@@ -3,10 +3,11 @@
   },
   "tasks": {
     "dev": "deno run --watch server/app.ts",
-    "bundle-client": "esbuild client/main.ts --bundle --outfile=./dist/out.js",
+    "bundle-client": "esbuild client/main.ts --bundle --outfile=./dist/web.js"
   },
   "imports": {
+    "@denodeland/knex": "npm:@denodeland/knex@^2.5.4",
+    "@std/assert": "jsr:@std/assert@1",
     "esbuild": "npm:esbuild@^0.24.0"
-    "@std/assert": "jsr:@std/assert@1"
   }
 }

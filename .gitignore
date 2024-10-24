@@ -1,3 +1,5 @@
 *.swp
 res/RAW/*
 temp/*
+src/data/postgres
+src/dist

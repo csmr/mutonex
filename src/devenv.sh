@@ -7,5 +7,5 @@ if ! command -v docker-compose &> /dev/null; then
   exit 2
 fi
 
-source ./buildscript.sh
+echo "мμτοηεχ δεv εηv ιηιτ"
 docker-compose up
