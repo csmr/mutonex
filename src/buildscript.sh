@@ -9,10 +9,12 @@ DATA_HOME="$BASE_DIR/data"
 mkdir -p "$RUNTIME_DIR"
 mkdir -p "$DATA_HOME"
 
+# Add contributor credits to client
+deno run --allow-read --allow-write ./scripts/make-credits.js
+
 # Install project deps & bundle client
 deno install
 deno task bundle-client
-cp "$BASE_DIR/client/mutonex.html" "$RUNTIME_DIR"
 
 # Run web server
 deno run --allow-net --allow-env server/app.ts

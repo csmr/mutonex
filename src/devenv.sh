@@ -8,5 +8,7 @@ if ! command -v docker-compose &> /dev/null; then
   exit 1
 fi
 
+git shortlog -n -s > CONTRIBS
+
 echo "мμτοηεχ δεv εηv ιηιτ"
 docker-compose up
