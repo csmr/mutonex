@@ -4,7 +4,6 @@ const a = {
   tem: "./client/mutonex.html",
   out: "./dist/index.html",
   pfx: "<em>C o n t r i b u t i o n s:\n</em>",
-  len: 2000 // ~40 names
 }
 const log = Deno.readTextFileSync(a.con).
   split("\n").
@@ -15,5 +14,5 @@ const log = Deno.readTextFileSync(a.con).
       "</span>");
   });
 const txt = Deno.readTextFileSync(a.tem).
-  replace("<footer>", "<footer>" + log);
+  replace("<footer>", "<footer>" + a.pfx + log);
 Deno.writeTextFileSync(a.out, txt);
