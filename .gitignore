@@ -1,4 +1,5 @@
 *.swp
+*.lock
 res/RAW/*
 temp/*
 src/data/postgres

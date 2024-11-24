@@ -1,6 +1,6 @@
 // Inject `git shortlog -n -s` into template
 const a = {
-  con: "CONTRIBS",
+  con: "./dist/CONTRIBS",
   tem: "./client/mutonex.html",
   out: "./dist/index.html",
   pfx: "<em>C o n t r i b u t i o n s:\n</em>",
@@ -14,5 +14,5 @@ const log = Deno.readTextFileSync(a.con).
       "</span>");
   });
 const txt = Deno.readTextFileSync(a.tem).
-  replace("<footer>", "<footer>" + a.pfx + log);
+  replace("<contribs/>", a.pfx + log);
 Deno.writeTextFileSync(a.out, txt);
