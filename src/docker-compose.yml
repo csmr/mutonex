@@ -13,8 +13,17 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PLANET_SIM_URL: http://planet_sim:4567
     ports:
       - "8888:8888"
+
+  planet_sim:
+    image: ruby:alpine
+    volumes:
+      - ./simtellus:/app
+    command: sh /app/start-simtellus.sh
+    ports:
+      - "4567:4567"
 
   postgres:
     image: postgres:latest

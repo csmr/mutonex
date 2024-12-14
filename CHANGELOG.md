@@ -1,11 +1,13 @@
 # Changelog
 
-## 2024-10-21
+## 2024-10-21 to 2024-12-14
 
 ### Added
 - Add dependency installer.
 - Add dev-container config and runner.
 - Add bundler for client.
+- Add contribs to client script.
+- Add simtellus container, server.rb, simulation.rb.
 
 
 ## 2023-10-20 to 2024-11-15
