@@ -6,6 +6,9 @@ require_relative 'config'
 
 module Server
   class App < Sinatra::Base
+    # Set the bind option to listen on all network interfaces
+    set :bind, '0.0.0.0'
+
     get '/planet_state' do
       lat = params[:lat].to_f
       lon = params[:lon].to_f

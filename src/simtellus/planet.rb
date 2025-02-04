@@ -222,7 +222,7 @@ module Planet
       # weather *
       # extreme_weather *
       # biome *
-      p 'weather multiplier is mock'
+      # p 'weather multiplier is mock'
       1
     end
 
