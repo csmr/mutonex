@@ -2,18 +2,22 @@ version: '3.8'
 
 services:
   deno:
-    image: denoland/deno:latest
+    image: denoland/deno:1.40.0
     container_name: mutonex_deno
     volumes:
       - .:/app
     working_dir: /app
-    command: sh -c "./buildscript.sh"
+    command: sh -c "/app/webserver/start-webserver.sh"
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - ./data/.env.postgres
+      - ./simtellus/.env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PLANET_SIM_URL: http://planet_sim:4567
+      API_KEY_AUTH_ENABLE: ${API_KEY_AUTH_ENABLE}
     ports:
       - "8888:8888"
 
@@ -28,20 +32,21 @@ services:
   postgres:
     image: postgres:latest
     container_name: mutonpostgres
+    env_file:
+      - ./data/.env.postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./data/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 30s
       timeout: 30s
-      retries: 3
+      retries: 4
 
   nginx:
     image: nginx:latest

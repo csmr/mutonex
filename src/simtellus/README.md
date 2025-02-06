@@ -6,9 +6,9 @@ and updating the simulation.
 
 
 ## Server module
+In `./src/docker-compose.yml` ['planet_sim' service](https://github.com/csmr/mutonex/blob/16c6db7235900284348768649d5846302c156e06/src/docker-compose.yml#L20), repo dir `./src/simtellus` is mounted to `/app` of ruby-alpine container. Service runs [`start-simtellus.sh`](https://github.com/csmr/mutonex/blob/master/src/simtellus/start-simtellus.sh).
 
-Simtellus source dir is mounted on a ruby-alpine container and it autoruns the
-`start-simtellus.sh` script. Once running, it has the following http endpoints:
+### Server http endpoints:
 
 #### `GET /planet_state
 Retrieves the current state of the planet for a given latitude and longitude.
@@ -33,19 +33,24 @@ Updates the simulation state and advances the date.
     curl "http://localhost:4567/simulation_update"
     ```
 
-## Troubleshooting
+### Server API key authentication
+If `API_KEY_AUTH_ENABLED=true` in `./src/simtellus/.env`, the server http endpoint will look for api key parameter in requests, gives 401 if key not present. API keys are generated on every `./src/start-webserver.sh` run, (`scripts/generate-api-key.js`).
 
-### Controlling the Ruby Server Container
+
+## Controlling the Ruby Server Container
 
   ```
-  docker-compose logs planet_sim       # View logs
+  docker-compose up -d planet_sim      # Sim only
+  docker-compose ps                    # List containers
+  docker-compose logs planet_sim       # Container logs
   docker-compose exec planet_sim sh    # Access the container
+  / # tail -f app/log/simtellus.log    # Server logs
   docker-compose restart planet_sim    # Restart the container
   docker-compose stop planet_sim       # Stop the container
   docker-compose down                  # Remove the container
   ```
 
-### Tests for Simtellus modules
+## Tests for Simtellus modules
 Run tests whenever you change the modules, to catch any regressions by verifying that the simulation and server modules work as expected. The tests cover key functionalities: state initialization, weather computation, artifact storage, and endpoint responses.
 
 To run the tests, navigate to the `repository/src/simtellus` directory and execute the following commands:
@@ -53,12 +58,6 @@ To run the tests, navigate to the `repository/src/simtellus` directory and execu
 ruby simulation_tests.rb
 ruby server_tests.rb
 ```
-
-### Common Issues
-
-- **Gem Installation Errors**: Ensure that the `start-simtellus.sh` script has the necessary permissions and that the `Gemfile` and `Gemfile.lock` are correctly configured.
-- **Port Conflicts**: Ensure that port 4567 is not being used by another service.
-
 
 ## Module structure
 
@@ -68,21 +67,3 @@ Simtellus is composed of 3 main modules:
 - **Simulation Module**: is the core of the exoplanet simulation logic, handling the computation of the planet's state for each temporal cycle. In effect, using methods in Planet to update State.
 - **Server Module**: Provides the HTTP endpoints for interacting with the simulation. Uses the `Simulation` module to get and update the planet's state.
 
-## Example docker session:
-```
-# start sim
-$ docker-compose up -d planet_sim
-# see if up
-$ docker-compose ps
-# container instance logs
-$ docker-compose logs planet_sim
-# see the app logs
-$ docker exec -it src_planet_sim_1 /bin/sh
-/ # tail -f app/log/simtellus.log
-/ # exit
-# after updating sim files
-$ docker-compose restart planet_sim
-# test endpoint
-$ curl http://127.0.0.1:4567/planet_state
-$ $ docker-compose stop planet_sim
-```

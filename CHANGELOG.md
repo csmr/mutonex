@@ -1,5 +1,10 @@
 # Changelog
 
+## 2025-02-04 to 2025-02-09
+- Add database and webserver base
+- improve codebase, bootstrapping, bundling
+- API key and unique credentials
+
 ## 2024-10-21 to 2024-12-14
 
 ### Added

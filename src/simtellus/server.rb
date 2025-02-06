@@ -9,6 +9,15 @@ module Server
     # Set the bind option to listen on all network interfaces
     set :bind, '0.0.0.0'
 
+    # validate API key
+    # - can be disabled in simtellus/.env
+    before do
+      return if ENV['API_KEY_AUTH_ENABLE'] != 'true'
+
+      api_key = request.env['HTTP_X_API_KEY'] || params['api_key']
+      halt 401, 'Unauthorized' unless api_key == ENV['API_KEY']
+    end
+
     get '/planet_state' do
       lat = params[:lat].to_f
       lon = params[:lon].to_f
@@ -46,5 +55,12 @@ end
 # Start the simulation with the default start date and 100 years of cumulative state
 Simtellus.start_simulation
 
+# Define a signal handler for SIGTERM
+trap 'TERM' do
+  log! 'SIGTERM...'
+  puts 'SIGTERM...'
+  exit
+end
+
 # Run the Sinatra app
-Server::App.run! if __FILE__ == $0
+Server::App.run! if __FILE__ == $PROGRAM_NAME
