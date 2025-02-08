@@ -14,7 +14,8 @@ if ! command -v docker-compose >/dev/null; then
   echo "sudo apt install docker-compose"
   echo "sudo usermod -aG docker [username]"
   echo "log out and back in, retry"
-  exit 1fi
+  exit 1
+fi
 
 # Create directories if they do not exist
 mkdir -p "$RUNTIME_DIR"
@@ -23,7 +24,6 @@ mkdir -p "$DATA_HOME"
 # Unique DB credintials
 ./scripts/init-database-env.sh
 
-[ -d dist ] || mkdir dist
 git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
 
 # Postgres DB .env & simtellus .env

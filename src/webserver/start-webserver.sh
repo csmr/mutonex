@@ -19,7 +19,7 @@ deno run --allow-net --allow-env webserver/app.ts &
 WEBSERVER_PID=$!
 
 log "start..."
-sleep 10
+sleep 60
 
 URL="http://localhost:8888/db-test"
 response=$(deno run --allow-net - << EOF

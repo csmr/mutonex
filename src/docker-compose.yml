@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  deno:
+  webserver:
     image: denoland/deno:1.40.0
-    container_name: mutonex_deno
+    container_name: mutondeno
     volumes:
       - .:/app
     working_dir: /app
@@ -58,7 +58,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - deno
+      - webserver
     profiles:
       - production
 
