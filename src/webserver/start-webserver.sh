@@ -1,12 +1,13 @@
 #!/bin/bash
 
-source app.config.sh
+source scripts/app.config.sh
 
 log "$(date)"
 log "$(deno --version)"
 
 # Unique Simtellus API key
-# for server, hash to client
+# key to simtellus server, key-hash to client
+# - simple http API access control for dev container.
 deno run --allow-read --allow-write ./scripts/generate-api-key.js
 
 # Add contributor credits to client

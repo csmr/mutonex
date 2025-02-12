@@ -1,11 +1,11 @@
 require 'logger'
 require_relative 'config'
 
-LOG_DISABLE = env('LOG_DISABLE', 'true')
+LOG_DISABLE = env('SIM_LOG_DISABLE', 'true')
 p "[ #{$0} (and planet & sim) ] LOG_DISABLE: " + LOG_DISABLE
 
 if LOG_DISABLE == 'false'
-  LOG_PATH = env('LOG_PATH', '/app/log/simtellus.log')
+  LOG_PATH = env('SIM_LOG_PATH', '/app/log/simtellus.log')
   LOGGER = Logger.new(LOG_PATH)
 
   # Custom logging method to prefix log entries with the module name

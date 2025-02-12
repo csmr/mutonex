@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# This script makes dev env
-# - deps bash, git and docker-compose
+# Dev-environment init script
+# Dependencies bash, docker-compose and git.
 
-echo "мμτοηεχ δεv εηv ιηιτ"
-
-# App path, logging & build conf
-source ./app.config.sh
-
-# Dependencies 
 if ! command -v docker-compose >/dev/null; then
   echo "no docker-compose, on debian try:"
   echo "sudo apt install docker-compose"
@@ -17,14 +11,20 @@ if ! command -v docker-compose >/dev/null; then
   exit 1
 fi
 
+echo "мμτοηεχ δεv εηv ιηιτ"
+
+# App path, logging & build conf
+source ./scripts/app.config.sh
+
 # Create directories if they do not exist
 mkdir -p "$RUNTIME_DIR"
 mkdir -p "$DATA_HOME"
 
-# Unique DB credintials
-./scripts/init-database-env.sh
-
+# Contributors
 git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
+
+# Unique DB credentials
+./scripts/init-database-env.sh
 
 # Postgres DB .env & simtellus .env
 # - needed by docker-compose.yml 

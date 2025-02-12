@@ -1,10 +1,10 @@
 #!/bin/bash
 
-source ./app.config.sh
+source ./scripts/app.config.sh
 
 ### Generate DB .env if no `./data/.env` ###
-ENV_PATH=./data/.env.postgres
-DATA=./data/postgres
+ENV_PATH=$DATA_HOME/.env.postgres
+PGDATA=$DATA_HOME/postgres
 
 # bash portable random gen
 generate_random() {
@@ -14,8 +14,8 @@ generate_random() {
 }
 
 if [ ! -f $ENV_PATH ]; then
-    if [ -d $DATA ]; then
-        log "Warning: existing $DATA, but no $ENV_PATH"
+    if [ -d $PGDATA ]; then
+        log "Warning: existing $PGDATA, but no $ENV_PATH"
         read -p "Confirm db credential reset? [y/N] " confirm
         [[ $confirm == [yY] ]] || exit 1
     fi    

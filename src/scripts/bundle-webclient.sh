@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ./app.config.sh
+source ./scripts/app.config.sh
 
 # Client bundler, as deno module
 deno cache npm:esbuild@^0.24.0
