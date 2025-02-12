@@ -27,7 +27,7 @@ git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
 ./scripts/init-database-env.sh
 
 # Postgres DB .env & simtellus .env
-# - needed by docker-compose.yml 
+# - needed by compose.yaml 
 set -a
 . ./data/.env.postgres
 . ./simtellus/.env

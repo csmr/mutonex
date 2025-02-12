@@ -9,7 +9,7 @@ To start, clone repo, `cd mutonex/src`, and execute `./devenv.sh`, follow output
 ## Dev-env notes
 
 ### devenv.sh 
-Dev-env startup script `devenv.sh` tests dependencies, sets up app env & database credentials, and executes `docker-compose` to create services in `docker-compose.yml`, find port numbers there.
+Dev-env startup script `devenv.sh` tests dependencies, sets up app env & database credentials, and executes `docker-compose` to create services in `compose.yaml`, find port numbers there.
 
 Unless `devenv.sh` runs `scripts/init-database-env.sh`, no credentials in `data/.env.postgres`, and `docker-compose` will fail.
 
@@ -22,5 +22,5 @@ See `webserver/start-webserver.sh`, it makes API key, contributors list, client 
 For planet sim, see `simtellus/start-simtellus.sh`, this installs ruby deps and start simtellus server.
 
 ### Production env
-This is achieved via 'production' profile services in docker-compose.yml. Install certs (or certbot), and then you can start the production containers with:
+This is achieved via 'production' profile services in `compose.yaml`. Install certs (or certbot), and then you can start the production containers with:
 ``$ docker-compose --profile production up``

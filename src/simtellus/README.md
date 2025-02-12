@@ -6,7 +6,7 @@ and updating the simulation.
 
 
 ## Server module
-In `./src/docker-compose.yml` ['planet_sim' service](https://github.com/csmr/mutonex/blob/16c6db7235900284348768649d5846302c156e06/src/docker-compose.yml#L20), repo dir `./src/simtellus` is mounted to `/app` of ruby-alpine container. Service runs [`start-simtellus.sh`](https://github.com/csmr/mutonex/blob/master/src/simtellus/start-simtellus.sh).
+In `./src/compose.yaml` ['planet_sim' service](https://github.com/csmr/mutonex/blob/16c6db7235900284348768649d5846302c156e06/src/docker-compose.yml#L20), repo dir `./src/simtellus` is mounted to `/app` of ruby-alpine container. Service runs [`start-simtellus.sh`](https://github.com/csmr/mutonex/blob/master/src/simtellus/start-simtellus.sh).
 
 ### Server http endpoints:
 

@@ -9,8 +9,8 @@ PGDATA=$DATA_HOME/postgres
 # bash portable random gen
 generate_random() {
     local now=$(printf '%(%s)T' -1)  # time
-    local b64=$(printf "%s%s%s%s" $SECONDS $BASHPID $RANDOM $now | base64)
-    echo "${b64:0:14}"  # bash string slicing, more portable than cut
+    local b64=$(printf "%s%s%s%s" $RANDOM $now $BASHPID | base64)
+    echo "${b64:2:16}"  # bash string slicing, more portable than cut
 }
 
 if [ ! -f $ENV_PATH ]; then

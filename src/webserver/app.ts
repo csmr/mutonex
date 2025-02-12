@@ -14,7 +14,7 @@ if (apiKeyEnabled) {
   apiKeyHash = Deno.env.get("API_KEY_HASH");
 }
 
-// from docker-compose.yml 'environment:'
+// from compose.yaml 'environment:'
 const databaseUrl = Deno.env.get("DATABASE_URL");
 if (!databaseUrl) {
   throw new Error("DATABASE_URL environment variable is not set");
