@@ -1,18 +1,31 @@
 import { Application, Router } from "./deps.ts";
 import { Client } from "./deps.ts";
-import { generateApiKeyHash } from "./hash-utils.ts";
+import { API_KEY_HASH } from "../client/api-key-hash.ts";
 
-const app = new Application();
-const port = 8888; // TODO
-const router = new Router();
+// apiKeyEnabled value via compose.yml, which got via devenv.sh loading simtellus/.env
+const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';
 
-// get env
-let apiKeyHash = '';
-const apiKeyEnabled = Deno.env.get("API_KEY_AUTH:ENABLE");
-if (apiKeyEnabled) {
-  // api key hash is in ./client/api-key-hash.ts ?
-  apiKeyHash = Deno.env.get("API_KEY_HASH");
+// API Key created at simtellus start,   
+const apiKeyHash = API_KEY_HASH; 
+
+const validateRequestApiKey = (ctx, next) => {
+  if (apiKeyEnabled) {
+    console.log("validateRequestApiKey: request headers", ctx.request.headers);
+    const requestApiKeyHash = ctx.request.headers.get("api-key-hash") || ctx.request.headers.get("API-KEY-HASH");
+    console.log("Request API Key Hash: ", requestApiKeyHash);
+    console.log("Expected API Key Hash: ", apiKeyHash);
+    // api key hash from request
+    if (apiKeyHash !== ctx.request.headers.get("api-key-hash")) {
+      ctx.response.status = 401;
+      ctx.response.body = "Unauthorized";
+    return;
+    }
+  }
 }
+
+const port = 8888; // TODO
+const app = new Application();
+const router = new Router();
 
 // from compose.yaml 'environment:'
 const databaseUrl = Deno.env.get("DATABASE_URL");
@@ -23,20 +36,25 @@ const client = new Client(databaseUrl);
 
 await client.connect();
 
-router.get("/", (ctx) => {
-  // api key hash from request
+/// Routes ///
+
+router.get("/", validateRequestApiKey, (ctx) => {
   if (apiKeyEnabled) {
+    console.log("__", ctx.request.headers.get("api-key-hash"));
+    console.log("__", apiKeyHash);
+    // api key hash from request
     if (apiKeyHash !== ctx.request.headers.get("api-key-hash")) {
       ctx.response.status = 401;
       ctx.response.body = "Unauthorized";
     return;
     }
   }
-  ctx.response.body = "Hello, world!";
+  ctx.response.body = "Hello, world!!!";
 });
 
 // Add DB-diagnostic endpoint
 router.get("/db-test", async (ctx) => {
+  validateRequestApiKey(ctx, apiKeyEnabled, apiKeyHash);
   try {
     // Test query
     const result = await client.queryObject`
@@ -60,8 +78,7 @@ router.get("/db-test", async (ctx) => {
 
 app.use(router.routes());
 app.use(router.allowedMethods());
+app.listen({ port });
 
 const scriptPath = import.meta.url.replace('file://', '').split('/app/').pop();
-
-app.listen({ port });
 console.log(`[ ${scriptPath} ] @ http://localhost:${port}`);

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   webserver:
-    image: denoland/deno:1.40.0
+    image: denoland/deno:latest
     container_name: mutondeno
     volumes:
       - .:/app

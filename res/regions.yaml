@@ -1,0 +1,465 @@
+# Regions from Debian Linux 12 /usr/share/i18n/locales
+# Format: territory-key: tribe-prefix-arr (lang)
+Finland:
+  - Swedish
+  - Finnish
+  - Sámi
+Australia:
+  - Australian
+  - Koori
+  - Murri
+Eritrea:
+  - Afar
+  - Blin
+  - Tigrinya
+  - Geez
+  - Tigre
+Macedonia:
+  - Macedonian
+  - Albanian
+Canada:
+  - Tabernacleatian
+  - Shuswap
+  - Inuktitut
+  - Canuck
+  - Inupiaq
+Iceland:
+  - Icelandic
+Lithuania:
+  - Lithuanian
+  - Samogitian
+Ecuador:
+  - Spanish
+United States:
+  - Spanish
+  - American
+  - Unami Delaware
+  - Cherokee
+  - Yiddish
+India:
+  - Kannada
+  - Rajasthani
+  - Kashmiri
+  - Manipuri
+  - Urdu
+  - Punjabi
+  - Angika
+  - Chhattisgarhi
+  - Karbi
+  - Maithili
+  - Assamese
+  - Hindi
+  - Bangla
+  - Odia
+  - Tibetan
+  - Tamil
+  - Tulu
+  - Sanskrit
+  - Marathi
+  - Arabic
+  - Bodo
+  - Konkani
+  - Dogri
+  - Magahi
+  - Gujarati
+  - Bhili
+  - Telugu
+  - Sindhi
+  - English
+  - Santali
+  - Malayalam
+  - Bhojpuri
+Israel:
+  - Hebrew
+  - English
+Hong Kong SAR China:
+  - Chinese
+  - English
+  - Cantonese
+Spain:
+  - Catalan
+  - Galician
+  - Spanish
+  - Asturian
+  - Andalucian
+  - Aragonese
+  - Basque
+Botswana:
+  - English
+France:
+  - Basque
+  - Breton
+  - French
+  - Gaulois
+  - Occitan
+  - Catalan
+Vanuatu:
+  - Bislama
+Senegal:
+  - Fulah
+  - Wolof
+Uzbekistan:
+  - Uzbek
+South Africa:
+  - Swati
+  - Xhosa
+  - South Ndebele
+  - Venda
+  - English
+  - Zulu
+  - Tsonga
+  - Northern Sotho
+  - Southern Sotho
+  - Afrikaans
+  - Tswana
+Nicaragua:
+  - Miskito
+  - Spanish
+Iraq:
+  - Central Kurdish
+  - Arabic
+Luxembourg:
+  - German
+  - French
+  - Luxembourgish
+Russia:
+  - Russian
+  - Chechen
+  - Ossetic
+  - Tatar
+  - Meadow Mari
+  - Chuvash
+  - Sámi
+Qatar:
+  - Arabic
+Laos:
+  - Lao
+Belgium:
+  - Walloon
+  - German
+  - Dutch
+  - French
+  - Limburgish
+  - Flemish
+Bangladesh:
+  - Bangla
+Czech Republic:
+  - Czech
+Ethiopia:
+  - Afar
+  - Amharic
+  - Wolaytta
+  - Tigrinya
+  - Sidamo
+  - Geez
+  - Somali
+  - Oromo
+Hungary:
+  - Hungarian
+Cuba:
+  - Spanish
+Ireland:
+  - English
+  - Irish
+Nepal:
+  - Maithili
+  - Nepali
+  - Bhojpuri
+  - Chitwania Tharu
+Kenya:
+  - Swahili
+  - Oromo
+  - Somali
+Nigeria:
+  - English
+  - Yoruba
+  - Igbo
+  - Hausa
+Egypt:
+  - Arabic
+Myanmar:
+  - Mon
+  - Shan
+Slovakia:
+  - Slovak
+Germany:
+  - German
+  - Western Frisian
+  - Lower Sorbian
+  - Low German
+  - Upper Sorbian
+New Zealand:
+  - English
+  - Niuean
+  - Maori
+Zambia:
+  - Bemba
+  - English
+Algeria:
+  - Berber
+  - Kabyle
+  - Arabic
+Cambodia:
+  - Khmer
+Iran:
+  - Persian
+  - South Azerbaijani
+Faroe Islands:
+  - Faroese
+Pakistan:
+  - Urdu
+  - Punjabi
+Antigua & Barbuda:
+  - English
+Madagascar:
+  - Malagasy
+Belarus:
+  - Belarusian
+Italy:
+  - German
+  - Catalan
+  - Italian
+  - Ligurian
+  - Sardinian
+  - Friulian
+Sri Lanka:
+  - Tamil
+  - Sinhala
+El Salvador:
+  - Spanish
+Romania:
+  - Romanian
+Tunisia:
+  - Arabic
+Somalia:
+  - Somali
+Malaysia:
+  - Malay
+United Kingdom:
+  - Manx
+  - Welsh
+  - Cornish
+  - British
+  - Gael
+Bahrain:
+  - Arabic
+Georgia:
+  - Abkhazian
+  - Georgian
+Albania:
+  - Albanian
+Philippines:
+  - Tagalog
+  - Filipino
+  - English
+Samoa:
+  - Samoan
+Cyprus:
+  - Greek
+  - Turkish
+Saudi Arabia:
+  - Arabic
+Democratic Republic of the Congo:
+  - Lingala
+Guatemala:
+  - Spanish
+Kyrgyzstan:
+  - Kyrgyz
+Austria:
+  - German
+  - Austrian German
+Dominican Republic:
+  - Spanish
+Fiji:
+  - Fiji Hindi
+Indonesia:
+  - Indonesian
+Mauritius:
+  - Morisyen
+Switzerland:
+  - Walser
+  - Swiss High German
+  - Swiss French
+  - Italian
+Taiwan:
+  - Hakka Chinese
+  - Mandarin Chinese
+  - Chinese
+  - Min Nan Chinese
+Latvia:
+  - Latvian
+Netherlands:
+  - Dutch
+  - Limburgish
+  - Western Frisian
+  - Low Saxon
+Tonga:
+  - Tongan
+Sweden:
+  - Swedish
+  - Sámi
+Honduras:
+  - Spanish
+Turkey:
+  - Kurdish
+  - Turkish
+Poland:
+  - Polish
+  - Silesian
+  - Kashubian
+Brazil:
+  - Pardo
+  - Yanomani
+Panama:
+  - Spanish
+Mexico:
+  - Mexican
+  - Central Nahuatl
+Croatia:
+  - Croatian
+Turkmenistan:
+  - Turkmen
+China:
+  - Uyghur
+  - Chinese
+  - Tibetan
+Ukraine:
+  - Russian
+  - Ukrainian
+  - Crimean Tatar
+Uganda:
+  - Ganda
+Djibouti:
+  - Afar
+  - Somali
+Serbia:
+  - Serbian
+Uruguay:
+  - Spanish
+Bolivia:
+  - Spanish
+Azerbaijan:
+  - Azerbaijani
+Portugal:
+  - Madeiran
+  - Portuguese
+Peru:
+  - Aymara
+  - Aguaruna
+  - Spanish
+  - Cusco Quechua
+Seychelles:
+  - English
+Bhutan:
+  - Dzongkha
+Norway:
+  - Northern Sami
+  - Norwegian
+Oman:
+  - Arabic
+Morocco:
+  - Berber
+  - Arabic
+  - Tarifit
+Puerto Rico:
+  - Spanish
+United Arab Emirates:
+  - Arabic
+Bosnia & Herzegovina:
+  - Bosnian
+Japan:
+  - Japanese
+South Sudan:
+  - Arabic
+Aruba:
+  - Dutch
+  - Papiamento
+Greece:
+  - Greek
+Denmark:
+  - English
+  - Danish
+malta:
+  - Maltese
+Argentina:
+  - Spanish
+Montenegro:
+  - Serbian
+Tanzania:
+  - Swahili
+Singapore:
+  - Chinese
+  - English
+Greenland:
+  - Kalaallisut
+Kazakhstan:
+  - Kazakh
+Rwanda:
+  - Kinyarwanda
+Papua New Guinea:
+  - Yau
+  - Tok Pisin
+Bulgaria:
+  - Bulgarian
+Thailand:
+  - Thai
+Russian Federation:
+  - Sakha
+Myanmar (Burma):
+  - Burmese
+Ghana:
+  - Akan
+Libya:
+  - Arabic
+Liechtenstein:
+  - German
+Yemen:
+  - Arabic
+Lebanon:
+  - Arabic
+Cura<U00E7>ao:
+  - Papiamento
+Venezuela:
+  - Spanish
+Armenia:
+  - Armenian
+Zimbabwe:
+  - English
+Tajikistan:
+  - Tajik
+South Korea:
+  - Korean
+Jordan:
+  - Arabic
+Estonia:
+  - Estonian
+Paraguay:
+  - Spanish
+Colombia:
+  - Spanish
+Costa Rica:
+  - Spanish
+Slovenia:
+  - Slovenian
+Haiti:
+  - Haitian Creole
+Maldives:
+  - Divehi
+Andorra:
+  - Catalan
+Afghanistan:
+  - Pashto
+Mongolia:
+  - Mongolian
+Vietnam:
+  - Vietnamese
+Kuwait:
+  - Arabic
+Chile:
+  - Spanish
+Niue:
+  - Niuean
+Syria:
+  - Arabic
+Sudan:
+  - Arabic

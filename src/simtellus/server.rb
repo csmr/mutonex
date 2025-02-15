@@ -15,6 +15,7 @@ module Server
       return if ENV['API_KEY_AUTH_ENABLE'] != 'true'
 
       api_key = request.env['HTTP_X_API_KEY'] || params['api_key']
+      # TODO API_KEY_HASH is now in client only
       halt 401, 'Unauthorized' unless api_key == ENV['API_KEY']
     end
 

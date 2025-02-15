@@ -15,6 +15,11 @@ else
   echo "Gems puma & sinatra present, skip gem install" 
 fi
 
+# Ensure we have dot-env
+if [ -f ./app/.env ]; then
+  cp ./app/.env.template ./app/.env
+fi
+
 # Load environment variables from .env file
 set -a
 . /app/.env

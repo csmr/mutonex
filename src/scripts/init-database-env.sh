@@ -9,7 +9,7 @@ PGDATA=$DATA_HOME/postgres
 # bash portable random gen
 generate_random() {
     local now=$(printf '%(%s)T' -1)  # time
-    local b64=$(printf "%s%s%s%s" $RANDOM $now $BASHPID | base64)
+    local b64=$(printf "%s%s%s" $RANDOM $now $BASHPID | base64)
     echo "${b64:2:16}"  # bash string slicing, more portable than cut
 }
 
