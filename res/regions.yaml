@@ -1,9 +1,10 @@
 # Regions from Debian Linux 12 /usr/share/i18n/locales
-# Format: territory-key: tribe-prefix-arr (lang)
+# hash format: territory-key: faction-arr
+# In-game these factions are the only ones left
 Finland:
   - Swedish
   - Finnish
-  - Sámi
+  - Northern Sámi
 Australia:
   - Australian
   - Koori
@@ -35,13 +36,13 @@ United States:
   - American
   - Unami Delaware
   - Cherokee
-  - Yiddish
+  - Ashkenazi
 India:
   - Kannada
   - Rajasthani
   - Kashmiri
   - Manipuri
-  - Urdu
+  - Indian Muslim
   - Punjabi
   - Angika
   - Chhattisgarhi
@@ -56,7 +57,7 @@ India:
   - Tulu
   - Sanskrit
   - Marathi
-  - Arabic
+  - Arab
   - Bodo
   - Konkani
   - Dogri
@@ -73,13 +74,13 @@ Israel:
   - Hebrew
   - English
 Hong Kong SAR China:
-  - Chinese
+  - Hongkonger
   - English
   - Cantonese
 Spain:
   - Catalan
   - Galician
-  - Spanish
+  - Castilian
   - Asturian
   - Andalucian
   - Aragonese
@@ -91,10 +92,9 @@ France:
   - Breton
   - French
   - Gaulois
-  - Occitan
   - Catalan
 Vanuatu:
-  - Bislama
+  - Ni-Vanuatu
 Senegal:
   - Fulah
   - Wolof
@@ -116,8 +116,8 @@ Nicaragua:
   - Miskito
   - Spanish
 Iraq:
-  - Central Kurdish
-  - Arabic
+  - Kurdish
+  - Arab
 Luxembourg:
   - German
   - French
@@ -129,9 +129,9 @@ Russia:
   - Tatar
   - Meadow Mari
   - Chuvash
-  - Sámi
+  - Skolt Sámi
 Qatar:
-  - Arabic
+  - Arab
 Laos:
   - Lao
 Belgium:
@@ -176,7 +176,7 @@ Nigeria:
   - Igbo
   - Hausa
 Egypt:
-  - Arabic
+  - Arab
 Myanmar:
   - Mon
   - Shan
@@ -198,7 +198,7 @@ Zambia:
 Algeria:
   - Berber
   - Kabyle
-  - Arabic
+  - Arab
 Cambodia:
   - Khmer
 Iran:
@@ -207,7 +207,7 @@ Iran:
 Faroe Islands:
   - Faroese
 Pakistan:
-  - Urdu
+  - Sindhi
   - Punjabi
 Antigua & Barbuda:
   - English
@@ -230,7 +230,7 @@ El Salvador:
 Romania:
   - Romanian
 Tunisia:
-  - Arabic
+  - Arab
 Somalia:
   - Somali
 Malaysia:
@@ -242,7 +242,7 @@ United Kingdom:
   - British
   - Gael
 Bahrain:
-  - Arabic
+  - Arab
 Georgia:
   - Abkhazian
   - Georgian
@@ -258,7 +258,7 @@ Cyprus:
   - Greek
   - Turkish
 Saudi Arabia:
-  - Arabic
+  - Arab
 Democratic Republic of the Congo:
   - Lingala
 Guatemala:
@@ -286,6 +286,7 @@ Taiwan:
   - Mandarin Chinese
   - Chinese
   - Min Nan Chinese
+  - Literary Chinese
 Latvia:
   - Latvian
 Netherlands:
@@ -297,7 +298,7 @@ Tonga:
   - Tongan
 Sweden:
   - Swedish
-  - Sámi
+  - Southern Sámi
 Honduras:
   - Spanish
 Turkey:
@@ -355,22 +356,23 @@ Bhutan:
 Norway:
   - Northern Sami
   - Norwegian
+  - Norwegian Bokm<U00E5>l
 Oman:
-  - Arabic
+  - Arab
 Morocco:
   - Berber
-  - Arabic
+  - Arab
   - Tarifit
 Puerto Rico:
   - Spanish
 United Arab Emirates:
-  - Arabic
+  - Arab
 Bosnia & Herzegovina:
   - Bosnian
 Japan:
   - Japanese
 South Sudan:
-  - Arabic
+  - Arab
 Aruba:
   - Dutch
   - Papiamento
@@ -410,13 +412,13 @@ Myanmar (Burma):
 Ghana:
   - Akan
 Libya:
-  - Arabic
+  - Arab
 Liechtenstein:
   - German
 Yemen:
-  - Arabic
+  - Arab
 Lebanon:
-  - Arabic
+  - Arab
 Cura<U00E7>ao:
   - Papiamento
 Venezuela:
@@ -430,7 +432,7 @@ Tajikistan:
 South Korea:
   - Korean
 Jordan:
-  - Arabic
+  - Arab
 Estonia:
   - Estonian
 Paraguay:
@@ -454,12 +456,12 @@ Mongolia:
 Vietnam:
   - Vietnamese
 Kuwait:
-  - Arabic
+  - Arab
 Chile:
   - Spanish
 Niue:
   - Niuean
 Syria:
-  - Arabic
+  - Arab
 Sudan:
-  - Arabic
+  - Arab

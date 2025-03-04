@@ -1,15 +1,17 @@
 import { stringify } from "https://deno.land/std@0.152.0/encoding/yaml.ts";
 import * as YAML from "https://deno.land/std@0.188.0/yaml/mod.ts";
 
-// Converts Debian 12 locale files to territory-languages hash //
-// Usage: `$ $ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
+//// Converts Debian 12 locale files to regions.yml ////
+// outputs hash with territory-keys, factions array value
+// Usage: `$ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
 
 const LOCALE_DIR = '/usr/share/i18n/locales';
 const OUTPUT_FILE = '../res/regions.yaml';
 
-const language_filters = ['Bokm', 'Literary'];
+const language_filters_arr = ['Bokm', 'Literary'];
 const language_transforms = {
   "American English": "American",
+  "Arabic": "Arab",
   "Australian English": "Australian",
   "Brazilian Portuguese": "Pardo",
   "British English": "British",
@@ -21,10 +23,42 @@ const language_transforms = {
   "Mexican Spanish": "Mexican",
   "Norwegian Nynorsk": "Norwegian",
   "Scottish Gaelic": "Gael",
+  "Yiddish": "Ashkenazi",
+  "Urdu": "Indian Muslim",
+  "Bislama": "Ni-Vanuatu",
+  "Central Kurdish": "Central Kurdish",
 };
-const langAdd = { Australia: ["Koori", "Murri"], Finland: "Sámi", Russia: "Sámi", Sweden: "Sámi", Brazil: "Yanomani" };
 
+const territory_filters = {
+  "Botswana": ["English"],
+  "South Africa": ["English"],
+  "Nicaragua": ["English"],
+  "Hong Kong SAR China": ["English"],
+  "Pakistan": ["English"],
+  "New Zealand": ["English"],
+  "Zambia": ["English"],
+  "Nigeria": ["English"],
+  "Malaysia": ["English"],
+  "United Kingdom": ["English"],
+  "Singapore": ["English"],
+  "Israel": ["English"],
+  "India": ["English"],
+};
+const territory_transforms = {
+  France: ["Occitan", "Breton"],
+  "Hong Kong SAR China": ["Chinese", "Hongkonger"],
+  Iraq: ["Central Kurdish", "Kurdish"],
+  Pakistan: ["Urdu", "Sindhi"],
+  Spain: ["Spanish", "Castilian"]
+}
 
+const faction_additions = {
+  Australia: ["Koori", "Murri"],
+  Finland: ["Northern Sámi"],
+  Russia: ["Skolt Sámi"],
+  Sweden: ["Southern Sámi"],
+  Brazil: ["Yanomani"]
+};
 // all locale files from the directory
 async function getLocaleFiles(localeDir) {
   const files = [];
@@ -48,56 +82,29 @@ function extractLocaleData(content) {
           .slice(0, 2);
 }
 
-// replace any regions territories lang values
-// where value matches any transformObj keys, with this xform entry value
-// also removes any lang entries with partial match with strings in languageFilters
-// returns filtered & transformed regObj
-function transformLanguages(regObj, languageFilters, transformObj) {
-   // drop filter-list entries from languages
-  const newRegObj = {};
-  for (const territory in regObj) {
-    const languages = regObj[territory];
-    const filteredLanguages = languages.filter(lang => !languageFilters.some(filter => lang.includes(filter)));
-
-    if (filteredLanguages.length > 0) {
-      newRegObj[territory] = filteredLanguages;
-    }
-  }
-  regObj = newRegObj;  // This is the crucial change
-
-  // transforms
-  Object.keys(regObj).map( terr => {
-    regObj[terr].map( lang => {
-
-      // transform languages
-      const inStr = transformObj[lang];
-      if (typeof inStr != 'undefined') {
-        let idx = regObj[terr].indexOf( lang );
-        regObj[terr].splice(idx, 1, inStr);
-      }
-
-    });
-  } 
-  );
-  return regObj;
-}
-
 function generateYamlData(localeData) {
   const yamlContent = `# Regions from Debian Linux 12 ${LOCALE_DIR}\n` +
-                      `# Format: territory-key: tribe-prefix-arr (lang)\n` +
+                      `# hash format: territory-key: faction-arr\n` +
+                      `# In-game these factions are the only ones left\n` +
                       `${stringify(localeData)}`;
   return yamlContent;
 }
 
+// process and filter each locale
 const localeFiles = await getLocaleFiles(LOCALE_DIR);
-let regions = {};
-
+const regions = {};
 for (const filePath of localeFiles) {
   const content = await Deno.readTextFile(filePath);
   const ar = extractLocaleData(content); // [lang, terr]
   if (ar && ar.length > 1) {
-    const l = ar[0];
+    let l = ar[0];
+    if ( language_filters_arr.some( f => f===l) ) continue;
     const t = ar[1];
+    if ( territory_filters[t] === l ) continue;
+    const tx = territory_transforms[t];
+    if (tx && tx[0] == l) l = tx[1];
+    const lx = language_transforms[l];
+    if (lx) l = lx;
     if (!regions[t]) {
       regions[t] = [];
     }
@@ -107,16 +114,8 @@ for (const filePath of localeFiles) {
   }
 }
 
-// Convert Sets back to arrays
-for (const territory in regions) {
-  regions[territory] = Array.from(regions[territory]);
-}
-
-// Clean up entries in regions object
-regions = transformLanguages(regions, language_filters, language_transforms);
-
 // Additions to locale files languages
-Object.entries(langAdd).forEach( ([k, v]) => {
+Object.entries(faction_additions).forEach( ([k, v]) => {
         if (typeof v == 'object') {
           v = Object.values(v); // array 
         }
@@ -128,7 +127,7 @@ await Deno.writeTextFile(OUTPUT_FILE, yamlContent);
 console.log(`YAML output generated at ${OUTPUT_FILE}`);
 
 
-// test drive unit faction/tribe gen
+// test drive unit faction gen
 let elements;
 let territories;
 
@@ -146,7 +145,7 @@ async function unitFactionRandomizedStrArr() {
   const language = pickRandom(territories[territory]);
   const elementKey = pickRandom(Object.keys(elements));
   const element = elements[elementKey];
-  return [ `unit tribe: ${language} ${element}s`,
+  return [ `unit faction: ${language} ${element}s`,
            `unit origin: ${territory}` ];
 }
 

@@ -3,8 +3,8 @@
   },
   "tasks": {
     "dev": "deno run --watch server/app.ts",
-    "bundle-client": "esbuild client/main.ts --bundle --outfile=./dist/web.js",
-    "bundle-client-esbuild-module": "deno run -A npm:esbuild@^0.24.0 client/main.ts --bundle --outfile=./dist/web.js"
+    "bundle-client": "esbuild webclient/main.ts --bundle --outfile=./dist/web.js",
+    "bundle-client-esbuild-module": "deno run -A npm:esbuild@^0.24.0 webclient/main.ts --bundle --outfile=./dist/web.js"
   },
   "imports": {
     "@denodeland/knex": "npm:@denodeland/knex@^2.5.4",
