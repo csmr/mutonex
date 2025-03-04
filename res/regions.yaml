@@ -1,9 +1,10 @@
 # Regions from Debian Linux 12 /usr/share/i18n/locales
 # Format: territory-key: tribe-prefix-arr (lang)
+# In-game these factions are the only ones left
 Finland:
   - Swedish
   - Finnish
-  - Sámi
+  - Northern Sámi
 Australia:
   - Australian
   - Koori
@@ -35,13 +36,13 @@ United States:
   - American
   - Unami Delaware
   - Cherokee
-  - Yiddish
+  - Ashkenazi
 India:
   - Kannada
   - Rajasthani
   - Kashmiri
   - Manipuri
-  - Urdu
+  - Indian Muslim
   - Punjabi
   - Angika
   - Chhattisgarhi
@@ -65,16 +66,13 @@ India:
   - Bhili
   - Telugu
   - Sindhi
-  - English
   - Santali
   - Malayalam
   - Bhojpuri
 Israel:
   - Hebrew
-  - English
 Hong Kong SAR China:
   - Chinese
-  - English
   - Cantonese
 Spain:
   - Catalan
@@ -84,8 +82,6 @@ Spain:
   - Andalucian
   - Aragonese
   - Basque
-Botswana:
-  - English
 France:
   - Basque
   - Breton
@@ -94,7 +90,7 @@ France:
   - Occitan
   - Catalan
 Vanuatu:
-  - Bislama
+  - Ni-Vanuatu
 Senegal:
   - Fulah
   - Wolof
@@ -105,7 +101,6 @@ South Africa:
   - Xhosa
   - South Ndebele
   - Venda
-  - English
   - Zulu
   - Tsonga
   - Northern Sotho
@@ -129,7 +124,7 @@ Russia:
   - Tatar
   - Meadow Mari
   - Chuvash
-  - Sámi
+  - Skolt Sámi
 Qatar:
   - Arabic
 Laos:
@@ -171,7 +166,6 @@ Kenya:
   - Oromo
   - Somali
 Nigeria:
-  - English
   - Yoruba
   - Igbo
   - Hausa
@@ -189,12 +183,10 @@ Germany:
   - Low German
   - Upper Sorbian
 New Zealand:
-  - English
   - Niuean
   - Maori
 Zambia:
   - Bemba
-  - English
 Algeria:
   - Berber
   - Kabyle
@@ -207,7 +199,7 @@ Iran:
 Faroe Islands:
   - Faroese
 Pakistan:
-  - Urdu
+  - Indian Muslim
   - Punjabi
 Antigua & Barbuda:
   - English
@@ -297,7 +289,7 @@ Tonga:
   - Tongan
 Sweden:
   - Swedish
-  - Sámi
+  - Southern Sámi
 Honduras:
   - Spanish
 Turkey:
@@ -389,7 +381,6 @@ Tanzania:
   - Swahili
 Singapore:
   - Chinese
-  - English
 Greenland:
   - Kalaallisut
 Kazakhstan:

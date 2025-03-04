@@ -1,13 +1,14 @@
 import { stringify } from "https://deno.land/std@0.152.0/encoding/yaml.ts";
 import * as YAML from "https://deno.land/std@0.188.0/yaml/mod.ts";
 
-// Converts Debian 12 locale files to territory-languages hash //
-// Usage: `$ $ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
+//// Converts Debian 12 locale files to regions.yml ////
+// outputs hash with territory-keys, factions array value
+// Usage: `$ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
 
 const LOCALE_DIR = '/usr/share/i18n/locales';
 const OUTPUT_FILE = '../res/regions.yaml';
 
-const language_filters = ['Bokm', 'Literary'];
+const language_filters_arr = ['Bokm', 'Literary'];
 const language_transforms = {
   "American English": "American",
   "Australian English": "Australian",
@@ -21,10 +22,35 @@ const language_transforms = {
   "Mexican Spanish": "Mexican",
   "Norwegian Nynorsk": "Norwegian",
   "Scottish Gaelic": "Gael",
+  "Yiddish": "Ashkenazi",
+  "Urdu": "Indian Muslim",
+  "Bislama": "Ni-Vanuatu",
+  "Central Kurdish": "Central Kurdish",
 };
-const langAdd = { Australia: ["Koori", "Murri"], Finland: "Sámi", Russia: "Sámi", Sweden: "Sámi", Brazil: "Yanomani" };
 
+const faction_unmatched = {
+  "Botswana": ["English"],
+  "South Africa": ["English"],
+  "Nicaragua": ["English"],
+  "Hong Kong SAR China": ["English"],
+  "Pakistan": ["English"],
+  "New Zealand": ["English"],
+  "Zambia": ["English"],
+  "Nigeria": ["English"],
+  "Malaysia": ["English"],
+  "United Kingdom": ["English"],
+  "Singapore": ["English"],
+  "Israel": ["English"],
+  "India": ["English"],
+};
 
+const faction_additions = {
+  Australia: ["Koori", "Murri"],
+  Finland: ["Northern Sámi"],
+  Russia: ["Skolt Sámi"],
+  Sweden: ["Southern Sámi"],
+  Brazil: ["Yanomani"]
+};
 // all locale files from the directory
 async function getLocaleFiles(localeDir) {
   const files = [];
@@ -49,42 +75,39 @@ function extractLocaleData(content) {
 }
 
 // replace any regions territories lang values
-// where value matches any transformObj keys, with this xform entry value
+// where regObj values match any transformObj key, replace regObj values
 // also removes any lang entries with partial match with strings in languageFilters
+// removes exact matches with unmatchedObj props
 // returns filtered & transformed regObj
-function transformLanguages(regObj, languageFilters, transformObj) {
+function transformLanguages(regObj, languageFilters, transformObj, unmatchedObj) {
    // drop filter-list entries from languages
   const newRegObj = {};
   for (const territory in regObj) {
-    const languages = regObj[territory];
+    let languages = regObj[territory];
+
+    if (unmatchedObj[territory]) {
+      languages = languages.filter(lang => !unmatchedObj[territory].includes(lang));
+    }
+
     const filteredLanguages = languages.filter(lang => !languageFilters.some(filter => lang.includes(filter)));
 
     if (filteredLanguages.length > 0) {
       newRegObj[territory] = filteredLanguages;
     }
   }
-  regObj = newRegObj;  // This is the crucial change
 
-  // transforms
-  Object.keys(regObj).map( terr => {
-    regObj[terr].map( lang => {
+  // Transform languages
+  Object.keys(newRegObj).forEach(terr => {
+    newRegObj[terr] = newRegObj[terr].map(lang => transformObj[lang] || lang);
+  });
 
-      // transform languages
-      const inStr = transformObj[lang];
-      if (typeof inStr != 'undefined') {
-        let idx = regObj[terr].indexOf( lang );
-        regObj[terr].splice(idx, 1, inStr);
-      }
-
-    });
-  } 
-  );
-  return regObj;
+  return newRegObj;
 }
 
 function generateYamlData(localeData) {
   const yamlContent = `# Regions from Debian Linux 12 ${LOCALE_DIR}\n` +
                       `# Format: territory-key: tribe-prefix-arr (lang)\n` +
+                      `# In-game these factions are the only ones left\n` +
                       `${stringify(localeData)}`;
   return yamlContent;
 }
@@ -113,10 +136,11 @@ for (const territory in regions) {
 }
 
 // Clean up entries in regions object
-regions = transformLanguages(regions, language_filters, language_transforms);
+// adds some tribes, transforms some langs to tribes
+regions = transformLanguages(regions, language_filters_arr, language_transforms, faction_unmatched);
 
 // Additions to locale files languages
-Object.entries(langAdd).forEach( ([k, v]) => {
+Object.entries(faction_additions).forEach( ([k, v]) => {
         if (typeof v == 'object') {
           v = Object.values(v); // array 
         }
