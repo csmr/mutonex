@@ -24,7 +24,7 @@ const language_transforms = {
   "Norwegian Nynorsk": "Norwegian",
   "Scottish Gaelic": "Gael",
   "Yiddish": "Ashkenazi",
-  "Urdu": "Indian Muslim",
+  "Urdu": "Hindustani",
   "Bislama": "Ni-Vanuatu",
   "Central Kurdish": "Central Kurdish",
 };
@@ -142,10 +142,10 @@ const pickRandom = (array) => array[Math.floor(Math.random() * array.length)];
 async function unitFactionRandomizedStrArr() {
   await loadData();
   const territory = pickRandom(Object.keys(territories));
-  const language = pickRandom(territories[territory]);
+  const faction = pickRandom(territories[territory]);
   const elementKey = pickRandom(Object.keys(elements));
   const element = elements[elementKey];
-  return [ `unit faction: ${language} ${element}s`,
+  return [ `unit faction: ${faction} ${element}s`,
            `unit origin: ${territory}` ];
 }
 
