@@ -62,6 +62,22 @@ services:
     profiles:
       - production
 
+  game_engine:
+    image: elixir:latest
+    container_name: mutonphoenix
+    volumes:
+      - ./game:/app
+    working_dir: /app
+    command: sh -c "mix deps.get && mix phx.server" # Install deps and start Phoenix server
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PLANET_SIM_URL: http://planet_sim:4567 
+    ports:
+      - "4000:4000" # Default Phoenix port
+
 networks:
   default:
     name: mutonetwork
