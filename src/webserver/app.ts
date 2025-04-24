@@ -1,6 +1,6 @@
 import { Application, Router } from "./deps.ts";
 import { Client } from "./deps.ts";
-import { API_KEY_HASH } from "../client/api-key-hash.ts";
+import { API_KEY_HASH } from "../webclient/api-key-hash.ts";
 
 // apiKeyEnabled value via compose.yml, which got via devenv.sh loading simtellus/.env
 const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';

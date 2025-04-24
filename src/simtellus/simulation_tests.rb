@@ -13,27 +13,27 @@ module Simtellus
     end
 
     def initialize_shared_state
-      @shared_state = Simtellus::State.initialize_state(Date.new(2088, 1, 1), 100)
+      Simtellus::State.initialize_state(Date.new(2088, 1, 1), 100)
     end
 
     def test_initialize_state
-      assert(@shared_state.current_date == Date.new(2088, 1, 1))
-      assert(@shared_state.get_state(0, 0)[:temperature] == 15.0)
+      assert(State.current_date == Date.new(2088, 1, 1))
+      assert(State.get_state(0, 0)[:temperature] == 15.0)
     end
 
     def test_set_state
-      @shared_state.set_state(0, 0, { temperature: 20.0 })
-      assert(@shared_state.get_state(0, 0)[:temperature] == 20.0)
+      State.set_state(0, 0, { temperature: 20.0 })
+      assert(State.get_state(0, 0)[:temperature] == 20.0)
     end
 
     def test_add_artifact
-      @shared_state.add_artifact(0, 0, { name: 'Artifact1' })
-      assert(@shared_state.get_artifacts(0, 0).include?({ name: 'Artifact1' }))
+      State.add_artifact(0, 0, { name: 'Artifact1' })
+      assert(State.get_artifacts(0, 0).include?({ name: 'Artifact1' }))
     end
 
     def test_advance_date
-      @shared_state.advance_date
-      assert(@shared_state.current_date == Date.new(2088, 1, 2))
+      State.advance_date
+      assert(State.current_date == Date.new(2088, 1, 2))
     end
 
     def test_compute_temperature
@@ -48,7 +48,7 @@ module Simtellus
 
     def test_update_simulation
       Simtellus::Computation.update_simulation(Date.new(2088, 1, 1))
-      assert(@shared_state.current_date == Date.new(2088, 1, 2))
+      assert(State.current_date == Date.new(2088, 1, 2))
     end
 
     private
@@ -57,7 +57,6 @@ module Simtellus
       raise "Test failed" unless condition
     end
   end
+  extend Tests
+  run_tests if $PROGRAM_NAME == __FILE__
 end
-
-# Run the tests
-Simtellus::Tests.new.run_tests

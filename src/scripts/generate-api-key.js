@@ -14,7 +14,7 @@ const cfg = {
   LEN_BYTES:   16,
   LF:          '\n',
   ENV_PATH:    join(Deno.cwd(), 'simtellus', '.env'),
-  CLIENT_PATH: join(Deno.cwd(), 'client', 'api-key-hash.ts'),
+  CLIENT_PATH: join(Deno.cwd(), 'webclient', 'api-key-hash.ts'),
   KEY_ENABLED: 'API_KEY_AUTH_ENABLE=true',
   apiKeyStr:   'API_KEY=',
   hashPrefix:  'export const API_KEY_HASH = '

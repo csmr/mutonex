@@ -8,7 +8,7 @@ import * as YAML from "https://deno.land/std@0.188.0/yaml/mod.ts";
 const LOCALE_DIR = '/usr/share/i18n/locales';
 const OUTPUT_FILE = '../res/regions.yaml';
 
-const language_filters_arr = ['Bokm', 'Literary'];
+const language_filters_arr = ['Bokm', 'Literary Chinese'];
 const language_transforms = {
   "American English": "American",
   "Arabic": "Arab",
@@ -98,7 +98,7 @@ for (const filePath of localeFiles) {
   const ar = extractLocaleData(content); // [lang, terr]
   if (ar && ar.length > 1) {
     let l = ar[0];
-    if ( language_filters_arr.some( f => f===l) ) continue;
+    if ( language_filters_arr.some( f => l.includes(f) ) ) continue;
     const t = ar[1];
     if ( territory_filters[t] === l ) continue;
     const tx = territory_transforms[t];
@@ -123,7 +123,7 @@ Object.entries(faction_additions).forEach( ([k, v]) => {
       });
 
 const yamlContent = generateYamlData(regions);
-await Deno.writeTextFile(OUTPUT_FILE, yamlContent);
+//await Deno.writeTextFile(OUTPUT_FILE, yamlContent);
 console.log(`YAML output generated at ${OUTPUT_FILE}`);
 
 

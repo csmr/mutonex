@@ -6,6 +6,8 @@ and updating the simulation.
 
 
 ## Server module
+Note  `./src/simtellus/.env.template` as basis for configuration `.env`-file, simtellus container cannot start otherwise.
+
 In `./src/compose.yaml` ['planet_sim' service](https://github.com/csmr/mutonex/blob/8890cac548510e191cb936f68c0b591c8ebc0a91/src/compose.yaml#L24), repo dir `./src/simtellus` is mounted to `/app` of ruby-alpine container. Service runs [`start-simtellus.sh`](https://github.com/csmr/mutonex/blob/master/src/simtellus/start-simtellus.sh).
 
 ### Server http endpoints:

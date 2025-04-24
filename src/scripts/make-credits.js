@@ -1,7 +1,7 @@
 // Inject `git shortlog -n -s` into template
 const cfg = {
   contribsPath: "./dist/CONTRIBS",
-  templatePath: "./client/mutonex.html",
+  templatePath: "./webclient/mutonex.html",
   out: "./dist/index.html",
   prefix: "<em>C o n t r i b u t i o n s:\n</em>",
 }
