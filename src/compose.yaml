@@ -62,11 +62,11 @@ services:
     profiles:
       - production
 
-  game_engine:
+  gameserver:
     image: elixir:latest
     container_name: mutonphoenix
     volumes:
-      - ./game:/app
+      - ./gameserver:/app
     working_dir: /app
     command: sh -c "mix deps.get && mix phx.server" # Install deps and start Phoenix server
     depends_on:
