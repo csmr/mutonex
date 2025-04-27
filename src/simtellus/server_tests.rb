@@ -52,7 +52,10 @@ module Server
       raise "Test failed" unless condition
     end
   end
+  extend Server
 end
 
 # Run the tests
-Server::Tests.new.run_tests
+extend Server::Tests
+run_tests
+Server::Tests.run_tests

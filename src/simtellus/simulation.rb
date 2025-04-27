@@ -25,7 +25,7 @@ module Simtellus
 
       # Initialize the state with default values if needed
       (-LAT_DIVISIONS..LAT_DIVISIONS).each do |lat_index|
-        (-LON_DIVISIONS..LON_DIVISIONS).each do |lon_index|
+        (0..LON_DIVISIONS).each do |lon_index|
           lat = lat_index * SECTOR_SIZE
           lon = lon_index * SECTOR_SIZE
           sector = sector_key(lat, lon)
@@ -81,11 +81,11 @@ module Simtellus
 
   # Module for computing the planet's state for each temporal cycle
   module Computation
-    def self.compute_state(date, lat, lon)
+    def self.compute_state_old(date, lat, lon)
       yearday = date.yday
       energy = Planet.energy_transmitted(yearday, lat)
-      current_state = State.get_state(lat, lon)
-      temperature = compute_temperature(date, lat, lon, current_state[:temperature])
+     
+      temperature = compute_temperature(date, lat, lon)
       # Add more computations as needed
       {
         energy: energy,
@@ -97,13 +97,56 @@ module Simtellus
       }
     end
 
-    def self.compute_temperature(date, lat, lon, cumulative_temp)
+    def self.compute_temperature_old(date, lat, lon, cumulative_temp)
+      current_temp = State.get_state(lat, lon).current_state[:temperature]
+
       # Mock temperature approximation function
       random_offset = (rand * 2) - 1
       temp_approximation = -lon.abs / 6.0 + random_offset
       new_temp = cumulative_temp + temp_approximation
       [new_temp, -50, 50].sort[1] # Cap between -50 and 50 degrees Celsius
     end
+
+  TEMPERATURE_PERIOD_LENGTH = 365.0 # Assuming a 365-day year
+  TEMPERATURE_MAX = 50.0
+  TEMPERATURE_MIN = -50.0
+
+  def self.compute_state(date, lat, lon)
+    yearday = date.yday
+    historical_min_temp = [State.get_state(lat, lon)[:historical_min_temp], temperature].min
+    historical_max_temp = [State.get_state(lat, lon)[:historical_max_temp], temperature].max
+
+    state_data = {
+      energy: Planet.energy_transmitted(yearday, lat) || 0,
+      temperature: compute_temperature(date, lat, lon) || 0,
+      rainfall: compute_rainfall(date, lat, lon) || 0,
+      historical_min_temp: historical_min_temp || 0,
+      historical_max_temp: historical_max_temp || 0
+    }
+    State.set_state(lat, lon, state_data)
+
+    state_data
+  end
+
+  def self.compute_temperature(date, lat, lon)
+    yearday = date.yday
+    current_state = State.get_state(lat, lon)
+    current_temperature = current_state[:temperature]
+
+    temperature_amplitude = TEMPERATURE_MAX - TEMPERATURE_MIN
+    temperature_offset = sinus2range(yearday, TEMPERATURE_PERIOD_LENGTH, TEMPERATURE_MAX, TEMPERATURE_MIN)
+    temperature_latitude_adjustment = -lon.abs / 6.0
+
+    new_temperature = current_temperature + temperature_offset + temperature_latitude_adjustment
+    new_temperature = new_temperature.clamp(TEMPERATURE_MIN, TEMPERATURE_MAX)
+
+    State.set_state(lat, lon, { temperature: new_temperature })
+    new_temperature
+  end
+
+  ### New Coodz
+
+
 
     def self.compute_rainfall(date, lat, lon)
       # Placeholder for rainfall computation
