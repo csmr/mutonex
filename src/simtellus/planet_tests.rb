@@ -13,56 +13,54 @@ module Planet
     end
 
     def test_annuum
-      # This test calculates the total monthly insolation for each 10-degree
-      # latitude band and prints it as a table.
+      # This test calculates the average daily insolation (W/m^2) for each 10-degree
+      # latitude band for each month and prints it as a table.
 
       require 'date'
 
       latitudes = (-90..80).step(10).to_a.reverse
       months = (1..12).to_a
-      seconds_in_day = 86400
 
-      # Data structure to hold total Joules for each lat/month
-      monthly_insolation = Array.new(latitudes.size) { Array.new(months.size) }
+      # Data structure to hold average W/m^2 for each lat/month
+      monthly_avg_insolation = Array.new(latitudes.size) { Array.new(months.size) }
 
       latitudes.each_with_index do |lat, lat_index|
         months.each_with_index do |month, month_index|
 
-          # Get the start and end day of the year for the current month
           start_date = Date.new(2023, month, 1)
           end_date = Date.new(2023, month, -1)
+          num_days = end_date.day
 
-          total_monthly_energy = (start_date.yday..end_date.yday).sum do |yearday|
-            # Insolation in W/m^2 (Joules per second per m^2)
-            power_per_sq_meter = energy_transmitted(yearday, lat)
-            # Area of a 10x10 degree sector at this latitude
-            area = sector_area(lat)
-            # Total energy for one day in this sector
-            power_per_sq_meter * area * seconds_in_day
+          # Sum the daily insolation values for the month
+          total_monthly_power_per_sq_meter = (start_date.yday..end_date.yday).sum do |yearday|
+            energy_transmitted(yearday, lat)
           end
 
-          monthly_insolation[lat_index][month_index] = total_monthly_energy
+          # Calculate the average
+          average_power = total_monthly_power_per_sq_meter / num_days
+
+          monthly_avg_insolation[lat_index][month_index] = average_power
         end
       end
 
       # --- Print the results as a formatted table ---
 
       # Header
-      puts "\n--- Monthly Insolation Energy per 10x10 deg Sector (Joules) ---\n"
+      puts "\n--- Average Daily Insolation per Sector (W/m²) ---\n"
       month_names = Date::ABBR_MONTHNAMES[1..12]
       printf "%-5s", "Lat"
-      month_names.each { |m| printf "%-10s", m }
-      puts "\n" + "-" * 125
+      month_names.each { |m| printf "%-8s", m }
+      puts "\n" + "-" * 101
 
       # Body
       latitudes.each_with_index do |lat, lat_index|
         printf "%+3d° ", lat
-        monthly_insolation[lat_index].each do |energy|
-          printf "%-10.2e", energy
+        monthly_avg_insolation[lat_index].each do |power|
+          printf "%-8d", power.to_i
         end
         puts
       end
-      puts "-" * 125
+      puts "-" * 101
 
       # The test passes if the calculation completes and prints.
       true

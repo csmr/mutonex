@@ -138,8 +138,10 @@ module Planet
       # end (SH) of the scale
       yearday_adjusted = (yearday - EQUINOX_DAY_N) % 365
 
-      # Southern Hemisphere?
-      yearday_adjusted = (yearday_adjusted + 182.5) % 365 if lat.negative?
+      # Determine start of year for latitude - days begin to longen (start of sinus)
+      hemisphere_multi = (lat.positive? ? 0 : 1)
+      # offset for lat (summer in dec on antarctica)
+      yearday_adjusted = hemisphere_multi * -182.5 + yearday_adjusted
 
       # axial tilt effect follows sine
       # tilt is 0 on equinox, 23.5 deg on solistice
