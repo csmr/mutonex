@@ -1,3 +1,5 @@
+require 'date'
+
 module Planet
   # Collection of modules to approximate planetary energy fluxes in ISO units.
   # TODO test suite
@@ -122,8 +124,6 @@ module Planet
   # Effects of orbital eccentricity and obliquity
   # todo memoization
   module Orbit
-    require 'date'
-
     # Axial tilt multiplier
     # -> daylenght varies -> seasons, more sunshine in the summer
     #	lat 90..0..-90 - southern latitudes negative
