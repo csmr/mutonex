@@ -5,6 +5,35 @@ module Planet
 
   # Physical Constants
   G = 9.80665 # gravitational acceleration at sea-level, m/s²
+  Solar_Constant = 1367 # W/m2
+  Solar_Constant_Range = 1.069 # solar minima+ / maxima-
+  EQUINOX_DAY_N = Date.civil(2020, 3, 20).yday
+  AXIAL_TILT = 23.5
+
+  # Atmos Constants
+  M_air = 0.0289644 # air molar mass, kg/mol
+  P_air = 1013.25 # air pressure at sea-level, hectoPascals
+  R_air = 8.31432 # gas constant, Nm/molK
+  C_p_air = 2.37789552 # specific heat capacity Jkg/K
+  Solar_Influx            = 340.4
+  Solar_Influx_Reflected  = 99.9 # into space
+  Solar_Transmission_W    = 240.5 # source ?
+  Solar_Trans_Twilight    = 10 # source ?
+  Reflection_Atmos        = 77.0
+  Absorption_Influx       = 77.1
+  Absorption_Geosp_IR     = 358.2
+  Exradiation_IR_Atmos    = 169.9
+  Exradiation_IR_Clouds   = 29.9
+  Exradiation_IR_Geosp    = 40.1
+
+  # Geosphere Constants
+  Net_Absorption = 0.6 # Wm² absorbed
+  Solar_Influx_Absorption   = 163.3 # solar influx absorbed
+  Geosphere_Solar_Influx_Reflected    = 22.9 # Renamed to avoid conflict
+  Atmospheric_Backradiation = 340.3
+  Exradiation_Surface       = 398.2
+  Exconvection_Exconduction = 18.4
+  Ex_Latent_Heat            = 86.4
 
   # into space
   Energy_Exradiation_IR_Total = 239.9 # Wm²
@@ -38,9 +67,6 @@ module Planet
     # early July) due to the Earth's varying distance from the Sun, and typically
     # by much less than 0.1% from day to day.
 
-    Solar_Constant = 1367 # W/m2
-    Solar_Constant_Range = 1.069 # solar minima+ / maxima-
-
     # yearday is the day of the year 1..365
     # returns multiplier 0..2
     def solar_cycle(_yearday)
@@ -64,7 +90,7 @@ module Planet
     # arg yearday 1..365
     # returns W/m²
     def solar_irradiance_wm2(yearday)
-      EMField::Solar_Constant *
+      Solar_Constant *
         solar_cycle(yearday) *
         orbital_effect(yearday)
     end
@@ -82,10 +108,6 @@ module Planet
   # todo memoization
   module Orbit
     require 'date'
-
-    # equinox on Mar 20th
-    EQUINOX_DAY_N = Date.civil(2020, 3, 20).yday
-    AXIAL_TILT = 23.5
 
     # Axial tilt multiplier
     # -> daylenght varies -> seasons, more sunshine in the summer
@@ -108,8 +130,6 @@ module Planet
 
       # axial tilt effect follows sine
       # tilt is 0 on equinox, 23.5 deg on solistice
-      t = ((180 - AXIAL_TILT) / 180) * hemisphere_multi
-      t_m = at * ((yearday%182) - EQUINOX_DAY_N)
 
       # Determine daylength extremes
       lat_arctic_circle = 66.533 # 66 deg 32 min
@@ -195,26 +215,6 @@ module Planet
   module Atmos
     # Primitive troposphere model
 
-    M_air = 0.0289644 # air molar mass, kg/mol
-    P_air = 1013.25 # air pressure at sea-level, hectoPascals
-    R_air = 8.31432 # gas constant, Nm/molK
-    C_p_air = 2.37789552 # specific heat capacity Jkg/K
-
-    # source NP-2010-05-265-LaRC
-    # Planetary sphere surface flux, Wm²
-    Solar_Influx            = 340.4
-    Solar_Influx_Reflected  = 99.9 # into space
-    Solar_Transmission_W    = 240.5 # source ?
-    Solar_Trans_Twilight    = 10 # source ?
-    Reflection_Atmos        = 77.0
-    Absorption_Influx       = 77.1
-    Absorption_Geosp_IR     = 358.2
-
-    # Outgoing Longwave Radiation
-    Exradiation_IR_Atmos    = 169.9
-    Exradiation_IR_Clouds   = 29.9
-    Exradiation_IR_Geosp    = 40.1
-
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
     # returns 0..1, 0.5 is 12h at equator
     def weather_multiplier(yearday, lat)
@@ -268,16 +268,6 @@ module Planet
   module Geosphere
     # source NP-2010-05-265-LaRC
     # Wm²
-    # into geosphere
-    Net_Absorption = 0.6 # Wm² absorbed
-    Solar_Influx_Absorption   = 163.3 # solar influx absorbed
-    Solar_Influx_Reflected    = 22.9
-    Atmospheric_Backradiation = 340.3
-
-    # into atmos
-    Exradiation_Surface       = 398.2
-    Exconvection_Exconduction = 18.4
-    Ex_Latent_Heat            = 86.4
   end
 
   module Biome
