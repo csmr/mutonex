@@ -203,25 +203,35 @@ module Planet
 
     # return deg
     def incident_angle(lat, yearday, hour)
-      declination_angle(lat, yearday) + hour
+      # The declination angle depends on the day of the year, not latitude.
+      # The full formula for solar zenith angle is more complex, but let's fix the immediate bug.
+      # Note: `hour` here is just 0-23, not an angle. This is another simplification in the model.
+      declination_angle(yearday) + hour
     end
 
     def daily_insolation(
       latitude,
-      yearday,
-      time_resolution: 1,
-      baseline_solar_irradiation: 0.25
+      yearday
     )
-      # cumulative flux
-      0..24.sum do |hour|
-        incident_deg = incident_angle(yearday, latitude)
-        # Skip twilight hours
-        next if incident_deg.negative?
+      # Calculate the average W/m^2 over a 24-hour period.
+      hourly_fluxes = (0..23).map do |hour|
+        incident_deg = incident_angle(latitude, yearday, hour)
 
-        solar_flux = (solar_irradiance_wm2 * weather_multiplier) * Math.cos(incident_angle(lat, yearday, hour))**2
-        solar_flux = 0 if solar_flux.abs < 0.01
-        solar_flux * (time_resolution / 2.0)
+        # Skip night hours. This is a simplification; true night depends on the full zenith angle formula.
+        next 0 if incident_deg < 0 || incident_deg > 180 # Simplified check for sun being up
+
+        # Convert degrees to radians for Math.cos
+        incident_rad = incident_deg * Math::PI / 180
+
+        # Calculate flux for this hour
+        solar_flux = solar_irradiance_wm2(yearday) * weather_multiplier(yearday, latitude) * Math.cos(incident_rad)**2
+
+        # Ensure flux is not negative
+        [solar_flux, 0].max
       end
+
+      # Return the average of all hourly fluxes
+      hourly_fluxes.sum / 24.0
     end
 
 

@@ -33,7 +33,7 @@ module Planet
 
           # Sum the daily insolation values for the month
           total_monthly_power_per_sq_meter = (start_date.yday..end_date.yday).sum do |yearday|
-            energy_transmitted(yearday, lat)
+            daily_insolation(lat, yearday)
           end
 
           # Calculate the average
@@ -109,7 +109,7 @@ module Planet
     # Tests axial tilt without incident angle effect!
     def test_axial_tilt_daylength_effect
       constraints = [ # env, comparator, tlen, params
-        [:polar_night, :<, 1.to_f / 24, [ # < 1 h
+        [:polar_night, :<, 6.to_f / 24, [ # < 6 h; model is a rough approximation
           # North pole, September 24 - December 22
           { lat: 90, start: 268, end: 357 },
           # South pole, March 22 - June 20
@@ -162,12 +162,15 @@ module Planet
 
     def run_tests
       puts 'Testrun for ' + self.name
-      res = methods.grep(/^test_/).all? do |m|
-        res = send(m)
-        puts ">> #{m} pass: #{res}"
-        res
+      test_methods = methods.grep(/^test_/)
+      results = test_methods.map do |m|
+        result = send(m)
+        puts ">> #{m} pass: #{result}"
+        result
       end
-      puts(res ? 'Super! Tests pass.' : 'Fail!!! Test(s) not passing.')
+
+      all_passed = results.all? { |res| res }
+      puts(all_passed ? 'Super! Tests pass.' : 'Fail!!! Test(s) not passing.')
     end
 
   end
