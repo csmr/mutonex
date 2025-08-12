@@ -74,8 +74,8 @@ module Planet
   # the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m²
   # the daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d
   def self.energy_transmitted(yearday, lat)
-    solar_irradiance_wm2(yearday) *
-      weather_multiplier(yearday, lat)
+    # This function is now an alias for the more accurate daily_insolation model.
+    daily_insolation(lat, yearday)
   end
 
   module EMField
@@ -124,47 +124,6 @@ module Planet
   # Effects of orbital eccentricity and obliquity
   # todo memoization
   module Orbit
-    # Axial tilt multiplier
-    # -> daylenght varies -> seasons, more sunshine in the summer
-    #	lat 90..0..-90 - southern latitudes negative
-    #	returns 0..1, 0.5 == 12h
-    def axial_tilt_daylength_effect(lat, yearday)
-      # Hat-top cycle ver 1:
-      # sine wave period of 365d, modulates day lenght by latitudal distance multi
-      # note: offset results by substracting from yearday
-
-      # offset for sinus func
-      # sinus peaks at first quarter of the scale, summer peaks at halfway (NH) or
-      # end (SH) of the scale
-      yearday_adjusted = (yearday - EQUINOX_DAY_N) % 365
-
-      # Determine start of year for latitude - days begin to longen (start of sinus)
-      hemisphere_multi = (lat.positive? ? 0 : 1)
-      # offset for lat (summer in dec on antarctica)
-      yearday_adjusted = hemisphere_multi * -182.5 + yearday_adjusted
-
-      # axial tilt effect follows sine
-      # tilt is 0 on equinox, 23.5 deg on solistice
-
-      # Determine daylength extremes
-      lat_arctic_circle = 66.533 # 66 deg 32 min
-      lat_daylen_offset = (lat.to_f / lat_arctic_circle).abs
-      lat_daylen_offset = 1 if lat_daylen_offset > 1 # 0..1
-      day_max_len = 12 + 12 * lat_daylen_offset # 12..24
-      day_min_len = 12 - 12 * lat_daylen_offset # 0..12
-
-      sinus2range(yearday_adjusted, 365, day_max_len, day_min_len) / 24
-    end
-
-    # Incident angle effect on insolation:
-    #   I = I_max * cos(θ)
-    # Returns 0..1, multi
-    def incident_angle_effect(lat, _yearday)
-      # ruff approx, sinus2range param always in first quarter of sine
-      # gives sinusoidal range 0-0.9
-      1 - sinus2range( lat.abs.to_f, 360, 0.99, 0 ) # ruff approx
-    end
-
     #	Calculates the daylength (compared to 1 = 24h)
     #	arg day of year 1..365
     #	returns multiplier
@@ -182,55 +141,65 @@ module Planet
 
     require 'numeric'
 
-    # Possibly refactor these to be closures to be passed into daily_insolation, if that improves computation
+    # Calculates the solar declination angle for a given day of the year.
+    # The declination is the angle between the sun's rays and the plane of the Earth's equator.
+    # Returns the declination angle in radians.
     def declination_angle(yearday)
-      # Calculate the day of the year
-      day = Date.new(2023, 1, 1).yday + yearday
-
-      # Calculate the declination using the equation
-      calculate_orbit(day) + 0.0001
+      # A standard approximation for solar declination.
+      # The formula is based on the Earth's axial tilt and its position in its orbit.
+      # 23.45 degrees is the approximate axial tilt. We convert it to radians.
+      axial_tilt_rad = AXIAL_TILT * Math::PI / 180
+      # The declination varies as a cosine function of the day of the year.
+      # (yearday + 284) is used to align the cycle with the solstices.
+      -axial_tilt_rad * Math.cos(2.0 * Math::PI / 365.0 * (yearday + 10))
     end
 
-    def calculate_orbit(yearday)
-      # Calculate the angle of Earth's orbit around the sun
-      angle = yearday * (2 * Math::PI) / 365.2422
-
-      # Normalize the angle to between 0 and 2π
-      angle %= (2 * Math::PI)
-
-      angle
+    # Converts the hour of the day (0-23) to an hour angle in radians.
+    # The hour angle is 0 at solar noon, negative in the morning, and positive in the afternoon.
+    def hour_angle(hour)
+      # 15 degrees per hour, converted to radians.
+      (hour - 12) * 15 * Math::PI / 180
     end
 
-    # return deg
+    # Calculates the solar zenith angle (the angle of the sun from the vertical).
+    # This is the primary determinant of insolation intensity.
+    # Returns the zenith angle in radians.
     def incident_angle(lat, yearday, hour)
-      # The declination angle depends on the day of the year, not latitude.
-      # The full formula for solar zenith angle is more complex, but let's fix the immediate bug.
-      # Note: `hour` here is just 0-23, not an angle. This is another simplification in the model.
-      declination_angle(yearday) + hour
+      lat_rad = lat * Math::PI / 180
+      decl_rad = declination_angle(yearday)
+      h_angle_rad = hour_angle(hour)
+
+      # The standard formula for the cosine of the solar zenith angle (θ).
+      # cos(θ) = sin(lat)sin(δ) + cos(lat)cos(δ)cos(h)
+      cos_zenith = Math.sin(lat_rad) * Math.sin(decl_rad) + Math.cos(lat_rad) * Math.cos(decl_rad) * Math.cos(h_angle_rad)
+
+      # The zenith angle is the arccos of this value.
+      # Clamp the value to the range [-1, 1] to avoid domain errors with acos.
+      cos_zenith = [[cos_zenith, -1.0].max, 1.0].min
+      Math.acos(cos_zenith)
     end
 
     def daily_insolation(
       latitude,
       yearday
     )
-      # Calculate the average W/m^2 over a 24-hour period.
+      # Calculate the average W/m^2 over a 24-hour period by integrating the hourly flux.
       hourly_fluxes = (0..23).map do |hour|
-        incident_deg = incident_angle(latitude, yearday, hour)
+        # Get the solar zenith angle in radians.
+        zenith_angle = incident_angle(latitude, yearday, hour)
 
-        # Skip night hours. This is a simplification; true night depends on the full zenith angle formula.
-        next 0 if incident_deg < 0 || incident_deg > 180 # Simplified check for sun being up
-
-        # Convert degrees to radians for Math.cos
-        incident_rad = incident_deg * Math::PI / 180
-
-        # Calculate flux for this hour
-        solar_flux = solar_irradiance_wm2(yearday) * weather_multiplier(yearday, latitude) * Math.cos(incident_rad)**2
-
-        # Ensure flux is not negative
-        [solar_flux, 0].max
+        # If the sun is below the horizon, the flux is 0.
+        # zenith_angle > PI/2 means it's night.
+        if zenith_angle > Math::PI / 2
+          0.0
+        else
+          # The intensity of solar radiation is proportional to the cosine of the zenith angle.
+          solar_flux = solar_irradiance_wm2(yearday) * weather_multiplier(yearday, latitude) * Math.cos(zenith_angle)
+          [solar_flux, 0.0].max # Ensure flux is not negative
+        end
       end
 
-      # Return the average of all hourly fluxes
+      # Return the average of all hourly fluxes for the day.
       hourly_fluxes.sum / 24.0
     end
 
