@@ -13,9 +13,59 @@ module Planet
     end
 
     def test_annuum
-      # Print a table containing insolation & temp
-      # for each month and each 10 deg lat
-      return true
+      # This test calculates the total monthly insolation for each 10-degree
+      # latitude band and prints it as a table.
+
+      require 'date'
+
+      latitudes = (-90..80).step(10).to_a.reverse
+      months = (1..12).to_a
+      seconds_in_day = 86400
+
+      # Data structure to hold total Joules for each lat/month
+      monthly_insolation = Array.new(latitudes.size) { Array.new(months.size) }
+
+      latitudes.each_with_index do |lat, lat_index|
+        months.each_with_index do |month, month_index|
+
+          # Get the start and end day of the year for the current month
+          start_date = Date.new(2023, month, 1)
+          end_date = Date.new(2023, month, -1)
+
+          total_monthly_energy = (start_date.yday..end_date.yday).sum do |yearday|
+            # Insolation in W/m^2 (Joules per second per m^2)
+            power_per_sq_meter = energy_transmitted(yearday, lat)
+            # Area of a 10x10 degree sector at this latitude
+            area = sector_area(lat)
+            # Total energy for one day in this sector
+            power_per_sq_meter * area * seconds_in_day
+          end
+
+          monthly_insolation[lat_index][month_index] = total_monthly_energy
+        end
+      end
+
+      # --- Print the results as a formatted table ---
+
+      # Header
+      puts "\n--- Monthly Insolation Energy per 10x10 deg Sector (Joules) ---\n"
+      month_names = Date::ABBR_MONTHNAMES[1..12]
+      printf "%-5s", "Lat"
+      month_names.each { |m| printf "%-10s", m }
+      puts "\n" + "-" * 125
+
+      # Body
+      latitudes.each_with_index do |lat, lat_index|
+        printf "%+3d° ", lat
+        monthly_insolation[lat_index].each do |energy|
+          printf "%-10.2e", energy
+        end
+        puts
+      end
+      puts "-" * 125
+
+      # The test passes if the calculation completes and prints.
+      true
     end
 
     def test_energy_transmitted

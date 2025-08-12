@@ -4,6 +4,7 @@ module Planet
   # TODO render svg graph for year 2017 and 2017-2037 year periods
 
   # Physical Constants
+  PLANET_RADIUS = 6371e3 # meters
   G = 9.80665 # gravitational acceleration at sea-level, m/s²
   Solar_Constant = 1367 # W/m2
   Solar_Constant_Range = 1.069 # solar minima+ / maxima-
@@ -49,6 +50,20 @@ module Planet
     val = Math.sin(posi.to_f)
     dist = y_max - y_min
     y_min + (1 + val) / 2 * dist
+  end
+
+  # Calculates the area of a 10x10 degree sector on the planet's surface.
+  # lat: The starting latitude of the sector (in degrees).
+  # returns area in square meters.
+  def self.sector_area(lat)
+    # Convert degrees to radians for trigonometric functions
+    lat_rad = lat * Math::PI / 180
+    lat_plus_10_rad = (lat + 10) * Math::PI / 180
+
+    # Area of a 10-degree latitude band
+    zone_area = 2 * Math::PI * PLANET_RADIUS**2 * (Math.sin(lat_plus_10_rad) - Math.sin(lat_rad)).abs
+    # Area of a 10-degree longitude slice of that band
+    zone_area * (10.0 / 360.0)
   end
 
   # Net energy available on surface
