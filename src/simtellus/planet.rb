@@ -199,25 +199,34 @@ module Planet
 
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
     # returns a multiplier to account for weather effects (e.g., clouds).
-    def weather_multiplier(yearday, lat)
-      # https://en.wikipedia.org/wiki/File:Insolation.png
-      # weather *
-      # extreme_weather *
-      # biome *
-      # p 'weather multiplier is mock'
-      1
+    def weather_multiplier(_yearday, lat)
+      # Simple latitude-based model: more clouds at the equator, clearer at the poles.
+      # This is a rough approximation.
+      0.8 + 0.15 * (lat.abs / 90.0)
     end
 
     # Returns average C deg
-    def temp(_yearday, _lat, _elev, _biome)
-      # Average temperature is 15 C according to NASA
-      # Low Vostok -89.2 C, High Lut Desert 70.7 C
-      # -> +-60C norm, if weather extreme, multiply by 1.25
-      # -> +-80C max
-      # elev loss
-      # biome
-      p 'Atmos.temp is wip @ 15 C'
-      15
+    def temp(yearday, lat, elev, _biome)
+      # 1. Base temperature on latitude
+      # Simple linear gradient from 25°C at equator to -15°C at poles.
+      base_temp = 25.0 - 40.0 * (lat.abs / 90.0)
+
+      # 2. Seasonal variation
+      # Swing is larger at the poles (+-25°C) and smaller at the equator (+-5°C).
+      swing_amplitude = 5.0 + 20.0 * (lat.abs / 90.0)
+      # Northern hemisphere summer is around day 172, southern around day 356.
+      # We shift the sine wave so that the peak aligns with the summer solstice.
+      season_offset = lat >= 0 ? -80.5 : 102.0 # -80.5 for NH, 102 for SH
+      seasonal_variation = sinus2range(yearday + season_offset, 365, swing_amplitude, -swing_amplitude)
+
+      # 3. Elevation effect (lapse rate)
+      # Temperature decreases by ~6.5°C per 1000m.
+      lapse_rate = 6.5 / 1000.0
+      elevation_effect = elev * lapse_rate
+
+      # 4. Combine and clamp
+      final_temp = base_temp + seasonal_variation - elevation_effect
+      final_temp.clamp(-90.0, 60.0)
     end
 
     # Air pressure at elevation
