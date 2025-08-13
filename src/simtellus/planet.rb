@@ -68,11 +68,11 @@ module Planet
     zone_area * (10.0 / 360.0)
   end
 
-  # Net energy available on surface
-  # Wm²
-  # the average incoming solar radiation, considering incident angle and half
-  # the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m²
-  # the daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d
+  # Net energy available on surface.
+  # The average incoming solar radiation, considering incident angle and the fact that
+  # half the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m².
+  # The daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d.
+  # returns W/m²
   def self.energy_transmitted(yearday, lat)
     # This function is now an alias for the more accurate daily_insolation model.
     daily_insolation(lat, yearday)
@@ -97,7 +97,7 @@ module Planet
       0.999
     end
 
-    # returns what?
+    # returns multiplier
     def space_weather(_yearday)
       # solar wind
       # magnetic storms
@@ -112,7 +112,7 @@ module Planet
         orbital_effect(yearday)
     end
 
-    # returns Wm
+    # returns W/m²
     def uv_influx(yearday, lat, elevation)
       p 'EMField.uv multiplier mock is static'
       altitude_effect = 0.08 # per 1000 m, Blumenthal 1997
@@ -179,6 +179,7 @@ module Planet
       Math.acos(cos_zenith)
     end
 
+    # returns average W/m²
     def daily_insolation(
       latitude,
       yearday
@@ -210,7 +211,7 @@ module Planet
     # Primitive troposphere model
 
     # lat is the latitude -90..0..90, negative latitude denoting southern hemisphere
-    # returns 0..1, 0.5 is 12h at equator
+    # returns a multiplier to account for weather effects (e.g., clouds).
     def weather_multiplier(yearday, lat)
       # https://en.wikipedia.org/wiki/File:Insolation.png
       # weather *
