@@ -122,7 +122,6 @@ module Simtellus
           Simtellus::State.set_state(lat, lon, state)
         end
       end
-      Simtellus::State.advance_date
     end
   end
 
