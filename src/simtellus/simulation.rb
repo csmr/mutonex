@@ -81,74 +81,33 @@ module Simtellus
 
   # Module for computing the planet's state for each temporal cycle
   module Computation
-    def self.compute_state_old(date, lat, lon)
+    def self.compute_state(date, lat, lon)
       yearday = date.yday
-      energy = Planet.energy_transmitted(yearday, lat)
-     
-      temperature = compute_temperature(date, lat, lon)
-      # Add more computations as needed
+
+      # Calculate new values using the improved models from Planet module
+      # Note: The 'lon' and sector elevation are not yet used in these models.
+      new_energy = Planet.irradiance_daily_wm2(lat, yearday)
+      new_temp = Planet.temp(yearday, lat, 0, 0) # Assuming sea level (elev 0)
+      new_rainfall = compute_rainfall(date, lat, lon) # Still a mock
+
+      # Get current state to update historical records
+      current_sector_state = State.get_state(lat, lon) || {}
+
+      # Update historical temperature records
+      historical_min = [current_sector_state[:historical_min_temp] || new_temp, new_temp].min
+      historical_max = [current_sector_state[:historical_max_temp] || new_temp, new_temp].max
+
+      # Assemble the new state data for the sector
       {
-        energy: energy,
-        temperature: temperature,
-        rainfall: compute_rainfall(date, lat, lon),
-        historical_min_temp: [current_state[:historical_min_temp], temperature].min,
-        historical_max_temp: [current_state[:historical_max_temp], temperature].max,
-        # Add more state information
+        energy: new_energy,
+        temperature: new_temp,
+        rainfall: new_rainfall,
+        historical_min_temp: historical_min,
+        historical_max_temp: historical_max
       }
     end
 
-    def self.compute_temperature_old(date, lat, lon, cumulative_temp)
-      current_temp = State.get_state(lat, lon).current_state[:temperature]
-
-      # Mock temperature approximation function
-      random_offset = (rand * 2) - 1
-      temp_approximation = -lon.abs / 6.0 + random_offset
-      new_temp = cumulative_temp + temp_approximation
-      [new_temp, -50, 50].sort[1] # Cap between -50 and 50 degrees Celsius
-    end
-
-  TEMPERATURE_PERIOD_LENGTH = 365.0 # Assuming a 365-day year
-  TEMPERATURE_MAX = 50.0
-  TEMPERATURE_MIN = -50.0
-
-  def self.compute_state(date, lat, lon)
-    yearday = date.yday
-    historical_min_temp = [State.get_state(lat, lon)[:historical_min_temp], temperature].min
-    historical_max_temp = [State.get_state(lat, lon)[:historical_max_temp], temperature].max
-
-    state_data = {
-      energy: Planet.energy_transmitted(yearday, lat) || 0,
-      temperature: compute_temperature(date, lat, lon) || 0,
-      rainfall: compute_rainfall(date, lat, lon) || 0,
-      historical_min_temp: historical_min_temp || 0,
-      historical_max_temp: historical_max_temp || 0
-    }
-    State.set_state(lat, lon, state_data)
-
-    state_data
-  end
-
-  def self.compute_temperature(date, lat, lon)
-    yearday = date.yday
-    current_state = State.get_state(lat, lon)
-    current_temperature = current_state[:temperature]
-
-    temperature_amplitude = TEMPERATURE_MAX - TEMPERATURE_MIN
-    temperature_offset = sinus2range(yearday, TEMPERATURE_PERIOD_LENGTH, TEMPERATURE_MAX, TEMPERATURE_MIN)
-    temperature_latitude_adjustment = -lon.abs / 6.0
-
-    new_temperature = current_temperature + temperature_offset + temperature_latitude_adjustment
-    new_temperature = new_temperature.clamp(TEMPERATURE_MIN, TEMPERATURE_MAX)
-
-    State.set_state(lat, lon, { temperature: new_temperature })
-    new_temperature
-  end
-
-  ### New Coodz
-
-
-
-    def self.compute_rainfall(date, lat, lon)
+    def self.compute_rainfall(_date, _lat, _lon)
       # Placeholder for rainfall computation
       5.0 # Example value in mm
     end
@@ -163,7 +122,6 @@ module Simtellus
           Simtellus::State.set_state(lat, lon, state)
         end
       end
-      Simtellus::State.advance_date
     end
   end
 
