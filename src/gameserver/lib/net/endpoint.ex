@@ -7,12 +7,17 @@ defmodule Net.Endpoint do
     longpoll: false
 
   def start(_type, _args) do
-    # Minimal supervision tree
     children = [
-      supervisor(Phoenix.PubSub, [name: Engine.PubSub]),
-      supervisor(Net.Endpoint, [])
+      # The PubSub system
+      {Phoenix.PubSub, [name: Mutonex.PubSub, pool_size: 1]},
+      # A registry for tracking game sessions by their sector_id
+      {Registry, [keys: :unique, name: Mutonex.GameRegistry]},
+      # A dynamic supervisor to manage game session processes
+      {DynamicSupervisor, [name: Mutonex.GameSessionSupervisor, strategy: :one_for_one]},
+      # The web endpoint itself
+      __MODULE__
     ]
-    Supervisor.start_link(children, strategy: :one_for_one, name: Engine.Supervisor)
+    Supervisor.start_link(children, strategy: :one_for_one, name: Mutonex.Supervisor)
   end
 
   # Serve static assets from the "priv/static" directory

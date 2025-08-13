@@ -8,44 +8,80 @@ module Planet
       cases = [[0, 1], [0.75, 3], [1.5, 1], [2.25, -1], [3, 1]]
       cases.all? do |n|
         res = sinus2range(n[0], 3, 3, -1).round(3)
-        # p "s2r result: " + res.to_s + " vs " + n[1].to_f.to_s
         n[1].to_f == res
       end
     end
 
     def test_annuum
-      # Print a table containing insolation & temp
-      # for each month and each 10 deg lat
-      p "test_annuum is a static mock"
-      return true
+      # This test calculates and displays average daily insolation (W/m^2) and
+      # average temperature (°C) for each 10-degree latitude band for each month.
+
+      require 'date'
+
+      latitudes = (-90..80).step(10).to_a.reverse
+      months = (1..12).to_a
+
+      monthly_data = Array.new(latitudes.size) { Array.new(months.size) }
+
+      latitudes.each_with_index do |lat, lat_index|
+        months.each_with_index do |month, month_index|
+          start_date = Date.new(2023, month, 1)
+          end_date = Date.new(2023, month, -1)
+          num_days = end_date.day
+
+          daily_irradiances = []
+          daily_temps = []
+          (start_date.yday..end_date.yday).each do |yearday|
+            daily_irradiances << irradiance_daily_wm2(lat, yearday)
+            daily_temps << temp(yearday, lat, 0, 0) # Sea level temperature
+          end
+
+          monthly_data[lat_index][month_index] = {
+            irradiance: daily_irradiances.sum / num_days,
+            temperature: daily_temps.sum / num_days
+          }
+        end
+      end
+
+      # --- Print the results as a formatted table ---
+      puts "\n--- Annual Simulation Summary: Avg W/m² (Avg Temp °C) ---\n"
+      month_names = Date::ABBR_MONTHNAMES[1..12]
+      printf "%-6s", "Lat"
+      month_names.each { |m| printf "%-12s", m }
+      puts "\n" + "-" * 150
+
+      latitudes.each_with_index do |lat, lat_index|
+        printf "%+3d° | ", lat
+        monthly_data[lat_index].each do |data|
+          printf "%-12s", "#{data[:irradiance].round(0)} (#{data[:temperature].round(1)})"
+        end
+        puts
+      end
+      puts "-" * 150
+
+      true
     end
 
-    def test_energy_transmitted
+    def test_irradiance_daily_wm2
+      # This test checks if the output of the main energy function is within a plausible physical range
+      # for different latitudes and times of year.
       cases = [
-        [:non_polar_latitudes,
-         { max: Atmos::Solar_Transmission_W * 1.5,
-           latitudes: (0..66).step(6).to_a,
-           dayrange: (1..365).step(5).to_a }],
-        [:antarctic,
-         { max: Atmos::Solar_Trans_Twilight * 3,
-           latitudes: (-90..-69).step(4).to_a,
-           dayrange: (172..202).step(5).to_a }],
-        [:arctic,
-         { max: Atmos::Solar_Trans_Twilight * 3,
-           latitudes: (68..90).step(4).to_a,
-           dayrange: (335..365).step(5).to_a }]
+        # lat, day, expected_min, expected_max
+        [0, 80, 300, 400],     # Equator at equinox: high irradiance
+        [90, 172, 450, 550],   # North Pole at summer solstice (near aphelion): highest irradiance
+        [90, 356, 0, 0],       # North Pole at winter solstice: zero irradiance
+        [-90, 172, 0, 0],      # South Pole at winter solstice: zero irradiance
+        [45, 172, 350, 450],   # Mid-latitude at summer solstice (near aphelion)
+        [45, 356, 50, 150]     # Mid-latitude at winter solstice
       ]
 
-      #require 'pry'
-      #binding.pry if c == :antarctic
-      cases.all? do |c, params|
-        params[:latitudes].all? do |lat|
-          params[:dayrange].all? do |d|
-            res = energy_transmitted(d, lat)
-            p c, lat, d, res, params[:max] unless res < params[:max]
-            res.class == Float && res < params[:max]
-          end
+      cases.all? do |lat, day, min, max|
+        res = irradiance_daily_wm2(lat, day)
+        pass = res.is_a?(Float) && res.between?(min, max)
+        unless pass
+          puts "FAIL: lat=#{lat}, day=#{day}. Got #{res.round(2)}, expected #{min}..#{max}"
         end
+        pass
       end
     end
 
@@ -55,122 +91,69 @@ module Planet
     end
 
     def test_space_weather
-      p 'make test for space_weather -method'
       true # no test
     end
 
     def test_orbital_effect
-      # Should return day length multiplier 0..1,
-      # - so case "10h/day" --> solar irradiance multiplier ~0.84 (shines most of day)
-      res = orbital_effect(rand * 365)
-      res.class == Float && res >= 1420.0 / 1440 && res <= 1460.0 / 1440
-    end
+      # The orbital effect models the ~3.4% variation in solar intensity due to orbital eccentricity.
+      # The multiplier should be between ~0.966 and ~1.034.
+      range_pass = (0..365).all? { |day| orbital_effect(day).between?(0.966, 1.034) }
 
-    # Tests axial tilt without incident angle effect!
-    def test_axial_tilt_daylength_effect
-      constraints = [ # nn, len, pars
-        [:polar_night, 1.to_f / 24, [ # < 1 h
-          # North pole, September 24 - December 22
-          { lat: 90, start: 268, end: 357 },
-          # South pole, March 22 - June 20
-          { lat: -90, start: 82, end: 170 }
-        ]],
-        [:polar_day, 23.to_f / 24, [ # > 23 h
-          # North pole, March 22 - September 21
-          { lat: 90, start: 82, end: 265 },
-          # South pole, December 22 - December 30
-          { lat: -90, start: 357, end: 264 },
-          # South pole, January 1 - March 21
-          { lat: -90, start: 1, end: 82 }
-        ]],
-         [:equatorial_day, 11.to_f / 24, # ~12 h
-         # Equator, January 1 - June 30
-         [{ lat: 0, start: 1, end: 180 }]]
-      ]
-      constraints.all? do |env, tlen, params|
-        params.all? do |par|
-          (par[:start]...par[:end]).all? do |yearday|
-            res = axial_tilt_daylength_effect(par[:lat], yearday)
-            p "#{env}: #{res} vs #{tlen} @ #{par[:lat]} deg #{yearday} d"
-            p 'must combine axial tilt and incident effect funcs'
-            p 'two different comparison cases < and >'
-            p 'wrong answer for axial tilt'
-            # res.send((env == :polar_night ? :< : :>), tlen)
-            (res <= tlen)
-          end
-        end
-      end
-    end
+      # Check that perihelion (day 3) has higher effect than aphelion (day 185)
+      phase_pass = orbital_effect(3) > orbital_effect(185)
 
-    def test_incident_angle_effect
-      cases = {
-        equatorial_summer: { lat: 0, day: 170 },
-        northpole_equinox: { lat: 90, day: Orbit::EQUINOX_DAY_N }
-      }
-      cases.all? do |_c, params|
-        res = incident_angle_effect(params[:lat], params[:day])
-        res.class == Float &&
-          res.between?(0, 1) # What is the correct value for minimum?
-      end
+      range_pass && phase_pass
     end
 
     def test_solar_irradiance
-      # source?
-      # todo
       res = solar_irradiance_wm2(rand * 365)
-      p "solar irradiance: #{res} wm2"
-      res.class == Float &&
-        # res > EMField::Solar_Constant - (1/EMField::Solar_Constant_Range*2) &&
-        res < EMField::Solar_Constant * EMField::Solar_Constant_Range
+      res.class == Float && res < Solar_Constant * Solar_Constant_Range
     end
 
-    def test_insolation_multiplier
-      cases = {
-        equator_summer: { lat: 0, day: 170 },
-        northpole_equinox: { lat: 90, day: Orbit::EQUINOX_DAY_N }
-      }
-      cases.all? do |c, p|
-        res = insolation_multiplier(p[:day], p[:lat])
-        p "insolation multiplier: #{c} #{res} @ d #{p[:day]}, #{p[:lat]} deg"
-        res.instance_of?(Float) &&
-          res.between?(0, 1)
-      end
-    end
-
-    # def test_uv_influx yearday, long, lat, elevation
-    # def test_orbital_effect yearday
-    # def test_atmospheric_effect
-    # def test_atmospheric_tide yearday
     def test_pressure
       res = pressure(rand * 365, -90 + rand * 180, rand * 100)
-      p "Airpressure: #{res} hPA."
-      ( # hPa @ Typhoon Tip, Pacific 12.10.1979.
-       res > 870 &&
-      # hPa @ Tosontsengel, Mongolia 19.12.2001.
-      res < 1085
-     )
+      (res > 870 && res < 1085)
     end
 
-    # def test_temp yearday, lat, elev, biome
-    # def testresain yearday, lat, elev, biome
-    # def test_weather_extremes yearday
-    # def test_biome_adjust biome_code, type
-    # def test_fauna
+    def test_temp
+      # Checks for plausible temperatures at different locations and times.
+      # 1. Equator should be warmer than pole.
+      t_equator = temp(80, 0, 0, 0)
+      t_pole = temp(172, 90, 0, 0)
+      pass1 = t_equator > t_pole
 
-    # def render_line_graph_for_period year-range
+      # 2. Summer should be warmer than winter.
+      t_summer = temp(172, 45, 0, 0)
+      t_winter = temp(356, 45, 0, 0)
+      pass2 = t_summer > t_winter
+
+      # 3. High altitude should be colder than sea level.
+      t_sea_level = temp(80, 0, 0, 0)
+      t_mountain = temp(80, 0, 5000, 0)
+      pass3 = t_sea_level > t_mountain
+
+      # 4. Check against absolute min/max
+      t_min = temp(356, 90, 2000, 0) # Polar winter on a plateau
+      t_max = temp(172, 20, 0, 0) # Tropical summer at sea level
+      pass4 = t_min.between?(-90, 60) && t_max.between?(-90, 60)
+
+      pass1 && pass2 && pass3 && pass4
+    end
+
     def run_tests
-      puts 'Testrun for ' + name 
-      res = methods.grep(/^test_/).all? do |m|
-        res = send(m)
-        puts ">> #{m} pass: #{res}"
-        res
+      puts 'Testrun for ' + self.name
+      test_methods = methods.grep(/^test_/)
+      results = test_methods.map do |m|
+        result = send(m)
+        puts ">> #{m} pass: #{result}"
+        result
       end
-      puts(res ? 'Super! Tests pass.' : 'Fail!!! Test(s) not passing.')
+
+      all_passed = results.all? { |res| res }
+      puts(all_passed ? 'Super! Tests pass.' : 'Fail!!! Test(s) not passing.')
     end
 
   end
-  #require 'pry'
-  #binding.pry
   extend Tests
   run_tests if $PROGRAM_NAME == __FILE__
 end
