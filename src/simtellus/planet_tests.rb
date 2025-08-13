@@ -33,7 +33,7 @@ module Planet
 
           # Sum the daily insolation values for the month
           total_monthly_power_per_sq_meter = (start_date.yday..end_date.yday).sum do |yearday|
-            daily_insolation(lat, yearday)
+            irradiance_daily_wm2(lat, yearday)
           end
 
           # Calculate the average
@@ -66,20 +66,26 @@ module Planet
       true
     end
 
-    def test_energy_transmitted
-      # This test now checks if the output of the main energy function is within a plausible physical range.
-      # It runs a few sample points (equator, pole, mid-latitude) at different times of year.
+    def test_irradiance_daily_wm2
+      # This test checks if the output of the main energy function is within a plausible physical range
+      # for different latitudes and times of year.
       cases = [
-        { lat: 0, day: 80 },   # Equator at equinox
-        { lat: 0, day: 172 },  # Equator at solstice
-        { lat: 60, day: 172 }, # Mid-latitude at summer solstice
-        { lat: -90, day: 356 } # South pole at summer solstice
+        # lat, day, expected_min, expected_max
+        [0, 80, 350, 450],     # Equator at equinox: high irradiance
+        [90, 172, 400, 550],   # North Pole at summer solstice: high irradiance (24h sun)
+        [90, 356, 0, 0],       # North Pole at winter solstice: zero irradiance (24h night)
+        [-90, 172, 0, 0],      # South Pole at winter solstice: zero irradiance
+        [45, 172, 300, 400],   # Mid-latitude at summer solstice
+        [45, 356, 50, 150]     # Mid-latitude at winter solstice
       ]
 
-      cases.all? do |c|
-        res = energy_transmitted(c[:day], c[:lat])
-        # Check if the result is a Float and within a reasonable range for W/m^2.
-        res.is_a?(Float) && res.between?(0, 600)
+      cases.all? do |lat, day, min, max|
+        res = irradiance_daily_wm2(lat, day)
+        pass = res.is_a?(Float) && res.between?(min, max)
+        unless pass
+          puts "FAIL: lat=#{lat}, day=#{day}. Got #{res.round(2)}, expected #{min}..#{max}"
+        end
+        pass
       end
     end
 

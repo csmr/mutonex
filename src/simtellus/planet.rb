@@ -68,16 +68,6 @@ module Planet
     zone_area * (10.0 / 360.0)
   end
 
-  # Net energy available on surface.
-  # The average incoming solar radiation, considering incident angle and the fact that
-  # half the planet doesn't receive radiation, is 1/4 the solar constant ~340 W/m².
-  # The daily average irradiance for Earth is approx 250 W/m2, 6 kWh/m2/d.
-  # returns W/m²
-  def self.energy_transmitted(yearday, lat)
-    # This function is now an alias for the more accurate daily_insolation model.
-    daily_insolation(lat, yearday)
-  end
-
   module EMField
     # The actual direct solar irradiance at the top of the atmosphere fluctuates by
     # about 6.9% during a year (from 1.412 kW/m² in early January to 1.321 kW/m² in
@@ -180,7 +170,7 @@ module Planet
     end
 
     # returns average W/m²
-    def daily_insolation(
+    def irradiance_daily_wm2(
       latitude,
       yearday
     )
