@@ -2,7 +2,6 @@ require 'date'
 
 module Planet
   # Collection of modules to approximate planetary energy fluxes in ISO units.
-  # TODO test suite
   # TODO render svg graph for year 2017 and 2017-2037 year periods
 
   # Physical Constants
