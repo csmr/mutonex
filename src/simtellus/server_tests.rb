@@ -57,5 +57,4 @@ end
 
 # Run the tests
 extend Server::Tests
-run_tests
-Server::Tests.run_tests
+run_tests if $PROGRAM_NAME == __FILE__
