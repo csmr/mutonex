@@ -72,10 +72,10 @@ module Planet
       cases = [
         # lat, day, expected_min, expected_max
         [0, 80, 350, 450],     # Equator at equinox: high irradiance
-        [90, 172, 400, 550],   # North Pole at summer solstice: high irradiance (24h sun)
-        [90, 356, 0, 0],       # North Pole at winter solstice: zero irradiance (24h night)
+        [90, 172, 350, 400],   # North Pole at summer solstice (near aphelion): high irradiance
+        [90, 356, 0, 0],       # North Pole at winter solstice: zero irradiance
         [-90, 172, 0, 0],      # South Pole at winter solstice: zero irradiance
-        [45, 172, 300, 400],   # Mid-latitude at summer solstice
+        [45, 172, 350, 400],   # Mid-latitude at summer solstice (near aphelion)
         [45, 356, 50, 150]     # Mid-latitude at winter solstice
       ]
 
@@ -99,10 +99,14 @@ module Planet
     end
 
     def test_orbital_effect
-      res = orbital_effect(rand * 365)
       # The orbital effect models the ~3.4% variation in solar intensity due to orbital eccentricity.
       # The multiplier should be between ~0.966 and ~1.034.
-      res.is_a?(Float) && res.between?(0.966, 1.034)
+      range_pass = (0..365).all? { |day| orbital_effect(day).between?(0.966, 1.034) }
+
+      # Check that perihelion (day 3) has higher effect than aphelion (day 185)
+      phase_pass = orbital_effect(3) > orbital_effect(185)
+
+      range_pass && phase_pass
     end
 
     def test_solar_irradiance

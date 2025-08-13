@@ -118,13 +118,10 @@ module Planet
     #	arg day of year 1..365
     #	returns multiplier
     def orbital_effect(yearday)
-      # Orbit eccentricity:
-      # sine wave period of 365 d, modulating day length by 0..-7,66m..0..+7,66 minutes
-      # Orbit obliquity:
-      # sine wave period of 182.5 d, modulates day length by 0..-9,87..0..+9,87 minutes
-      orb_ecce = sinus2range(yearday, 365, -7.66, 7.66)
-      orb_obli = sinus2range(yearday, 182.5, -9.87, 9.87)
-      (orb_ecce + orb_obli) / (24 * 60) + 1
+      # Models the ~3.4% variation in solar intensity due to Earth's orbital eccentricity.
+      # Perihelion (closest) is ~Jan 3 (day 3), aphelion (farthest) is ~July 4 (day 185).
+      # The flux is proportional to 1/r^2, so this is an approximation of that effect.
+      1 + 0.033 * Math.cos(2 * Math::PI * (yearday - 3) / 365.0)
     end
 
   ############################ NEW CODE
