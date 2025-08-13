@@ -72,7 +72,7 @@ module Planet
       cases = [
         # lat, day, expected_min, expected_max
         [0, 80, 350, 450],     # Equator at equinox: high irradiance
-        [90, 172, 350, 400],   # North Pole at summer solstice (near aphelion): high irradiance
+        [90, 172, 520, 535],   # North Pole at summer solstice (near aphelion): highest irradiance
         [90, 356, 0, 0],       # North Pole at winter solstice: zero irradiance
         [-90, 172, 0, 0],      # South Pole at winter solstice: zero irradiance
         [45, 172, 350, 400],   # Mid-latitude at summer solstice (near aphelion)
