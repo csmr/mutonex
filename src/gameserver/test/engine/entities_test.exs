@@ -1,5 +1,6 @@
 defmodule Mutonex.Engine.EntitiesTest do
-  # To run: elixir -r src/gameserver/lib/engine/entities.ex src/gameserver/test/engine/entities_test.exs
+  # To run this test script, execute the following command from the repository root:
+  # elixir -r src/gameserver/lib/engine/entities.ex src/gameserver/test/engine/entities_test.exs
 
   alias Mutonex.Engine.Entities
 
@@ -159,10 +160,6 @@ defmodule Mutonex.Engine.EntitiesTest do
     end
   end
 end
-
-# Load the code under test by ensuring the module is compiled and loaded.
-# This assumes the script is run from the root of the project.
-Code.load_file("src/gameserver/lib/engine/entities.ex")
 
 # Run the tests
 Mutonex.Engine.EntitiesTest.run_all_tests()
