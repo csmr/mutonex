@@ -1,7 +1,19 @@
 defmodule Mutonex.Engine.EntitiesTest do
-  # To run this test script, execute `elixir <path_to_this_file>`
+  @on_load :run_tests_on_load
+
+  # To run this test script, execute `elixir -r <path_to_this_file>`
 
   alias Mutonex.Engine.Entities
+
+  def run_tests_on_load do
+    # Load dependencies
+    entities_file = Path.expand("../../../lib/engine/entities.ex", __DIR__)
+    Code.load_file(entities_file)
+
+    # Run tests
+    run_all_tests()
+    :ok
+  end
 
   defp test(description, test_fun) do
     try do
@@ -155,14 +167,6 @@ defmodule Mutonex.Engine.EntitiesTest do
       IO.puts("\nSuper! Tests pass.")
     else
       IO.puts("\nFail!!! Test(s) not passing.")
-      System.halt(1)
     end
   end
 end
-
-# Load the code under test
-entities_file = Path.expand("../../../lib/engine/entities.ex", __DIR__)
-Code.load_file(entities_file)
-
-# Run the tests
-Mutonex.Engine.EntitiesTest.run_all_tests()
