@@ -20,11 +20,17 @@ defmodule Mutonex.Engine.GameSession do
   def init(sector_id) do
     # TODO: The bounds should eventually come from the sector's definition.
     bounds = {0, 0, 0, 10_000, 10_000, 10_000} # Using a larger, more realistic bound for a sector
+
+    # In the future, this is where we would load persistent state (relics, minerals, etc.)
+    # for this sector from the simtellus server API.
     initial_state = %{
       sector_id: sector_id,
       players: %{},
+      societies: %{},
+      units: %{},
+      buildings: %{},
+      minerals: %{},
       scene_graph: SparseOctree.new(bounds)
-      # In the future, this is where we would load persistent state for this sector from the database.
     }
     {:ok, initial_state}
   end
