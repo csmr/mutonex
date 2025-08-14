@@ -38,17 +38,17 @@ defmodule Mutonex.Engine.EntitiesTest do
     results = [
       test("can create a Unit struct with default values", fn ->
         unit = %Entities.Unit{}
-        assert unit.id == nil
-        assert unit.type == nil
-        assert unit.position == %{x: 0, y: 0, z: 0}
-        assert unit.society_id == nil
-        assert unit.home_id == nil
-        assert unit.sight_area == 0
-        assert unit.attributes == %{charm: 0, tribe: nil, flavor: nil}
-        assert unit.history == %{}
+        assert(unit.id == nil)
+        assert(unit.type == nil)
+        assert(unit.position == %{x: 0, y: 0, z: 0})
+        assert(unit.society_id == nil)
+        assert(unit.home_id == nil)
+        assert(unit.sight_area == 0)
+        assert(unit.attributes == %{charm: 0, tribe: nil, flavor: nil})
+        assert(unit.history == %{})
       end),
 
-      test "can create a Unit struct with specific values", fn ->
+      test("can create a Unit struct with specific values", fn ->
         unit_data = %{
           id: 1,
           type: :head,
@@ -60,29 +60,29 @@ defmodule Mutonex.Engine.EntitiesTest do
           history: %{birth: ~D[2023-01-01]}
         }
         unit = struct(Entities.Unit, unit_data)
-        assert unit.id == 1
-        assert unit.type == :head
-        assert unit.position == %{x: 10, y: 20, z: 5}
-        assert unit.society_id == 100
-        assert unit.home_id == 200
-        assert unit.sight_area == 5
-        assert unit.attributes.charm == 10
-        assert unit.history.birth == ~D[2023-01-01]
-      end,
+        assert(unit.id == 1)
+        assert(unit.type == :head)
+        assert(unit.position == %{x: 10, y: 20, z: 5})
+        assert(unit.society_id == 100)
+        assert(unit.home_id == 200)
+        assert(unit.sight_area == 5)
+        assert(unit.attributes.charm == 10)
+        assert(unit.history.birth == ~D[2023-01-01])
+      end),
 
-      test "can create a Building struct with default values", fn ->
+      test("can create a Building struct with default values", fn ->
         building = %Entities.Building{}
-        assert building.id == nil
-        assert building.type == nil
-        assert building.position == %{x: 0, y: 0, z: 0}
-        assert building.society_id == nil
-        assert building.chief_id == nil
-        assert building.sight_area == 0
-        assert building.function == nil
-        assert building.history == %{}
-      end,
+        assert(building.id == nil)
+        assert(building.type == nil)
+        assert(building.position == %{x: 0, y: 0, z: 0})
+        assert(building.society_id == nil)
+        assert(building.chief_id == nil)
+        assert(building.sight_area == 0)
+        assert(building.function == nil)
+        assert(building.history == %{})
+      end),
 
-      test "can create a Building struct with specific values", fn ->
+      test("can create a Building struct with specific values", fn ->
         building_data = %{
           id: 2,
           type: :power_structure,
@@ -94,22 +94,22 @@ defmodule Mutonex.Engine.EntitiesTest do
           history: %{built: ~D[2023-05-10]}
         }
         building = struct(Entities.Building, building_data)
-        assert building.id == 2
-        assert building.type == :power_structure
-        assert building.position.x == 50
-        assert building.society_id == 100
-        assert building.function == :resource_conversion
-      end,
+        assert(building.id == 2)
+        assert(building.type == :power_structure)
+        assert(building.position.x == 50)
+        assert(building.society_id == 100)
+        assert(building.function == :resource_conversion)
+      end),
 
-      test "can create a Society struct with default values", fn ->
+      test("can create a Society struct with default values", fn ->
         society = %Entities.Society{}
-        assert society.id == nil
-        assert society.home_id == nil
-        assert society.ethnicity == nil
-        assert society.player_id == nil
-      end,
+        assert(society.id == nil)
+        assert(society.home_id == nil)
+        assert(society.ethnicity == nil)
+        assert(society.player_id == nil)
+      end),
 
-      test "can create a Society struct with specific values", fn ->
+      test("can create a Society struct with specific values", fn ->
         society_data = %{
           id: 100,
           home_id: 2,
@@ -117,48 +117,48 @@ defmodule Mutonex.Engine.EntitiesTest do
           player_id: 500
         }
         society = struct(Entities.Society, society_data)
-        assert society.id == 100
-        assert society.ethnicity == :french
-        assert society.player_id == 500
-      end,
+        assert(society.id == 100)
+        assert(society.ethnicity == :french)
+        assert(society.player_id == 500)
+      end),
 
-      test "can create a Fauna struct with default values", fn ->
+      test("can create a Fauna struct with default values", fn ->
         fauna = %Entities.Fauna{}
-        assert fauna.id == nil
-        assert fauna.sector_id == nil
-        assert fauna.ethnicity == nil
-      end,
+        assert(fauna.id == nil)
+        assert(fauna.sector_id == nil)
+        assert(fauna.ethnicity == nil)
+      end),
 
-      test "can create a Fauna struct with specific values", fn ->
+      test("can create a Fauna struct with specific values", fn ->
         fauna_data = %{
           id: 3,
           sector_id: 10,
           ethnicity: :fauna_french
         }
         fauna = struct(Entities.Fauna, fauna_data)
-        assert fauna.id == 3
-        assert fauna.sector_id == 10
-        assert fauna.ethnicity == :fauna_french
-      end,
+        assert(fauna.id == 3)
+        assert(fauna.sector_id == 10)
+        assert(fauna.ethnicity == :fauna_french)
+      end),
 
-      test "can create a Mineral struct with default values", fn ->
+      test("can create a Mineral struct with default values", fn ->
         mineral = %Entities.Mineral{}
-        assert mineral.id == nil
-        assert mineral.position == %{x: 0, y: 0, z: 0}
-        assert mineral.type == nil
-      end,
+        assert(mineral.id == nil)
+        assert(mineral.position == %{x: 0, y: 0, z: 0})
+        assert(mineral.type == nil)
+      end),
 
-      test "can create a Mineral struct with specific values", fn ->
+      test("can create a Mineral struct with specific values", fn ->
         mineral_data = %{
           id: 4,
           position: %{x: 80, y: 120, z: 0},
           type: :iron
         }
         mineral = struct(Entities.Mineral, mineral_data)
-        assert mineral.id == 4
-        assert mineral.position.y == 120
-        assert mineral.type == :iron
-      end
+        assert(mineral.id == 4)
+        assert(mineral.position.y == 120)
+        assert(mineral.type == :iron)
+      end)
     ]
 
     all_passed = Enum.all?(results, fn status -> status == :ok end)
