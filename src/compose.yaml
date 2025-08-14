@@ -1,8 +1,6 @@
 version: '3.8'
 
 services:
-  # To get a shell in this container, run:
-  # docker exec -it mutondeno sh
   webserver:
     image: denoland/deno:latest
     container_name: mutondeno
@@ -64,8 +62,6 @@ services:
     profiles:
       - production
 
-  # To get a shell in this container, run:
-  # docker exec -it mutonphoenix bash
   gameserver:
     image: elixir:latest
     container_name: mutonphoenix
