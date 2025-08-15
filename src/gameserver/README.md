@@ -11,7 +11,7 @@ Elixir project, with Phoenix and WebSockets.
 ├── lib
 │   ├── application.ex          # Application entry point
 │   ├── engine
-│   │   ├── game_instance.ex    # Game instance logic
+│   │   ├── game_session.ex     # Game session
 │   │   └── sparse_octree.ex    # scenegraph type
 │   └── net
 │       ├── endpoint.ex         # Phoenix endpoint conf
@@ -21,7 +21,7 @@ Elixir project, with Phoenix and WebSockets.
 ├── README.md                   # Documentation
 └── test
     ├── engine
-    │   ├── game_instance_test.exs  # Tests for game instance logic
+    │   ├── entities_test.exs       # Tests for entities.ex
     │   └── sparse_octree_test.exs  # Tests for sparse octree
     ├── gameserver_test.exs         # Tests for the application
     └── test.run.sh                 # Script to run tests
