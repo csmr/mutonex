@@ -7,3 +7,4 @@ src/data/.env.postgres
 src/dist
 src/simtellus/.env
 src/client/api-key-hash.ts
+src/gameserver/deps
