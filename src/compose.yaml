@@ -13,7 +13,7 @@ services:
         condition: service_healthy
     env_file:
       - ./data/.env.postgres
-      - ./simtellus/.env
+      - ./.env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PLANET_SIM_URL: http://planet_sim:4567
@@ -23,6 +23,9 @@ services:
 
   planet_sim:
     image: ruby:alpine
+    env_file:
+      - ./.env
+      - ./simtellus/.env
     volumes:
       - ./simtellus:/app
     command: sh /app/start-simtellus.sh
@@ -72,6 +75,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - ./data/.env.postgres
+      - ./.env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PLANET_SIM_URL: http://planet_sim:4567 

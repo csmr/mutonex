@@ -23,7 +23,7 @@ defmodule Mutonex.Game.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:phoenix, "~> 1.7.11"}, # latest stable version
+      {:phoenix, "~> 1.7"}, # latest stable version
       {:phoenix_pubsub, "~> 2.1"},
       {:phoenix_html, "~> 3.3"},
       {:telemetry_metrics, "~> 0.6"},

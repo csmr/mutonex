@@ -30,6 +30,7 @@ git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
 # - needed by compose.yaml 
 set -a
 . ./data/.env.postgres
+. ./.env
 . ./simtellus/.env
 set +a
 

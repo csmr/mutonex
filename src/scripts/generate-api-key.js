@@ -5,15 +5,15 @@ import { generateApiKeyHash } from "../webserver/hash-utils.ts";
 
 /* 
  * Generates unique API key
- * - key stored in `src/simtellus/.env`.
- * - key-hash stored in `src/client/api-key-hash.sh`.
+ * - key stored in `src/.env`.
+ * - key-hash stored in `src/webclient/api-key-hash.ts`.
  */
 
 // config
 const cfg = {
   LEN_BYTES:   16,
   LF:          '\n',
-  ENV_PATH:    join(Deno.cwd(), 'simtellus', '.env'),
+  ENV_PATH:    join(Deno.cwd(), '.env'),
   CLIENT_PATH: join(Deno.cwd(), 'webclient', 'api-key-hash.ts'),
   KEY_ENABLED: 'API_KEY_AUTH_ENABLE=true',
   apiKeyStr:   'API_KEY=',
