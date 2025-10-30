@@ -1,6 +1,3 @@
-# Load code, relative to this script dir
-Code.require_file("../../lib/engine/entities.ex", __DIR__)
-
 defmodule Mutonex.Engine.EntitiesTest do
   defp test(description, test_fun) do
     if test_fun.() do

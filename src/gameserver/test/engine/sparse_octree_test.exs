@@ -1,6 +1,3 @@
-# Load code, relative to this script dir
-Code.require_file("../../lib/engine/sparse_octree.ex", __DIR__)
-
 defmodule Gameserver.Engine.SparseOctreeTest do
   alias Gameserver.Engine.SparseOctree
 

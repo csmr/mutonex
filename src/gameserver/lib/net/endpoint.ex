@@ -23,46 +23,28 @@ defmodule Net.Endpoint do
   # Serve static assets from the "priv/static" directory
   plug Plug.Static, at: "/", from: :mutonex_web
 
-  # Plug to handle token authentication
-  plug(Plug.Parsers, [:urlencoded, :multipart, :json])
-  plug(Plug.MethodOverride)
-  plug(Plug.Head)
-  plug(Plug.Session, @session_options)
-  plug(&handle_auth/2) # Our authentication plug
-
   @session_options [
     store: :cookie,
     key: "_mutonex_web_key",
     max_age: 1209600,
-    same_site: "Lax"
+    same_site: "Lax",
+    signing_salt: "some_long_and_random_string_for_signing_salt"
   ]
 
-  def handle_auth(conn, _opts) do
-    token = get_req_header(conn, "authorization") |> List.first()
+  # Plug to handle token authentication
+  plug Plug.Parsers, parsers: [:urlencoded, :multipart, :json], json_decoder: Jason
+  plug(Plug.MethodOverride)
+  plug(Plug.Head)
+  plug(Plug.Session, @session_options)
+  plug Net.Plugs.Auth # Our authentication plug
+  plug :health_check
 
-    case token do
-      {"Bearer", auth_token} ->
-        # In a real application, you'd verify this token against your auth service/database
-        if valid_token?(auth_token) do
-          # Store user info in the connection assigns if needed
-          # conn = assign(conn, :current_user_id, user_id_from_token(auth_token))
-          conn
-        else
-          send_resp(conn, 401, "Unauthorized") |> halt()
-        end
-      _ ->
-        send_resp(conn, 401, "Unauthorized") |> halt()
+  defp health_check(conn, _opts) do
+    if conn.request_path == "/health" do
+      send_resp(conn, 200, "OK") |> halt()
+    else
+      conn
     end
   end
-
-  defp valid_token?(_token), do: true
-    # Replace with actual token verification logic
-    # defp user_id_from_token(token), do: ... 
-    # Logic to extract user ID from token
-    # TODO     # Example: JWT.decode(token, your_secret_key)
-  end
-
-  # Health check endpoint
-  get "/health", conn, do: send_resp(conn, 200, "OK")
 
 end

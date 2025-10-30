@@ -1,4 +1,5 @@
 defmodule Engine.SimtellusClient do
+  @behaviour Engine.SimtellusClientBehaviour
   use Tesla
 
   # Build the middleware stack dynamically.

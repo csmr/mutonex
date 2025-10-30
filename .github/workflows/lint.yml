@@ -1,0 +1,19 @@
+name: Linter
+
+on:
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  elixir-linter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Elixir
+        uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: '1.18.4'
+          otp-version: '28.0.2'
+      - name: Check formatting
+        working-directory: ./src/gameserver
+        run: mix format --check-formatted

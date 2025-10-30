@@ -1,7 +1,7 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
 
-  alias Mutonex.Engine.SparseOctree
+  alias Gameserver.Engine.SparseOctree
 
   # --- Client API ---
 

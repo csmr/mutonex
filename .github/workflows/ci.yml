@@ -1,10 +1,8 @@
 name: Mutonex CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ develop ]
 
 jobs:
   elixir-tests:
@@ -16,10 +14,11 @@ jobs:
         with:
           elixir-version: '1.18.4' # Replace with your Elixir version
           otp-version: '28.0.2'   # Replace with your OTP version
-      - name: Run Elixir tests
+      - name: Install dependencies and run tests
+        working-directory: ./src/gameserver
         run: |
-          elixir src/gameserver/test/engine/entities_test.exs
-          elixir src/gameserver/test/engine/sparse_octree_test.exs
+          mix deps.get
+          mix test
 
   docker-compose-tests:
     runs-on: ubuntu-latest
@@ -30,7 +29,13 @@ jobs:
       - name: Wait for services to be healthy
         run: |
           echo "Waiting for services to be healthy..."
-          sleep 30
+          timeout 60s bash -c '
+            until curl -f http://localhost:8888/health > /dev/null 2>&1 && curl -f http://localhost:4000/health > /dev/null 2>&1; do
+              echo "Services not yet healthy. Retrying in 5 seconds..."
+              sleep 5
+            done
+          '
+          echo "All services are healthy."
       - name: Check running services
         run: docker-compose -f src/compose.yaml ps
       - name: Check webserver health

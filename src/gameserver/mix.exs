@@ -16,8 +16,15 @@ defmodule Mutonex.Game.MixProject do
   def application do
     [
       mod: {Mutonex.Server.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: extra_applications()
     ]
+  end
+
+  defp extra_applications() do
+    case Mix.env() do
+      :test -> [:logger, :runtime_tools, :mox]
+      _ -> [:logger, :runtime_tools]
+    end
   end
 
   # Run "mix help deps" to learn about dependencies.
@@ -29,7 +36,9 @@ defmodule Mutonex.Game.MixProject do
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.4"},
-      {:plug_cowboy, "~> 2.6"}
+      {:plug_cowboy, "~> 2.6"},
+      {:tesla, "~> 1.4"},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 end

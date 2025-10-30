@@ -16,12 +16,19 @@ defmodule Engine.GameLoop do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
+  @doc """
+  A synchronous call for testing purposes to ensure messages have been processed.
+  """
+  def sync(pid) do
+    GenServer.call(pid, :sync)
+  end
+
   #
   # GenServer Callbacks
   #
 
   @impl true
-  def init(_opts) do
+  def init(opts) do
     # For now, we'll use a hardcoded list of sectors.
     # In a real app, this would be managed dynamically.
     active_sectors = [
@@ -35,8 +42,11 @@ defmodule Engine.GameLoop do
       active_sectors: active_sectors
     }
 
-    Logger.info("GameLoop started. Turn 1 begins in #{@turn_interval_ms / 1000} seconds.")
-    schedule_tick()
+    if Keyword.get(opts, :start_ticking, true) do
+      Logger.info("GameLoop started. Turn 1 begins in #{@turn_interval_ms / 1000} seconds.")
+      schedule_tick()
+    end
+
     {:ok, state}
   end
 
@@ -44,11 +54,13 @@ defmodule Engine.GameLoop do
   def handle_info(:tick, state) do
     Logger.info("Processing Turn ##{state.turn_number} for #{Enum.count(state.active_sectors)} sectors...")
 
+    simtellus_client = Application.get_env(:mutonex_server, :simtellus_client, Engine.SimtellusClient)
+
     # For each active sector, fetch its state from the simulation
     Enum.each(state.active_sectors, fn sector ->
       Logger.info("Fetching planet state for sector at lat=#{sector.lat}, lon=#{sector.lon}")
 
-      case Engine.SimtellusClient.get_planet_state(sector.lat, sector.lon) do
+      case simtellus_client.get_planet_state(sector.lat, sector.lon) do
         {:ok, %{body: planet_data}} ->
           Logger.info("Successfully fetched data for sector #{sector.lat},#{sector.lon}: #{inspect(planet_data)}")
           # TODO: Do something with the data, e.g., update game state for this sector.
@@ -61,6 +73,11 @@ defmodule Engine.GameLoop do
     schedule_tick()
     new_state = %{state | turn_number: state.turn_number + 1}
     {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_call(:sync, _from, state) do
+    {:reply, :ok, state}
   end
 
   #

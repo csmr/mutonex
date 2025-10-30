@@ -21,5 +21,9 @@ Iteration
 * Contributions in repo flow from developers-branch to RC-branch to Master.
 * Bugs and problems go into ./res/docs/project/ISSUES.txt.
 
+Continuous Integration
+* The project uses a CI workflow to automatically test all changes.
+* Please see [.github/CI.md](.github/CI.md) for a detailed explanation of the CI jobs and how to run tests locally.
+
 * Project Owner/maintainer: CP
 
