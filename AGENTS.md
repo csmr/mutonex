@@ -1,7 +1,12 @@
-Mutonex implementation strives to reach standard of secure,  pragmatic, succinct and accessible.
-Mutonex is implemented with a functional style where possible, using Elixir, Ruby, and Deno JavaScript interpreters. For development and hosting purposes, each Mutonex component runs in a container defined in `compose.yaml`. The implementation minimizes coupling between modules and especially seeks to minimize coupling and dependencies in test scripts, which should be standalone and exist for each module.
+# AGENTS.md: Development Guidelines for AI Agents
 
-## Code format:
+Mutonex implementation strives to reach standard of secure,  pragmatic, succinct and accessible.
+
+Mutonex is implemented with a functional style where possible, using Elixir, Ruby, and Deno JavaScript interpreters. For development and hosting purposes, each Mutonex component runs in a container defined in `compose.yaml`.
+
+The implementation minimizes coupling between modules and especially seeks to minimize coupling and dependencies in test scripts, which should be standalone and exist for each module.
+
+## Code format
 1. Functional style code, mix-ins, modules.
 2. One thing functions, limit blocks to >11 lines.
 3. Expressions formatted one thing per line.
