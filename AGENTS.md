@@ -18,7 +18,7 @@ The implementation minimizes coupling between modules and especially seeks to mi
 To set up your development environment, run the following script:
 
 ```bash
-./agent_setup.sh
+src/scripts/agent_setup.sh
 ```
 
 This will install all the necessary dependencies and start the required services.
