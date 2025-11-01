@@ -25,3 +25,14 @@ To run the tests for the `gameserver`, navigate to the `src/gameserver` director
 ```bash
 mix test
 ```
+
+## Merge strategy for Google Jules
+
+Jules bots need to pay specific attention to merge strategy, in oreder to avoid 'detached HEAD' state:
+Avoid checking out specific commits or tags directly. So the git HEAD reference always points to a branch.
+Perform merge operations by first checking out the target branch and then merging changes from the source branch:
+```
+$ git checkout target-branch
+$ git merge source-branch
+```
+Merge conflicts must be solved carefully, ensuring the working or the newest changes are included. Then changes staged (git add) and committed.
