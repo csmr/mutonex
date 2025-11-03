@@ -1,4 +1,4 @@
-defmodule Gameserver.Engine.SparseOctree do
+defmodule Gameserver.Engine.LidarRayIntersections do
 
   @doc """
   Check if a ray intersects an AABB (axis-aligned bounding box).
