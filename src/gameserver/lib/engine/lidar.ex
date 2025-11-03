@@ -5,6 +5,7 @@ defmodule Gameserver.Engine.Lidar do
   """
 
   alias Gameserver.Engine.SparseOctree
+  alias Gameserver.Engine.LidarRayIntersections
 
   @doc """
   Cast LIDAR rays in spherical coordinates from an observer.
