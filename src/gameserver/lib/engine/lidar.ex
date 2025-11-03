@@ -31,7 +31,7 @@ defmodule Gameserver.Engine.Lidar do
         z: :math.cos(rad_polar)
       }
       {intersected?, position, distance} =
-        SparseOctree.ray_intersect(
+        LidarRayIntersections.ray_intersect(
           octree,
           %{origin: observer_pos, direction: direction},
           {false, nil, :infinity}
