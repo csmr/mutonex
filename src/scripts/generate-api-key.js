@@ -1,52 +1,50 @@
 import { crypto } from 'https://deno.land/std@0.152.0/crypto/mod.ts';
-import { join } from 'https://deno.land/std@0.152.0/path/mod.ts';
+import { join, dirname, fromFileUrl } from 'https://deno.land/std@0.152.0/path/mod.ts';
 import { existsSync } from 'node:fs';
 import { generateApiKeyHash } from "../webserver/hash-utils.ts";
 
-/* 
+/*
  * Generates unique API key
- * - key stored in `src/.env`.
+ * - key & hash stored in `/.env`.
  * - key-hash stored in `src/webclient/api-key-hash.ts`.
  */
 
 // config
+const rootPath = join(dirname(fromFileUrl(import.meta.url)), '..', '..');
 const cfg = {
-  LEN_BYTES:   16,
-  LF:          '\n',
-  ENV_PATH:    join(Deno.cwd(), '.env'),
-  CLIENT_PATH: join(Deno.cwd(), 'webclient', 'api-key-hash.ts'),
-  KEY_ENABLED: 'API_KEY_AUTH_ENABLE=true',
-  apiKeyStr:   'API_KEY=',
-  hashPrefix:  'export const API_KEY_HASH = '
-} 
-
-// from inStr, del rows with xStr, addStr row
-function cleanAndInsertRows(inStr, xStr, addStr) {
-  return inStr.split(cfg.LF).
-               filter(row => !row.includes(xStr) && row.length>=1).
-               concat(addStr).
-               join(cfg.LF);
+  LEN_BYTES:    16,
+  LF:           '\n',
+  ENV_PATH:     join(rootPath, '.env'),
+  CLIENT_PATH:  join(rootPath, 'src', 'webclient', 'api-key-hash.ts'),
+  KEY_ENABLED:  'API_KEY_AUTH_ENABLE=true',
+  API_KEY:      'API_KEY=',
+  API_KEY_HASH: 'API_KEY_HASH=',
+  CLIENT_HASH:  'export const API_KEY_HASH = '
 }
 
-// read .env into string 
-let inStr = '';
+// read .env into string
+let envContent = '';
 if (existsSync(cfg.ENV_PATH)) {
-    inStr = Deno.readTextFileSync(cfg.ENV_PATH);
+    envContent = Deno.readTextFileSync(cfg.ENV_PATH);
 }
 
-// If .env has auth enabled, key, otherwise empty
-const isEnabled = inStr.includes(cfg.KEY_ENABLED);
+// If .env has auth enabled, generate a key, otherwise use empty strings
+const isEnabled = envContent.includes(cfg.KEY_ENABLED);
 const apiKey = isEnabled ? crypto.randomUUID().replace(/-/g, '').slice(0, cfg.LEN_BYTES * 2) : '';
-
-// Convert hash buffer to hex string
 const hash = isEnabled ? await generateApiKeyHash(apiKey) : '';
 
-// Always write files
-Deno.writeTextFileSync(cfg.ENV_PATH, 
-    cleanAndInsertRows(inStr, cfg.apiKeyStr, `${cfg.apiKeyStr}${apiKey}`));
+// Filter out old key and hash values from the .env content
+const envLines = envContent.split(cfg.LF).
+                           filter(row => !row.startsWith(cfg.API_KEY) &&
+                                         !row.startsWith(cfg.API_KEY_HASH) &&
+                                         row.length > 0);
+// Add the new (or empty) key and hash values
+envLines.push(`${cfg.API_KEY}${apiKey}`);
+envLines.push(`${cfg.API_KEY_HASH}${hash}`);
 
-Deno.writeTextFileSync(cfg.CLIENT_PATH, 
-    `${cfg.hashPrefix}'${hash}';`);
+// Always write the updated .env and client-side hash files
+Deno.writeTextFileSync(cfg.ENV_PATH, envLines.join(cfg.LF) + cfg.LF);
+Deno.writeTextFileSync(cfg.CLIENT_PATH, `${cfg.CLIENT_HASH}'${hash}';`);
 
 const script = import.meta.url.replace('file://', '').split('/app/').pop();
 console.log(`[ ${script} ] Generated ${isEnabled ? 'new' : 'empty'} API key configuration.`);

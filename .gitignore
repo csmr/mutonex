@@ -1,3 +1,6 @@
+# Environment variables and secrets
+.env
+
 *.swp
 *.lock
 res/RAW/*
