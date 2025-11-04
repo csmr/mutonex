@@ -8,10 +8,8 @@ set -e
 if ! command -v elixir &> /dev/null
 then
     echo "Elixir not found. Installing..."
-    # This script was originally in src/gameserver, so the path to install.sh
-    # has been adjusted from ../../install.sh to ./install.sh to reflect its
-    # new location in src/scripts when run from the root directory.
-    ./install.sh elixir@1.18.4 otp@28.0.2
+    # The Elixir installation script is now located in src/scripts.
+    src/scripts/install-elixir.sh elixir@1.18.4 otp@28.0.2
     export PATH=$HOME/.elixir-install/installs/otp/28.0.2/bin:$PATH
     export PATH=$HOME/.elixir-install/installs/elixir/1.18.4-otp-27/bin:$PATH
 fi
