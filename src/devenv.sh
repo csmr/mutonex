@@ -13,6 +13,11 @@ fi
 
 echo "мμτοηεχ δεv εηv ιηιτ"
 
+# Create .env if it doesn't exist
+./scripts/init-dotenv.sh
+
+source ./.env
+
 # App path, logging & build conf
 source ./scripts/app.config.sh
 
