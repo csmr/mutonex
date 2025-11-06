@@ -1,5 +1,4 @@
-import { Application, Router } from "./deps.ts";
-import { Client } from "./deps.ts";
+import { Application, Client, Router } from "./deps.ts";
 import { API_KEY_HASH } from "../webclient/api-key-hash.ts";
 
 // apiKeyEnabled value via compose.yml, which got via devenv.sh loading simtellus/.env
@@ -8,7 +7,7 @@ const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';
 // API Key created at simtellus start,   
 const apiKeyHash = API_KEY_HASH; 
 
-const validateRequestApiKey = (ctx, next) => {
+const validateRequestApiKey = async (ctx) => {
   if (apiKeyEnabled) {
     console.log("validateRequestApiKey: request headers", ctx.request.headers);
     const requestApiKeyHash = ctx.request.headers.get("api-key-hash") || ctx.request.headers.get("API-KEY-HASH");
@@ -38,18 +37,9 @@ await client.connect();
 
 /// Routes ///
 
-router.get("/", validateRequestApiKey, (ctx) => {
-  if (apiKeyEnabled) {
-    console.log("__", ctx.request.headers.get("api-key-hash"));
-    console.log("__", apiKeyHash);
-    // api key hash from request
-    if (apiKeyHash !== ctx.request.headers.get("api-key-hash")) {
-      ctx.response.status = 401;
-      ctx.response.body = "Unauthorized";
-    return;
-    }
-  }
-  ctx.response.body = "Hello, world!!!";
+router.get("/", async (ctx) => {
+  // validateRequestApiKey 
+  ctx.response.body = "Hello, Exoplanet!!!";
 });
 
 // Add DB-diagnostic endpoint

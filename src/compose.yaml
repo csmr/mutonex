@@ -19,7 +19,8 @@ services:
       PLANET_SIM_URL: http://planet_sim:4567
       API_KEY_AUTH_ENABLE: ${API_KEY_AUTH_ENABLE}
     ports:
-      - "8888:8888"
+      # binds container port 8888 to only hosts 127.0.0.1 (localhost)
+      - "127.0.0.1:8888:8888"
 
   planet_sim:
     image: ruby:alpine
