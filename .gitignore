@@ -1,5 +1,3 @@
-.env
-
 *.swp
 *.lock
 res/RAW/*

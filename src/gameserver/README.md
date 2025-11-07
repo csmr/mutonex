@@ -13,6 +13,7 @@ Elixir project, with Phoenix and WebSockets.
 │   ├── engine
 │   │   ├── entities.ex         # Game entity data structures
 │   │   ├── game_session.ex     # Game session state management
+│   │   ├── lidar.ex            # Rendering style
 │   │   └── sparse_octree.ex    # Scene graph data structure
 │   └── net
 │       ├── endpoint.ex         # Phoenix endpoint configuration
@@ -23,9 +24,8 @@ Elixir project, with Phoenix and WebSockets.
 └── test
     ├── engine
     │   ├── entities_test.exs       # Tests for entities.ex
+    │   ├── lidar_test.ex
     │   └── sparse_octree_test.exs  # Tests for sparse_octree.ex
     ├── gameserver_test.exs         # Tests for the application
     └── test.run.sh                 # Script to run tests
 ```
-
-
