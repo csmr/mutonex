@@ -13,6 +13,9 @@ fi
 
 echo "мμτοηεχ δεv εηv ιηιτ"
 
+# Unique DB credentials
+./scripts/init-database-env.sh
+
 # Create .env if it doesn't exist
 ./scripts/init-dotenv.sh
 
@@ -28,14 +31,9 @@ mkdir -p "$DATA_HOME"
 # Contributors
 git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
 
-# Unique DB credentials
-./scripts/init-database-env.sh
-
 # Postgres DB .env & simtellus .env
 # - needed by compose.yaml 
 set -a
-. ./data/.env.postgres
-. ./.env
 . ./simtellus/.env
 set +a
 

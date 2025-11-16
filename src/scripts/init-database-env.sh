@@ -2,7 +2,7 @@
 
 source ./scripts/app.config.sh
 
-### Generate DB .env if no `./data/.env` ###
+### Generate DB .env if no `.env.postgres` ###
 ENV_PATH=$DATA_HOME/.env.postgres
 PGDATA=$DATA_HOME/postgres
 
@@ -25,7 +25,12 @@ POSTGRES_USER=muto_user_$(generate_random)
 POSTGRES_PASSWORD=muto_pass_$(generate_random)
 POSTGRES_DB=muto_db_$(generate_random)
 EOL
+
+    # Load the generated file
+    source "$ENV_PATH"
+
+    # Add DB url
+    echo "DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}" >> $ENV_PATH
 fi 
 
-# Load the environment variables from the generated file.  Crucial!
-source "$ENV_PATH"
+
