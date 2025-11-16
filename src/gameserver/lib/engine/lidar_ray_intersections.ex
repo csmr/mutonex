@@ -17,11 +17,11 @@ defmodule Gameserver.Engine.LidarRayIntersections do
         {inv_dir, t1, t2} =
           case axis do
             0 ->
-              {1.0 / direction.x, (bounds |> elem(0) - origin.x) / direction.x, (bounds |> elem(3) - origin.x) / direction.x}
+              {1.0 / direction.x, (elem(bounds, 0) - origin.x) / direction.x, (elem(bounds, 3) - origin.x) / direction.x}
             1 ->
-              {1.0 / direction.y, (bounds |> elem(1) - origin.y) / direction.y, (bounds |> elem(4) - origin.y) / direction.y}
+              {1.0 / direction.y, (elem(bounds, 1) - origin.y) / direction.y, (elem(bounds, 4) - origin.y) / direction.y}
             2 ->
-              {1.0 / direction.z, (bounds |> elem(2) - origin.z) / direction.z, (bounds |> elem(5) - origin.z) / direction.z}
+              {1.0 / direction.z, (elem(bounds, 2) - origin.z) / direction.z, (elem(bounds, 5) - origin.z) / direction.z}
           end
 
         t1 = min(t1, t2)
@@ -54,7 +54,7 @@ defmodule Gameserver.Engine.LidarRayIntersections do
   ## Returns
     - Updated `closest_so_far` tuple.
   """
-  def ray_intersect(%__MODULE__{} = node, %{origin: origin, direction: direction}, {false, _, _} = closest_so_far) do
+  def ray_intersect(node, %{origin: origin, direction: direction}, {false, _, _} = closest_so_far) do
     {intersects_bbox?, _distance} = ray_intersects_aabb?(origin, direction, node.bounds)
 
     if not intersects_bbox? do
