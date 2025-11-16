@@ -12,8 +12,7 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - ./data/.env.postgres
-      - ./.env
+      - ../.env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PLANET_SIM_URL: http://planet_sim:4567
@@ -24,7 +23,7 @@ services:
   planet_sim:
     image: ruby:alpine
     env_file:
-      - ./.env
+      - ../.env
       - ./simtellus/.env
     volumes:
       - ./simtellus:/app
@@ -35,14 +34,12 @@ services:
   postgres:
     image: postgres:latest
     container_name: mutonpostgres
-    env_file:
-      - ./data/.env.postgres
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql
     ports:
       - "5432:5432"
     healthcheck:
@@ -76,8 +73,7 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - ./data/.env.postgres
-      - ./.env
+      - ../.env
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PLANET_SIM_URL: http://planet_sim:4567 
