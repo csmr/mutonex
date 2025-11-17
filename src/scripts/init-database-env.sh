@@ -32,5 +32,3 @@ EOL
     # Add DB url
     echo "DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}" >> $ENV_PATH
 fi 
-
-
