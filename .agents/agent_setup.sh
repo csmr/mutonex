@@ -3,7 +3,7 @@
 # This script is intended to be used by AI agents to set up the
 # development environment and run tests.
 set -e # exit immediate if command return non-zero status
-INSTALLER=".agents/install-elixir.sh"
+INSTALLER=".agents/install_elixir.sh"
 
 # 1. Install Elixir and Hex
 if ! command -v elixir &> /dev/null

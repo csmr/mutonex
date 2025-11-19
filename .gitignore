@@ -5,8 +5,9 @@ temp/*
 src/data/postgres
 src/data/.env.postgres
 src/dist
+.env
 src/.env
 src/simtellus/.env
-src/client/api-key-hash.ts
+src/webclient/api-key-hash.ts
 src/gameserver/deps
 src/gameserver/_build

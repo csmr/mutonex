@@ -1,14 +1,36 @@
-import { Application } from "./deps.ts";
-import { API_KEY_HASH } from './api-key-hash.ts';
+import { ViewManager } from "./ViewManager.ts";
+import { GlobeView } from "./GlobeView.ts";
+import { GameStateProvider } from "./GameStateProvider.ts";
 
-// Example function to initialize the game UI
-function initGameUI() {
-    const appElement = document.getElementById("app");
-    if (appElement) {
-        appElement.innerHTML = "<h1>Welcome to the Game!</h1>";
-        console.log(`Client key hash: ${API_KEY_HASH}`);
-    }
+async function main() {
+  const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
+  if (!canvas) {
+    console.error('Main canvas not found');
+    return;
+  }
+
+  // Fetch the geographical data
+  const geoDataResponse = await fetch('./assets/countries.topo.json');
+  const geoData = await geoDataResponse.json();
+
+  // Setup the main components
+  const viewManager = new ViewManager(canvas);
+  const globeView = new GlobeView(geoData, canvas);
+  viewManager.setActiveView(globeView);
+
+  // Setup the game state provider
+  const gameStateProvider = new GameStateProvider((gameState) => {
+    globeView.updateGameState(gameState);
+  });
+  gameStateProvider.start();
+
+  // Wire up the "Next Turn" button
+  const nextTurnBtn = document.getElementById("next-turn-btn");
+  if (nextTurnBtn) {
+    nextTurnBtn.addEventListener("click", () => {
+      gameStateProvider.requestNewGameState();
+    });
+  }
 }
 
-// Initialize the game UI when the page loads
-window.addEventListener("load", initGameUI);
+window.addEventListener("DOMContentLoaded", main);

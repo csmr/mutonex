@@ -32,6 +32,26 @@ defmodule Mutonex.Net.GameChannel do
     {:noreply, socket}
   end
 
+  def handle_in("get_game_state", _payload, socket) do
+    push(socket, "game_state", %{
+      gameTime: 720,
+      resources: %{
+        "Player1" => %{energy: 1000, materials: 500},
+        "Player2" => %{energy: 1000, materials: 500}
+      },
+      units: [
+        %{id: "u1", owner: "Player1", lat: 40.7128, lon: -74.0060},
+        %{id: "u2", owner: "Player2", lat: 34.0522, lon: -118.2437}
+      ],
+      sectors: %{
+        "lat_40_lon_-70" => %{id: "lat_40_lon_-70", owner: "Player1"},
+        "lat_30_lon_-120" => %{id: "lat_30_lon_-120", owner: "Player2"},
+        "lat_50_lon_0" => %{id: "lat_50_lon_0", owner: "Player1"}
+      }
+    })
+    {:noreply, socket}
+  end
+
   # --- Private Helpers ---
 
   defp get_sector_id(socket) do

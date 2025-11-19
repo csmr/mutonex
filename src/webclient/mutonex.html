@@ -4,10 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>M U T O N E X</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #main-canvas { display: block; width: 100vw; height: 100vh; }
+    #next-turn-btn { position: absolute; top: 10px; left: 10px; z-index: 100; }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
+  <canvas id="main-canvas"></canvas>
+  <button id="next-turn-btn">Next Turn</button>
   <script type="module" src="main.js"></script>
   <footer><contribs/></footer>
 </body>
