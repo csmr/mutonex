@@ -19,13 +19,13 @@ if [ ! -f $ENV_PATH ]; then
         read -p "Confirm db credential reset? [y/N] " confirm
         [[ $confirm == [yY] ]] || exit 1
     fi    
-    log "Generating $ENV_PATH..."
     cat > $ENV_PATH << EOL
 POSTGRES_USER=muto_user_$(generate_random)
 POSTGRES_PASSWORD=$(generate_random)$(generate_random)
 POSTGRES_DB=muto_db_$(generate_random)
 EOL
 
+    log "Generated $ENV_PATH."
     # Load the generated file
     source "$ENV_PATH"
 

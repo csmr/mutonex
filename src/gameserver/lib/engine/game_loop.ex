@@ -61,10 +61,13 @@ defmodule Engine.GameLoop do
       Logger.info("Fetching planet state for sector at lat=#{sector.lat}, lon=#{sector.lon}")
 
       case simtellus_client.get_planet_state(sector.lat, sector.lon) do
-        {:ok, %{body: planet_data}} ->
-          Logger.info("Successfully fetched data for sector #{sector.lat},#{sector.lon}: #{inspect(planet_data)}")
+        {:ok, %Tesla.Env{status: status, body: body}} when status in 200..299 ->
+          Logger.info("Successfully fetched data for sector #{sector.lat},#{sector.lon}: #{inspect(body)}")
           # TODO: Do something with the data, e.g., update game state for this sector.
-
+      
+        {:ok, %Tesla.Env{status: status, body: body}} ->
+          Logger.error("Failed to fetch planet state for sector #{sector.lat},#{sector.lon}: Received status #{status} with body: #{inspect(body)}")
+ 
         {:error, reason} ->
           Logger.error("Failed to fetch planet state for sector #{sector.lat},#{sector.lon}: #{inspect(reason)}")
       end

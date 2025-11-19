@@ -29,3 +29,14 @@ Elixir project, with Phoenix and WebSockets.
     ├── gameserver_test.exs         # Tests for the application
     └── test.run.sh                 # Script to run tests
 ```
+
+
+### Test run in a container
+
+To run the tests inside the gameserver container, use:
+
+```
+$ docker-compose run gameserver mix test
+
+```
+

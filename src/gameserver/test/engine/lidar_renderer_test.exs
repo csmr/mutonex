@@ -12,8 +12,8 @@ defmodule Gameserver.Engine.LidarRendererTest do
 
     assert render_data.type == :lidar_render
     assert length(render_data.arcs) == 1
-    assert render_data.arcs[0].azimuth == 45.0
-    assert length(render_data.arcs[0].points) == 2
+    assert hd(render_data.arcs).azimuth == 45.0
+    assert length(hd(render_data.arcs).points) == 2
   end
 
   test "render returns horizontal arcs for :horizontal_arcs type" do
@@ -25,7 +25,7 @@ defmodule Gameserver.Engine.LidarRendererTest do
 
     assert render_data.type == :lidar_render
     assert length(render_data.arcs) == 1
-    assert render_data.arcs[0].polar == 45.0
+    assert hd(render_data.arcs).polar == 45.0
   end
 
   test "render returns grid for :grid type" do

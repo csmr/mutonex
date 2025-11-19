@@ -22,3 +22,8 @@ if [ ! -f $CRED_PATH ]; then
 fi
 cat $CRED_PATH >> $ENV_PATH
 log "Appended $CRED_PATH to $ENV_PATH."
+
+### To run container as current user
+echo "UID=$(id -u)" >> $ENV_PATH
+echo "GID=$(id -g)" >> $ENV_PATH
+log "Appended current user UID & GID to $ENV_PATH."

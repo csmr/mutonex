@@ -3,7 +3,7 @@ defmodule Engine.SimtellusClient do
   use Tesla
 
   # Build the middleware stack dynamically.
-  plug Tesla.Middleware.BaseUrl, System.get_env("PLANET_SIM_URL") || "http://localhost:4567"
+  plug Tesla.Middleware.BaseUrl, System.get_env("PLANET_SIM_URL") || "http://planet_sim:4567"
   plug Tesla.Middleware.JSON
 
   # Conditionally add API key authentication if the key is present in the environment.

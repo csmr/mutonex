@@ -1,15 +1,13 @@
 defmodule Engine.GameLoopTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
   import Mox
 
   Mox.defmock(SimtellusClientMock, for: Engine.SimtellusClientBehaviour)
 
-  setup do
-    Mox.verify_on_exit!(self())
+  setup_all do
     Application.put_env(:mutonex_server, :simtellus_client, SimtellusClientMock)
     {:ok, pid} = start_supervised({Engine.GameLoop, [start_ticking: false]})
-    Mox.allow(SimtellusClientMock, self(), pid)
     on_exit(fn -> Process.exit(pid, :kill) end)
     :ok
   end
@@ -19,8 +17,11 @@ defmodule Engine.GameLoopTest do
   end
 
   test "game loop fetches planet state for all active sectors on tick" do
+    pid = Process.whereis(Engine.GameLoop)
+    Mox.allow(SimtellusClientMock, self(), pid)
+
     expect(SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
-      {:ok, %{body: %{"temperature" => 25.0}}}
+      {:ok, %Tesla.Env{status: 200, body: %{"temperature" => 25.0}}}
     end)
 
     pid = Process.whereis(Engine.GameLoop)
@@ -29,11 +30,12 @@ defmodule Engine.GameLoopTest do
   end
 
   test "game loop logs an error when simtellus call fails" do
+    pid = Process.whereis(Engine.GameLoop)
+    Mox.allow(SimtellusClientMock, self(), pid)
+
     expect(SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
       {:error, "a network error"}
-    end)
-
-    pid = Process.whereis(Engine.GameLoop)
+      end)
 
     # Capture the log output to verify the error is logged
     log_output =
@@ -44,5 +46,25 @@ defmodule Engine.GameLoopTest do
 
     # Assert that the error message was logged
     assert log_output =~ "Failed to fetch planet state"
+  end
+
+  test "game loop logs an error when simtellus returns a non-200 response" do
+    pid = Process.whereis(Engine.GameLoop)
+    Mox.allow(SimtellusClientMock, self(), pid)
+
+    expect(SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
+      {:ok, %Tesla.Env{status: 403, body: "Host not permitted"}}
+      end)
+
+    # Capture the log output to verify the error is logged
+    log_output =
+      ExUnit.CaptureLog.capture_log(fn ->
+        send(pid, :tick)
+        Engine.GameLoop.sync(pid)
+      end)
+
+    # Assert that the error message was logged
+    assert log_output =~ "Failed to fetch planet state"
+    assert log_output =~ "Received status 403"
   end
 end
