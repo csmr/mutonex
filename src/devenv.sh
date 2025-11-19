@@ -13,28 +13,17 @@ fi
 
 echo "мμτοηεχ δεv εηv ιηιτ"
 
-# Unique DB credentials
+# App path, logging & build conf
+source ./scripts/app.config.sh
+
+# Contributors
+mkdir -p "$RUNTIME_DIR"
+git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
+
+# Unique DB credentials .env.postgres
 ./scripts/init-database-env.sh
 
 # Create .env if it doesn't exist
 ./scripts/init-dotenv.sh
-
-source ./.env
-
-# App path, logging & build conf
-source ./scripts/app.config.sh
-
-# Create directories if they do not exist
-mkdir -p "$RUNTIME_DIR"
-mkdir -p "$DATA_HOME"
-
-# Contributors
-git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
-
-# Postgres DB .env & simtellus .env
-# - needed by compose.yaml 
-set -a
-. ./simtellus/.env
-set +a
 
 docker-compose up
