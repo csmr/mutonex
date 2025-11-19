@@ -7,12 +7,15 @@
   <style>
     body { margin: 0; overflow: hidden; }
     #main-canvas { display: block; width: 100vw; height: 100vh; }
-    #next-turn-btn { position: absolute; top: 10px; left: 10px; z-index: 100; }
+    .view-controls { position: absolute; top: 10px; left: 10px; z-index: 100; }
   </style>
 </head>
 <body>
   <canvas id="main-canvas"></canvas>
-  <button id="next-turn-btn">Next Turn</button>
+  <div class="view-controls">
+    <button id="next-turn-btn">Next Turn</button>
+    <button id="toggle-view-btn">Toggle View</button>
+  </div>
   <script type="module" src="main.js"></script>
   <footer><contribs/></footer>
 </body>

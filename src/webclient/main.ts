@@ -1,5 +1,6 @@
 import { ViewManager } from "./ViewManager.ts";
 import { GlobeView } from "./GlobeView.ts";
+import { LidarView } from "./LidarView.ts";
 import { GameStateProvider } from "./GameStateProvider.ts";
 
 async function main() {
@@ -9,26 +10,56 @@ async function main() {
     return;
   }
 
-  // Fetch the geographical data
+  // Fetch the geographical data for the GlobeView
   const geoDataResponse = await fetch('./assets/countries.topo.json');
   const geoData = await geoDataResponse.json();
 
   // Setup the main components
   const viewManager = new ViewManager(canvas);
   const globeView = new GlobeView(geoData, canvas);
-  viewManager.setActiveView(globeView);
+  const lidarView = new LidarView(canvas);
 
-  // Setup the game state provider
-  const gameStateProvider = new GameStateProvider((gameState) => {
-    globeView.updateGameState(gameState);
-  });
-  gameStateProvider.start();
+  // Set the initial view
+  viewManager.setActiveView(lidarView);
 
-  // Wire up the "Next Turn" button
-  const nextTurnBtn = document.getElementById("next-turn-btn");
-  if (nextTurnBtn) {
-    nextTurnBtn.addEventListener("click", () => {
-      gameStateProvider.requestNewGameState();
+  // Setup the game state provider, handling connection errors gracefully
+  try {
+    const gameStateProvider = new GameStateProvider((gameState) => {
+      // This callback is only used by GlobeView.
+      if (viewManager.getActiveView() === globeView) {
+        globeView.updateGameState(gameState);
+      }
+    });
+    gameStateProvider.start();
+
+    // Wire up the "Next Turn" button only if the connection is successful
+    const nextTurnBtn = document.getElementById("next-turn-btn");
+    if (nextTurnBtn) {
+      nextTurnBtn.addEventListener("click", () => {
+        // Only request new state if the GlobeView is active
+        if (viewManager.getActiveView() === globeView) {
+          gameStateProvider.requestNewGameState();
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Could not connect to game server:", error);
+    // Hide the "Next Turn" button if the connection fails
+    const nextTurnBtn = document.getElementById("next-turn-btn");
+    if (nextTurnBtn) {
+      nextTurnBtn.style.display = "none";
+    }
+  }
+
+  // Wire up the "Toggle View" button
+  const toggleViewBtn = document.getElementById("toggle-view-btn");
+  if (toggleViewBtn) {
+    toggleViewBtn.addEventListener("click", () => {
+      if (viewManager.getActiveView() === globeView) {
+        viewManager.setActiveView(lidarView);
+      } else {
+        viewManager.setActiveView(globeView);
+      }
     });
   }
 }
