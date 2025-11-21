@@ -1,10 +1,12 @@
 defmodule Engine.SimtellusClient do
   @behaviour Engine.SimtellusClientBehaviour
   use Tesla
+  require Logger
 
   # Build the middleware stack dynamically.
   plug Tesla.Middleware.BaseUrl, System.get_env("PLANET_SIM_URL") || "http://planet_sim:4567"
   plug Tesla.Middleware.JSON
+  plug Tesla.Middleware.Headers, [{"Host", "planet_sim"}]
 
   # Conditionally add API key authentication if the key is present in the environment.
   # This makes the client flexible for different deployment environments.
@@ -22,8 +24,20 @@ defmodule Engine.SimtellusClient do
   ## Returns
     - `{:ok, response}` where `response.body` is the parsed JSON map.
     - `{:error, reason}` on failure.
-  """
   def get_planet_state(lat, lon) do
     get("/planet_state", query: [lat: lat, lon: lon])
+  end
+
+  """
+
+  def get_planet_state(lat, lon) do
+    case get("/planet_state", query: [lat: lat, lon: lon]) do
+      {:ok, %Tesla.Env{status: status, body: body, headers: headers}} ->
+      Logger.info("Tesla response: status=#{status}, body=#{inspect(body)}, headers=#{inspect(headers)}")
+      {:ok, body}
+      {:error, reason} ->
+      Logger.error("Tesla error: #{inspect(reason)}")
+      {:error, reason}
+    end
   end
 end

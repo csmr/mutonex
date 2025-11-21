@@ -9,9 +9,17 @@ module Server
     # Set the bind option to listen on all network interfaces
     set :bind, '0.0.0.0'
 
+    # 🌟 NEW FIX: Disable Host Authorization for internal Docker network communication.
+    # Setting permitted_hosts to an empty array effectively bypasses the check.
+    set :host_authorization, { permitted_hosts: [] }
+
+    # Define allowed hosts as a constant or class variable
+    ALLOWED_HOSTS = ['planet_sim', 'localhost', '127.0.0.1'].freeze
+
     # validate API key
     # - can be disabled in simtellus/.env
     before do
+      log! "BEFORE: Request: #{request.request_method} #{request.path}, Host: #{request.host}, IP: #{request.ip}"
       return if ENV['API_KEY_AUTH_ENABLE'] != 'true'
 
       api_key = request.env['HTTP_X_API_KEY'] || params['api_key']
@@ -33,6 +41,10 @@ module Server
       end
 
       state.to_json
+    end
+
+    after do
+      log! "AFTER: Incoming Host header: #{request.host}"
     end
 
     post '/store_artifact' do
