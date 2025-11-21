@@ -34,7 +34,7 @@ defmodule Engine.GameLoop do
     active_sectors = [
       %{lat: 0, lon: 0},
       %{lat: 51.5, lon: -0.12}, # London
-      %{lat: 35.6, lon: 139.6}   # Tokyo
+      %{lat: 35.6, lon: 139.6}  # Tokyo
     ]
 
     state = %{
@@ -54,6 +54,7 @@ defmodule Engine.GameLoop do
   def handle_info(:tick, state) do
     Logger.info("Processing Turn ##{state.turn_number} for #{Enum.count(state.active_sectors)} sectors...")
 
+
     simtellus_client = Application.get_env(:mutonex_server, :simtellus_client, Engine.SimtellusClient)
 
     # For each active sector, fetch its state from the simulation
@@ -61,13 +62,17 @@ defmodule Engine.GameLoop do
       Logger.info("Fetching planet state for sector at lat=#{sector.lat}, lon=#{sector.lon}")
 
       case simtellus_client.get_planet_state(sector.lat, sector.lon) do
-        {:ok, %Tesla.Env{status: status, body: body}} when status in 200..299 ->
-          Logger.info("Successfully fetched data for sector #{sector.lat},#{sector.lon}: #{inspect(body)}")
+        # 🌟 FIX: Match the simplified result: {:ok, decoded_map}
+        {:ok, planet_state_map} when is_map(planet_state_map) ->
+          Logger.info("Successfully fetched and decoded data for sector #{sector.lat},#{sector.lon}: #{inspect(planet_state_map)}")
+          
           # TODO: Do something with the data, e.g., update game state for this sector.
-      
-        {:ok, %Tesla.Env{status: status, body: body}} ->
-          Logger.error("Failed to fetch planet state for sector #{sector.lat},#{sector.lon}: Received status #{status} with body: #{inspect(body)}")
- 
+          # Example of accessing the decoded map:
+          # current_temp = planet_state_map["temperature"]
+          # current_energy = planet_state_map["energy"]
+          # Logger.info("Sector #{sector.lat},#{sector.lon} has temp: #{current_temp}")
+
+        # Match on all error cases returned by the client (non-2xx status, network errors, etc.)
         {:error, reason} ->
           Logger.error("Failed to fetch planet state for sector #{sector.lat},#{sector.lon}: #{inspect(reason)}")
       end
