@@ -2,7 +2,7 @@ defmodule Engine.GameLoop do
   use GenServer
   require Logger
 
-  # Turn interval in milliseconds. Defaulting to 20 seconds.
+  # Turn interval in milliseconds.
   @turn_interval_ms 20 * 1000
 
   #
@@ -10,14 +10,16 @@ defmodule Engine.GameLoop do
   #
 
   @doc """
-  Starts the game loop GenServer. It's named globally via the module name.
+  Starts the game loop GenServer.
   """
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    GenServer.start_link(__MODULE__, opts,
+      name: __MODULE__
+    )
   end
 
   @doc """
-  A synchronous call for testing purposes to ensure messages have been processed.
+  Synchronous call for testing purposes.
   """
   def sync(pid) do
     GenServer.call(pid, :sync)
@@ -29,8 +31,7 @@ defmodule Engine.GameLoop do
 
   @impl true
   def init(opts) do
-    # For now, we'll use a hardcoded list of sectors.
-    # In a real app, this would be managed dynamically.
+    # Hardcoded sectors for PoC.
     active_sectors = [
       %{lat: 0, lon: 0},
       %{lat: 51.5, lon: -0.12}, # London
@@ -43,7 +44,10 @@ defmodule Engine.GameLoop do
     }
 
     if Keyword.get(opts, :start_ticking, true) do
-      Logger.info("GameLoop started. Turn 1 begins in #{@turn_interval_ms / 1000} seconds.")
+      Logger.info(
+        "GameLoop started. Turn 1 begins in " <>
+          "#{:erlang.div(@turn_interval_ms, 1000)} seconds."
+      )
       schedule_tick()
     end
 
@@ -52,34 +56,33 @@ defmodule Engine.GameLoop do
 
   @impl true
   def handle_info(:tick, state) do
-    Logger.info("Processing Turn ##{state.turn_number} for #{Enum.count(state.active_sectors)} sectors...")
+    Logger.info(
+      "Processing Turn ##{state.turn_number} for " <>
+        "#{Enum.count(state.active_sectors)} sectors..."
+    )
 
+    # Resolve client dynamically.
+    client =
+      Application.get_env(
+        :mutonex_server,
+        :simtellus_client,
+        Engine.SimtellusClient
+      )
 
-    simtellus_client = Application.get_env(:mutonex_server, :simtellus_client, Engine.SimtellusClient)
-
-    # For each active sector, fetch its state from the simulation
-    Enum.each(state.active_sectors, fn sector ->
-      Logger.info("Fetching planet state for sector at lat=#{sector.lat}, lon=#{sector.lon}")
-
-      case simtellus_client.get_planet_state(sector.lat, sector.lon) do
-        # 🌟 FIX: Match the simplified result: {:ok, decoded_map}
-        {:ok, planet_state_map} when is_map(planet_state_map) ->
-          Logger.info("Successfully fetched and decoded data for sector #{sector.lat},#{sector.lon}: #{inspect(planet_state_map)}")
-          
-          # TODO: Do something with the data, e.g., update game state for this sector.
-          # Example of accessing the decoded map:
-          # current_temp = planet_state_map["temperature"]
-          # current_energy = planet_state_map["energy"]
-          # Logger.info("Sector #{sector.lat},#{sector.lon} has temp: #{current_temp}")
-
-        # Match on all error cases returned by the client (non-2xx status, network errors, etc.)
-        {:error, reason} ->
-          Logger.error("Failed to fetch planet state for sector #{sector.lat},#{sector.lon}: #{inspect(reason)}")
-      end
-    end)
+    # Process all sectors using the abstracted function.
+    Enum.each(
+      state.active_sectors,
+      &process_sector(client, &1)
+    )
 
     schedule_tick()
-    new_state = %{state | turn_number: state.turn_number + 1}
+
+    new_state =
+      %{
+        state
+        | turn_number: state.turn_number + 1
+      }
+
     {:noreply, new_state}
   end
 
@@ -92,7 +95,41 @@ defmodule Engine.GameLoop do
   # Private helpers
   #
 
+  @doc """
+  Calls the Simtellus client for a single sector and logs 
+  the result.
+  """
+  defp process_sector(client, sector) do
+    lat = sector.lat
+    lon = sector.lon
+
+    Logger.info(
+      "Fetching planet state for sector at " <>
+        "lat=#{lat}, lon=#{lon}"
+    )
+
+    case client.get_planet_state(lat, lon) do
+      {:ok, planet_state_map} when is_map(planet_state_map) ->
+        Logger.info(
+          "Successfully fetched and decoded data for sector " <>
+            "#{lat},#{lon}: #{inspect(planet_state_map)}"
+        )
+        # TODO: Game logic for updating state.
+        :ok # Return value for Enum.each
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to fetch planet state for sector " <>
+            "#{lat},#{lon}: #{inspect(reason)}"
+        )
+    end
+  end
+
   defp schedule_tick() do
-    Process.send_after(self(), :tick, @turn_interval_ms)
+    Process.send_after(
+      self(),
+      :tick,
+      @turn_interval_ms
+    )
   end
 end
