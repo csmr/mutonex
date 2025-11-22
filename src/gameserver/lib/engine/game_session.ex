@@ -1,7 +1,7 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
 
-  alias Gameserver.Engine.SparseOctree
+  alias Mutonex.Engine.SparseOctree
 
   # --- Client API ---
 
@@ -44,7 +44,7 @@ defmodule Mutonex.Engine.GameSession do
     new_state = %{state | scene_graph: updated_scene_graph}
 
     # TODO: Here we would broadcast the state change to all subscribed clients
-    # Mutonex.PubSub.broadcast("game:" <> state.sector_id, "game_state_update", new_state)
+    # PubSub.broadcast("game:" <> state.sector_id, "game_state_update", new_state)
 
     {:noreply, new_state}
   end

@@ -1,7 +1,7 @@
-defmodule Net.UserSocket do
+defmodule Mutonex.Net.UserSocket do
   use Phoenix.Socket
 
-  channel "game:*", Net.GameChannel
+  channel "game:*", Mutonex.Net.GameChannel
 
   def connect(%{"token" => token}, socket) do
     case verify_token(token) do

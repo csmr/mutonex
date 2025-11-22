@@ -1,5 +1,5 @@
-defmodule Gameserver.Engine.SparseOctreeTest do
-  alias Gameserver.Engine.SparseOctree
+defmodule Mutonex.Engine.SparseOctreeTest do
+  alias Mutonex.Engine.SparseOctree
 
   defp test(description, test_fun) do
     if test_fun.() do
@@ -51,4 +51,4 @@ defmodule Gameserver.Engine.SparseOctreeTest do
 end
 
 # Run the tests
-Gameserver.Engine.SparseOctreeTest.run_all_tests()
+Mutonex.Engine.SparseOctreeTest.run_all_tests()

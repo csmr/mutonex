@@ -1,21 +1,41 @@
 // Defines the structure of the game state data.
-export interface Unit {
-    id: string;
-    owner: string; // 'Player1', 'Player2', etc.
-    lat: number;
-    lon: number;
+export interface Position {
+  x: number;
+  y: number;
+  z: number;
 }
 
-export interface Sector {
-    id: string; // e.g., "lat_10_lon_30"
-    owner: string;
+export interface Unit {
+  id: string;
+  type: string; // "head" | "chief" | "follower"
+  position: Position;
+  society_id: string;
+}
+
+export interface Building {
+  id: string;
+  type: string; // "power_structure" | "relic"
+  position: Position;
+  society_id: string;
+}
+
+export interface Society {
+  id: string;
+  player_id: string;
+}
+
+export interface Mineral {
+  id: string;
+  type: string; // "iron" | "potassium"
+  position: Position;
 }
 
 export interface GameState {
-    gameTime: number;
-    resources: Record<string, any>; // e.g. { Player1: { energy: 100 }, Player2: { ... } }
-    units: Unit[];
-    sectors: Record<string, Sector>;
+  game_time: number;
+  units: Unit[];
+  buildings: Building[];
+  societies: Society[];
+  minerals: Mineral[];
 }
 
 type UpdateCallback = (gameState: GameState) => void;

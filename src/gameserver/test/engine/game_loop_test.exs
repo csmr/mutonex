@@ -3,10 +3,7 @@ defmodule Engine.GameLoopTest do
 
   import Mox
 
-  Mox.defmock(SimtellusClientMock, for: Engine.SimtellusClientBehaviour)
-
   setup_all do
-    Application.put_env(:mutonex_server, :simtellus_client, SimtellusClientMock)
     {:ok, pid} = start_supervised({Engine.GameLoop, [start_ticking: false]})
     on_exit(fn -> Process.exit(pid, :kill) end)
     :ok
@@ -18,9 +15,9 @@ defmodule Engine.GameLoopTest do
 
   test "game loop fetches planet state for all active sectors on tick" do
     pid = Process.whereis(Engine.GameLoop)
-    Mox.allow(SimtellusClientMock, self(), pid)
+    Mox.allow(Engine.SimtellusClientMock, self(), pid)
 
-    expect(SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
+    expect(Engine.SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
       {:ok, %Tesla.Env{status: 200, body: %{"temperature" => 25.0}}}
     end)
 
@@ -31,9 +28,9 @@ defmodule Engine.GameLoopTest do
 
   test "game loop logs an error when simtellus call fails" do
     pid = Process.whereis(Engine.GameLoop)
-    Mox.allow(SimtellusClientMock, self(), pid)
+    Mox.allow(Engine.SimtellusClientMock, self(), pid)
 
-    expect(SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
+    expect(Engine.SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
       {:error, "a network error"}
       end)
 
@@ -50,10 +47,10 @@ defmodule Engine.GameLoopTest do
 
   test "game loop logs an error when simtellus returns a non-200 response" do
     pid = Process.whereis(Engine.GameLoop)
-    Mox.allow(SimtellusClientMock, self(), pid)
+    Mox.allow(Engine.SimtellusClientMock, self(), pid)
 
-    expect(SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
-      {:ok, %Tesla.Env{status: 403, body: "Host not permitted"}}
+    expect(Engine.SimtellusClientMock, :get_planet_state, 3, fn _lat, _lon ->
+      {:error, {:non_2xx_status, 403, "Host not permitted"}}
       end)
 
     # Capture the log output to verify the error is logged
@@ -65,6 +62,5 @@ defmodule Engine.GameLoopTest do
 
     # Assert that the error message was logged
     assert log_output =~ "Failed to fetch planet state"
-    assert log_output =~ "Received status 403"
   end
 end

@@ -8,7 +8,8 @@ defmodule Mutonex.Game.MixProject do
       elixir: "~> 1.14",
       target: :node,
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      config_path: "config/config.exs"
     ]
   end
 

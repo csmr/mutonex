@@ -1,4 +1,4 @@
-defmodule Net.Plugs.Auth do
+defmodule Mutonex.Net.Plugs.Auth do
   import Plug.Conn
 
   # This function is called when the plug is initialized in the endpoint.

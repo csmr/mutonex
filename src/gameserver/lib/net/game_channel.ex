@@ -11,7 +11,7 @@ defmodule Mutonex.Net.GameChannel do
     {:ok, _pid} = start_game_session(sector_id)
 
     # Subscribe to broadcasts for this game session
-    # Mutonex.PubSub.subscribe("game:#{sector_id}")
+    # PubSub.subscribe("game:#{sector_id}")
 
     {:ok, socket}
   end
@@ -33,22 +33,45 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   def handle_in("get_game_state", _payload, socket) do
-    push(socket, "game_state", %{
-      gameTime: 720,
-      resources: %{
-        "Player1" => %{energy: 1000, materials: 500},
-        "Player2" => %{energy: 1000, materials: 500}
-      },
+    # Hardcoded game state for the PoC
+    game_state = %Mutonex.Engine.Entities.GameState{
+      game_time: 720,
       units: [
-        %{id: "u1", owner: "Player1", lat: 40.7128, lon: -74.0060},
-        %{id: "u2", owner: "Player2", lat: 34.0522, lon: -118.2437}
+        %Mutonex.Engine.Entities.Unit{
+          id: "u1",
+          type: :head,
+          position: %{x: 40.7128, y: -74.0060, z: 0},
+          society_id: "s1"
+        },
+        %Mutonex.Engine.Entities.Unit{
+          id: "u2",
+          type: :chief,
+          position: %{x: 34.0522, y: -118.2437, z: 0},
+          society_id: "s2"
+        }
       ],
-      sectors: %{
-        "lat_40_lon_-70" => %{id: "lat_40_lon_-70", owner: "Player1"},
-        "lat_30_lon_-120" => %{id: "lat_30_lon_-120", owner: "Player2"},
-        "lat_50_lon_0" => %{id: "lat_50_lon_0", owner: "Player1"}
-      }
-    })
+      buildings: [
+        %Mutonex.Engine.Entities.Building{
+          id: "b1",
+          type: :power_structure,
+          position: %{x: 40.7128, y: -74.0060, z: 0},
+          society_id: "s1"
+        }
+      ],
+      societies: [
+        %Mutonex.Engine.Entities.Society{id: "s1", player_id: "player1"},
+        %Mutonex.Engine.Entities.Society{id: "s2", player_id: "player2"}
+      ],
+      minerals: [
+        %Mutonex.Engine.Entities.Mineral{
+          id: "m1",
+          type: :iron,
+          position: %{x: 51.5074, y: -0.1278, z: 0}
+        }
+      ]
+    }
+
+    push(socket, "game_state", game_state)
     {:noreply, socket}
   end
 
@@ -61,13 +84,17 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   defp start_game_session(sector_id) do
-    # Use the Registry to avoid starting duplicate processes.
-    # If a process is already registered for this sector_id, it returns its pid.
-    # If not, it starts a new one via our DynamicSupervisor.
-    Registry.find_or_create(Mutonex.GameRegistry, sector_id, fn ->
+    # Use via_tuple for robustly finding or starting the GenServer.
+    # This is the recommended approach for dynamically supervised processes.
+    via_tuple = {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+
+    # Check if the process is already alive.
+    if GenServer.whereis(via_tuple) do
+      {:ok, via_tuple}
+    else
+      # If not, start it.
       spec = {GameSession, sector_id}
-      {:ok, pid} = DynamicSupervisor.start_child(Mutonex.GameSessionSupervisor, spec)
-      {:ok, pid}
-    end)
+      DynamicSupervisor.start_child(Mutonex.GameSessionSupervisor, spec)
+    end
   end
 end

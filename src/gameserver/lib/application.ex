@@ -11,20 +11,20 @@ defmodule Mutonex.Server.Application do
   end
 
   # Returns children for the supervisor based on the Mix environment.
-  # This function head matches specifically for the :test atom.
-  defp top_level_children(:test) do
-    # Exclude stateful children like GameLoop during tests,
-    # allowing test suites to manage their lifecycle instead.
-    [
-      Net.Endpoint
+  defp top_level_children(env) do
+    # Common children for all environments
+    children = [
+      {Phoenix.PubSub, [name: Mutonex.PubSub, pool_size: 1]},
+      {Registry, [keys: :unique, name: Mutonex.GameRegistry]},
+      {DynamicSupervisor, [name: Mutonex.GameSessionSupervisor, strategy: :one_for_one]},
+      Mutonex.Net.Endpoint
     ]
-  end
 
-  # This function head uses a wildcard to match any environment other than :test.
-  defp top_level_children(_env) do
-    [
-      Net.Endpoint,
-      Engine.GameLoop
-    ]
+    # Add GameLoop only for non-test environments
+    if env != :test do
+      children ++ [Mutonex.Engine.GameLoop]
+    else
+      children
+    end
   end
 end

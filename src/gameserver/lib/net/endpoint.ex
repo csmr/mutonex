@@ -1,24 +1,10 @@
-defmodule Net.Endpoint do
+defmodule Mutonex.Net.Endpoint do
   use Phoenix.Endpoint, otp_app: :mutonex_server
 
-  socket "/live", Net.UserSocket,
+  socket "/live", Mutonex.Net.UserSocket,
     # TODO websocket: [timeout: 60_000], # Set a reasonable timeout
     websocket: [timeout: :infinity],
     longpoll: false
-
-  def start(_type, _args) do
-    children = [
-      # The PubSub system
-      {Phoenix.PubSub, [name: Mutonex.PubSub, pool_size: 1]},
-      # A registry for tracking game sessions by their sector_id
-      {Registry, [keys: :unique, name: Mutonex.GameRegistry]},
-      # A dynamic supervisor to manage game session processes
-      {DynamicSupervisor, [name: Mutonex.GameSessionSupervisor, strategy: :one_for_one]},
-      # The web endpoint itself
-      __MODULE__
-    ]
-    Supervisor.start_link(children, strategy: :one_for_one, name: Mutonex.Supervisor)
-  end
 
   # Serve static assets from the "priv/static" directory
   plug Plug.Static, at: "/", from: :mutonex_web
@@ -36,7 +22,7 @@ defmodule Net.Endpoint do
   plug(Plug.MethodOverride)
   plug(Plug.Head)
   plug(Plug.Session, @session_options)
-  plug Net.Plugs.Auth # Our authentication plug
+  plug Mutonex.Net.Plugs.Auth # Our authentication plug
   plug :health_check
 
   defp health_check(conn, _opts) do

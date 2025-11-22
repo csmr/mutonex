@@ -3,6 +3,15 @@ defmodule Mutonex.Engine.Entities do
   This module defines the core data structures (structs) for game entities.
   """
 
+  defmodule GameState do
+    @moduledoc "Represents the state of the game world to be sent to the client."
+    defstruct units: [],
+              buildings: [],
+              societies: [],
+              minerals: [],
+              game_time: 0
+  end
+
   defmodule Unit do
     @moduledoc "Represents a mobile entity in the game, such as a player Head, NPC Chief, or follower."
     defstruct id: nil,

@@ -1,4 +1,4 @@
-defmodule Gameserver.Engine.SparseOctree do
+defmodule Mutonex.Engine.SparseOctree do
   import Bitwise
   defstruct node: nil, bounds: nil, entities: [], children: nil
 
