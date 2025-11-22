@@ -10,21 +10,23 @@ defmodule Mutonex.Server.Application do
     Supervisor.start_link(children, opts)
   end
 
-  # Returns children for the supervisor based on the Mix environment.
-  defp top_level_children(env) do
-    # Common children for all environments
-    children = [
+  # Returns the base children for all environments.
+  defp base_children do
+    [
       {Phoenix.PubSub, [name: Mutonex.PubSub, pool_size: 1]},
       {Registry, [keys: :unique, name: Mutonex.GameRegistry]},
       {DynamicSupervisor, [name: Mutonex.GameSessionSupervisor, strategy: :one_for_one]},
       Mutonex.Net.Endpoint
     ]
+  end
 
-    # Add GameLoop only for non-test environments
-    if env != :test do
-      children ++ [Mutonex.Engine.GameLoop]
-    else
-      children
-    end
+  # For the :test environment, we start only the base children.
+  defp top_level_children(:test) do
+    base_children()
+  end
+
+  # For all other environments, we start the base children plus the GameLoop.
+  defp top_level_children(_env) do
+    base_children() ++ [Mutonex.Engine.GameLoop]
   end
 end
