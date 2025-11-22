@@ -6,6 +6,7 @@ services:
     container_name: mutondeno
     volumes:
       - .:/app
+      - ./dist:/app/dist
     working_dir: /app
     command: sh -c "/app/webserver/start-webserver.sh"
     depends_on:

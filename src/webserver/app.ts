@@ -1,4 +1,4 @@
-import { Application, Client, Router } from "./deps.ts";
+import { Application, Client, Router, send } from "./deps.ts";
 import { API_KEY_HASH } from "../webclient/api-key-hash.ts";
 
 // apiKeyEnabled value via compose.yml, which got via devenv.sh loading simtellus/.env
@@ -6,6 +6,7 @@ const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';
 
 // API Key created at simtellus start,   
 const apiKeyHash = API_KEY_HASH; 
+const STATIC_FILES_ROOT = "/app/dist";
 
 const validateRequestApiKey = async (ctx) => {
   if (apiKeyEnabled) {
@@ -35,12 +36,17 @@ const client = new Client(databaseUrl);
 
 await client.connect();
 
-/// Routes ///
-
-router.get("/", async (ctx) => {
-  // validateRequestApiKey 
-  ctx.response.body = "Hello, Exoplanet!!!";
+app.use(async (context, next) => {
+  try {
+    await context.send({
+      root: STATIC_FILES_ROOT,
+      index: "index.html",
+    });
+  } catch {
+    await next();
+  }
 });
+/// Routes ///
 
 // Add DB-diagnostic endpoint
 router.get("/db-test", async (ctx) => {

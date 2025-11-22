@@ -1,11 +1,10 @@
-defmodule Gameserver.Engine.Lidar do
+defmodule Mutonex.Engine.Lidar do
   @moduledoc """
   Handles LIDAR-style raytracing for the game.
   Generates samples by casting rays in spherical coordinates and intersecting with the octree/terrain.
   """
 
-  alias Gameserver.Engine.SparseOctree
-  alias Gameserver.Engine.LidarRayIntersections
+  alias Mutonex.Engine.LidarRayIntersections
 
   @doc """
   Cast LIDAR rays in spherical coordinates from an observer.
@@ -67,7 +66,7 @@ defmodule Gameserver.Engine.Lidar do
       z: :math.cos(rad_polar)
     }
     {intersected?, position, distance} =
-      SparseOctree.ray_intersect(
+      LidarRayIntersections.ray_intersect(
         octree,
         %{origin: observer_pos, direction: direction},
         {false, nil, :infinity}

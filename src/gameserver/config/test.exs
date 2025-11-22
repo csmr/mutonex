@@ -13,4 +13,4 @@ config :logger, level: :warning
 config :phoenix, :plug_init_mode, :runtime
 
 # Use the mock Simtellus client in tests
-config :mutonex_server, :simtellus_client, Engine.SimtellusClientMock
+config :mutonex_server, :simtellus_client, Mutonex.Engine.SimtellusClientMock

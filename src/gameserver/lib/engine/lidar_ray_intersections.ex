@@ -1,4 +1,4 @@
-defmodule Gameserver.Engine.LidarRayIntersections do
+defmodule Mutonex.Engine.LidarRayIntersections do
 
   @doc """
   Check if a ray intersects an AABB (axis-aligned bounding box).
@@ -14,23 +14,39 @@ defmodule Gameserver.Engine.LidarRayIntersections do
   def ray_intersects_aabb?(origin, direction, bounds) do
     {t_min, t_max} =
       Enum.reduce(0..2, {0.0, :infinity}, fn axis, {t_min, t_max} ->
-        {inv_dir, t1, t2} =
-          case axis do
-            0 ->
-              {1.0 / direction.x, (elem(bounds, 0) - origin.x) / direction.x, (elem(bounds, 3) - origin.x) / direction.x}
-            1 ->
-              {1.0 / direction.y, (elem(bounds, 1) - origin.y) / direction.y, (elem(bounds, 4) - origin.y) / direction.y}
-            2 ->
-              {1.0 / direction.z, (elem(bounds, 2) - origin.z) / direction.z, (elem(bounds, 5) - origin.z) / direction.z}
+        dir_axis = case axis do
+          0 -> direction.x
+          1 -> direction.y
+          2 -> direction.z
+        end
+
+        if abs(dir_axis) < 1.0e-6 do
+          # Ray is parallel to the slab. No intersection if origin is outside slab.
+          min_bound = elem(bounds, axis)
+          max_bound = elem(bounds, axis + 3)
+          origin_axis = case axis do
+            0 -> origin.x
+            1 -> origin.y
+            2 -> origin.z
           end
+          if origin_axis < min_bound or origin_axis > max_bound do
+            {1.0, 0.0} # This will result in t_min > t_max, indicating no intersection
+          else
+            {t_min, t_max}
+          end
+        else
+          inv_dir = 1.0 / dir_axis
+          t1 = (elem(bounds, axis) - (case axis do 0 -> origin.x; 1 -> origin.y; 2 -> origin.z end)) * inv_dir
+          t2 = (elem(bounds, axis + 3) - (case axis do 0 -> origin.x; 1 -> origin.y; 2 -> origin.z end)) * inv_dir
 
-        t1 = min(t1, t2)
-        t2 = max(t1, t2)
+          t1 = min(t1, t2)
+          t2 = max(t1, t2)
 
-        new_t_min = max(t_min, t1)
-        new_t_max = min(t_max, t2)
+          new_t_min = max(t_min, t1)
+          new_t_max = min(t_max, t2)
 
-        {new_t_min, new_t_max}
+          {new_t_min, new_t_max}
+        end
       end)
 
     intersects? = t_min <= t_max
@@ -97,17 +113,6 @@ defmodule Gameserver.Engine.LidarRayIntersections do
 
   def ray_intersect(_, _, closest_so_far), do: closest_so_far
 
-  @doc """
-  Check if a ray intersects an entity's bounding box.
-
-  ## Parameters
-    - entity: Entity map with `:position` and `:bounds` (or size).
-    - origin: Ray origin.
-    - direction: Ray direction.
-
-  ## Returns
-    - `{intersects?, position, distance}` tuple.
-  """
   defp ray_intersects_entity?(entity, origin, direction) do
     # Assume entity.bounds is a tuple like `{min_x, min_y, min_z, max_x, max_y, max_z}`
     # If not, calculate bounds from entity.position and entity.size
@@ -135,17 +140,6 @@ defmodule Gameserver.Engine.LidarRayIntersections do
     end
   end
 
-  @doc """
-  Calculate the position along a ray at a given distance.
-
-  ## Parameters
-    - origin: Ray origin.
-    - direction: Ray direction.
-    - distance: Distance from origin.
-
-  ## Returns
-    - Position map `%{x: float, y: float, z: float}`.
-  """
   defp ray_at_distance(%{x: ox, y: oy, z: oz}, %{x: dx, y: dy, z: dz}, distance) do
     %{x: ox + dx * distance, y: oy + dy * distance, z: oz + dz * distance}
   end

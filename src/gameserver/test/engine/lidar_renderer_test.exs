@@ -1,7 +1,7 @@
-defmodule Gameserver.Engine.LidarRendererTest do
+defmodule Mutonex.Engine.LidarRendererTest do
   use ExUnit.Case, async: true
 
-  alias Gameserver.Engine.LidarRenderer
+  alias Mutonex.Engine.LidarRenderer
 
   test "render returns vertical arcs for :vertical_arcs type" do
     samples = [

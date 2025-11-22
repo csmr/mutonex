@@ -1,6 +1,6 @@
 ExUnit.start()
 
-defmodule GameserverTest do
+defmodule Mutonex.GameserverTest do
   use ExUnit.Case, async: true
 
   test "starts the application" do

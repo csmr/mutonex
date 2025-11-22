@@ -1,4 +1,4 @@
-defmodule Engine.GameLoop do
+defmodule Mutonex.Engine.GameLoop do
   use GenServer
   require Logger
 
@@ -66,7 +66,7 @@ defmodule Engine.GameLoop do
       Application.get_env(
         :mutonex_server,
         :simtellus_client,
-        Engine.SimtellusClient
+        Mutonex.Engine.SimtellusClient
       )
 
     # Process all sectors using the abstracted function.
@@ -95,10 +95,6 @@ defmodule Engine.GameLoop do
   # Private helpers
   #
 
-  @doc """
-  Calls the Simtellus client for a single sector and logs 
-  the result.
-  """
   defp process_sector(client, sector) do
     lat = sector.lat
     lon = sector.lon

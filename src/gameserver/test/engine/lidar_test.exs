@@ -1,14 +1,14 @@
-defmodule Gameserver.Engine.LidarTest do
+defmodule Mutonex.Engine.LidarTest do
   use ExUnit.Case, async: true
 
-  alias Gameserver.Engine.Lidar
-  alias Gameserver.Engine.SparseOctree
+  alias Mutonex.Engine.Lidar
+  alias Mutonex.Engine.SparseOctree
 
   setup do
     # Create a simple octree with a single entity at {10, 10, 10}
     bounds = {0, 0, 0, 100, 100, 100}
     octree = SparseOctree.new(bounds)
-    entity = %{id: 1, position: %{x: 10, y: 10, z: 10}, size: 1}
+    entity = %{id: 1, position: %{x: 10, y: 10, z: 10}, size: 1, bounds: {9, 9, 9, 11, 11, 11}}
     octree = SparseOctree.insert(octree, entity)
     {:ok, octree: octree}
   end
@@ -22,10 +22,10 @@ defmodule Gameserver.Engine.LidarTest do
     result = Lidar.cast_ray(observer_pos, azimuth, polar, max_dist, octree)
 
     assert result != nil
-    assert result.distance ≈ 14.142  # sqrt(10^2 + 10^2 + 10^2) ≈ 17.32, but ray hits the AABB earlier
-    assert result.position.x ≈ 10.0
-    assert result.position.y ≈ 10.0
-    assert result.position.z ≈ 10.0
+    assert_in_delta result.distance, 14.142, 0.001
+    assert_in_delta result.position.x, 10.0, 0.001
+    assert_in_delta result.position.y, 10.0, 0.001
+    assert_in_delta result.position.z, 10.0, 0.001
   end
 
   test "cast_ray returns nil for a ray missing all entities", %{octree: octree} do

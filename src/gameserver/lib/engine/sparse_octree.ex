@@ -12,15 +12,25 @@ defmodule Mutonex.Engine.SparseOctree do
     if length(node.entities) < @capacity and is_nil(node.children) do
       %__MODULE__{node | entities: [entity | node.entities]}
     else
-      if is_nil(node.children) do
-        node = subdivide(node)
-      end
-
-      index = get_octant_index(node.bounds, entity)
-      child = Enum.at(node.children, index)
-      updated_child = insert(child, entity)
-      %__MODULE__{node | children: List.replace_at(node.children, index, updated_child)}
+      node
+      |> subdivide_if_leaf()
+      |> insert_into_child(entity)
     end
+  end
+
+  defp subdivide_if_leaf(node) do
+    if is_nil(node.children) do
+      subdivide(node)
+    else
+      node
+    end
+  end
+
+  defp insert_into_child(node, entity) do
+    index = get_octant_index(node.bounds, entity)
+    child = Enum.at(node.children, index)
+    updated_child = insert(child, entity)
+    %__MODULE__{node | children: List.replace_at(node.children, index, updated_child)}
   end
 
   defp subdivide(%__MODULE__{} = node) do

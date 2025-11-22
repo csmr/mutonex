@@ -51,9 +51,6 @@ defmodule Mutonex.Engine.GameSession do
 
   # --- Private Helpers ---
 
-  @doc """
-  Helper to create a name for registering the process in the Registry.
-  """
   defp via_tuple(sector_id) do
     {:via, Registry, {Mutonex.GameRegistry, sector_id}}
   end

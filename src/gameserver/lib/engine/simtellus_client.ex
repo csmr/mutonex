@@ -1,5 +1,5 @@
-defmodule Engine.SimtellusClient do
-  @behaviour Engine.SimtellusClientBehaviour
+defmodule Mutonex.Engine.SimtellusClient do
+  @behaviour Mutonex.Engine.SimtellusClientBehaviour
   use Tesla
   require Logger
   require Jason # 🌟 ADDED: Required for manual JSON decoding

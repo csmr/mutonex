@@ -1,4 +1,4 @@
-defmodule Gameserver.Engine.LidarRenderer do
+defmodule Mutonex.Engine.LidarRenderer do
   @moduledoc """
   Converts LIDAR samples into renderable arcs/lines for the client.
   Supports vertical/horizontal arcs and polar/azimuthal grids.
@@ -8,7 +8,7 @@ defmodule Gameserver.Engine.LidarRenderer do
   Convert LIDAR samples to renderable arcs.
 
   ## Parameters
-    - samples: List of LIDAR samples from `Gameserver.Engine.Lidar.cast_rays/5`.
+    - samples: List of LIDAR samples from `Mutonex.Engine.Lidar.cast_rays/5`.
     - render_type: `:vertical_arcs`, `:horizontal_arcs`, or `:grid`.
 
   ## Returns
