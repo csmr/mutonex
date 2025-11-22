@@ -33,8 +33,30 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   def handle_in("get_game_state", _payload, socket) do
-    # Hardcoded game state for the PoC
-    game_state = %Mutonex.Engine.Entities.GameState{
+    push(socket, "game_state", build_poc_game_state())
+    {:noreply, socket}
+  end
+
+  # --- Private Helpers ---
+
+  defp get_sector_id(socket) do
+    socket.topic |> String.split(":") |> Enum.at(1)
+  end
+
+  defp start_game_session(sector_id) do
+    via_tuple = {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+
+    case GenServer.whereis(via_tuple) do
+      nil ->
+        spec = {GameSession, sector_id}
+        DynamicSupervisor.start_child(Mutonex.GameSessionSupervisor, spec)
+      pid when is_pid(pid) ->
+        {:ok, pid}
+    end
+  end
+
+  defp build_poc_game_state do
+    %Mutonex.Engine.Entities.GameState{
       game_time: 720,
       units: [
         %Mutonex.Engine.Entities.Unit{
@@ -70,31 +92,5 @@ defmodule Mutonex.Net.GameChannel do
         }
       ]
     }
-
-    push(socket, "game_state", game_state)
-    {:noreply, socket}
-  end
-
-  # --- Private Helpers ---
-
-  defp get_sector_id(socket) do
-    # Extracts the sector_id from the channel topic
-    # "game:sector_id" -> "sector_id"
-    socket.topic |> String.split(":") |> Enum.at(1)
-  end
-
-  defp start_game_session(sector_id) do
-    # Use via_tuple for robustly finding or starting the GenServer.
-    # This is the recommended approach for dynamically supervised processes.
-    via_tuple = {:via, Registry, {Mutonex.GameRegistry, sector_id}}
-
-    # Check if the process is already alive.
-    if GenServer.whereis(via_tuple) do
-      {:ok, via_tuple}
-    else
-      # If not, start it.
-      spec = {GameSession, sector_id}
-      DynamicSupervisor.start_child(Mutonex.GameSessionSupervisor, spec)
-    end
   end
 end
