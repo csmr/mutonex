@@ -7,8 +7,14 @@ import { dirname, fromFileUrl, join } from "https://deno.land/std@0.178.0/path/m
 const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';
 
 // API Key created at simtellus start,   
-const apiKeyHash = API_KEY_HASH; 
-const STATIC_FILES_ROOT = "/app/dist";
+const apiKeyHash = API_KEY_HASH;
+
+// Get static root from environment - set in start-webserver.sh
+const STATIC_ROOT_DIR = Deno.env.get("STATIC_ROOT_DIR");
+if (!STATIC_ROOT_DIR) {
+  console.error("FATAL: STATIC_ROOT_DIR environment variable is not set.");
+  Deno.exit(1);
+}
 
 const validateRequestApiKey = async (ctx: Context) => {
   if (apiKeyEnabled) {
@@ -70,7 +76,7 @@ app.use(router.allowedMethods());
 // Serves index.html for the root route ("/").
 app.use(async (context) => {
   await send(context, context.request.url.pathname, {
-    root: STATIC_FILES_ROOT,
+    root: STATIC_ROOT_DIR,
     index: "index.html",
   });
 });

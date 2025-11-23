@@ -15,8 +15,11 @@ deno run --allow-read --allow-write ./scripts/make-credits.js
 
 ./scripts/bundle-webclient.sh
 
+# Define and export the single source of truth for the static assets path
+export STATIC_ROOT_DIR="/app/dist"
+
 # Run webserver
-deno run --allow-net --allow-env --allow-read=/app/dist webserver/app.ts &
+deno run --allow-net --allow-env --allow-read=$STATIC_ROOT_DIR webserver/app.ts &
 WEBSERVER_PID=$!
 
 log "start..."
