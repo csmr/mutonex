@@ -40,8 +40,8 @@ services:
       - ./data/.env.postgres
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./src/postgres/conf/postgresql.conf:/etc/postgresql/postgresql.conf
-      - ./src/postgres/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./data/conf/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./data/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf
     ports:
       - "5432:5432"
     healthcheck:
