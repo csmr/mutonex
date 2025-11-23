@@ -70,43 +70,30 @@ defmodule Mutonex.Engine.LidarRayIntersections do
   ## Returns
     - Updated `closest_so_far` tuple.
   """
-  def ray_intersect(node, %{origin: origin, direction: direction}, {false, _, _} = closest_so_far) do
+  def ray_intersect(node, %{origin: origin, direction: direction}, closest_so_far) do
+    # TODO: This function is not correctly detecting intersections, causing the lidar tests to fail.
+    # The logic for traversing the octree and checking for intersections needs to be reviewed and corrected.
     {intersects_bbox?, _distance} = ray_intersects_aabb?(origin, direction, node.bounds)
 
     if not intersects_bbox? do
       closest_so_far
     else
       # Check entities in this node
-      new_closest =
-        Enum.reduce(node.entities, closest_so_far, fn entity, {found?, _, closest_dist} ->
-          if found? do
-            {true, nil, closest_dist}
-          else
-            case ray_intersects_entity?(entity, origin, direction) do
-              {true, entity_pos, entity_dist} ->
-                if entity_dist < closest_dist do
-                  {true, entity_pos, entity_dist}
-                else
-                  {false, nil, closest_dist}
-                end
-              _ ->
-                {false, nil, closest_dist}
-            end
+      closest_after_entities =
+        Enum.reduce(node.entities, closest_so_far, fn entity, acc ->
+          case ray_intersects_entity?(entity, origin, direction) do
+            {true, pos, dist} when dist < elem(acc, 2) -> {true, pos, dist}
+            _ -> acc
           end
         end)
 
-      # Recurse into children if no intersection found yet
-      case new_closest do
-        {true, _, _} ->
-          new_closest
-        _ ->
-          case node.children do
-            nil -> closest_so_far
-            children ->
-              Enum.reduce(children, closest_so_far, fn child, acc ->
-                ray_intersect(child, %{origin: origin, direction: direction}, acc)
-              end)
-          end
+      # Recurse into children
+      if node.children do
+        Enum.reduce(node.children, closest_after_entities, fn child, acc ->
+          ray_intersect(child, %{origin: origin, direction: direction}, acc)
+        end)
+      else
+        closest_after_entities
       end
     end
   end

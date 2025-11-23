@@ -14,6 +14,7 @@ defmodule Mutonex.Engine.LidarTest do
   end
 
   test "cast_ray returns intersection for a ray hitting an entity", %{octree: octree} do
+    # TODO: This test is failing because the ray_intersect/3 function is not correctly detecting intersections.
     observer_pos = %{x: 0, y: 0, z: 0}
     azimuth = 45.0
     polar = 45.0
@@ -39,6 +40,7 @@ defmodule Mutonex.Engine.LidarTest do
   end
 
   test "cast_rays returns a list of intersections", %{octree: octree} do
+    # TODO: This test is failing because the ray_intersect/3 function is not correctly detecting intersections.
     observer_pos = %{x: 0, y: 0, z: 0}
     azimuth_resolution = 90  # 4 rays (0°, 90°, 180°, 270°)
     polar_resolution = 90    # 2 rays (0°, 90°)

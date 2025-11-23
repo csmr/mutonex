@@ -33,7 +33,7 @@ defmodule Mutonex.Engine.Lidar do
         LidarRayIntersections.ray_intersect(
           octree,
           %{origin: observer_pos, direction: direction},
-          {false, nil, :infinity}
+          {false, nil, max_distance}
         )
       if intersected? and distance <= max_distance do
         %{azimuth: azimuth, polar: polar, distance: distance, position: position}
@@ -69,7 +69,7 @@ defmodule Mutonex.Engine.Lidar do
       LidarRayIntersections.ray_intersect(
         octree,
         %{origin: observer_pos, direction: direction},
-        {false, nil, :infinity}
+        {false, nil, max_distance}
       )
     if intersected? and distance <= max_distance do
       %{azimuth: azimuth, polar: polar, distance: distance, position: position}
