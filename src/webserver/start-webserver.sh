@@ -16,7 +16,7 @@ deno run --allow-read --allow-write ./scripts/make-credits.js
 ./scripts/bundle-webclient.sh
 
 # Run webserver
-deno run --allow-net --allow-env webserver/app.ts & 
+deno run --allow-net --allow-env --allow-read=/app/dist webserver/app.ts &
 WEBSERVER_PID=$!
 
 log "start..."
