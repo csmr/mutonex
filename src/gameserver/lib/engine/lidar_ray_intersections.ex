@@ -35,15 +35,21 @@ defmodule Mutonex.Engine.LidarRayIntersections do
             {t_min, t_max}
           end
         else
+          origin_axis =
+            case axis do
+              0 -> origin.x
+              1 -> origin.y
+              2 -> origin.z
+            end
+
           inv_dir = 1.0 / dir_axis
-          t1 = (elem(bounds, axis) - (case axis do 0 -> origin.x; 1 -> origin.y; 2 -> origin.z end)) * inv_dir
-          t2 = (elem(bounds, axis + 3) - (case axis do 0 -> origin.x; 1 -> origin.y; 2 -> origin.z end)) * inv_dir
+          t1 = (elem(bounds, axis) - origin_axis) * inv_dir
+          t2 = (elem(bounds, axis + 3) - origin_axis) * inv_dir
 
-          t1 = min(t1, t2)
-          t2 = max(t1, t2)
+          {t_near, t_far} = if t1 > t2, do: {t2, t1}, else: {t1, t2}
 
-          new_t_min = max(t_min, t1)
-          new_t_max = min(t_max, t2)
+          new_t_min = max(t_min, t_near)
+          new_t_max = min(t_max, t_far)
 
           {new_t_min, new_t_max}
         end
@@ -71,8 +77,6 @@ defmodule Mutonex.Engine.LidarRayIntersections do
     - Updated `closest_so_far` tuple.
   """
   def ray_intersect(node, %{origin: origin, direction: direction}, closest_so_far) do
-    # TODO: This function is not correctly detecting intersections, causing the lidar tests to fail.
-    # The logic for traversing the octree and checking for intersections needs to be reviewed and corrected.
     {intersects_bbox?, _distance} = ray_intersects_aabb?(origin, direction, node.bounds)
 
     if not intersects_bbox? do
