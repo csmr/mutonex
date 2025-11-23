@@ -1,7 +1,6 @@
 import { Application, Router, send, Context } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 import { API_KEY_HASH } from "../webclient/api-key-hash.ts";
-import { dirname, fromFileUrl, join } from "https://deno.land/std@0.178.0/path/mod.ts";
 
 // apiKeyEnabled value via compose.yml, which got via devenv.sh loading simtellus/.env
 const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';

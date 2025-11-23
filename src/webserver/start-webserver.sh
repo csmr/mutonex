@@ -17,7 +17,6 @@ deno run --allow-read --allow-write ./scripts/make-credits.js
 
 # Define and export the single source of truth for the static assets path
 export STATIC_ROOT_DIR="/app/dist"
-log "Set STATIC_ROOT_DIR to $STATIC_ROOT_DIR"
 
 # Run webserver
 deno run --allow-net --allow-env --allow-read=$STATIC_ROOT_DIR webserver/app.ts &

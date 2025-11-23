@@ -1,3 +1,6 @@
+// Set a dummy value for the environment variable before importing the app
+Deno.env.set("STATIC_ROOT_DIR", "src/dist");
+
 import { load } from "https://deno.land/std@0.178.0/dotenv/mod.ts";
 await load({ envPath: "./src/.env", export: true });
 
