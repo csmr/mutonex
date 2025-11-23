@@ -1,5 +1,7 @@
-import { Application, Client, Router, send } from "./deps.ts";
+import { Application, Router, send, Context } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
 import { API_KEY_HASH } from "../webclient/api-key-hash.ts";
+import { dirname, fromFileUrl, join } from "https://deno.land/std@0.178.0/path/mod.ts";
 
 // apiKeyEnabled value via compose.yml, which got via devenv.sh loading simtellus/.env
 const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';
@@ -8,7 +10,7 @@ const apiKeyEnabled = Deno.env.get("API_KEY_AUTH_ENABLE") === 'true';
 const apiKeyHash = API_KEY_HASH; 
 const STATIC_FILES_ROOT = "/app/dist";
 
-const validateRequestApiKey = async (ctx) => {
+const validateRequestApiKey = async (ctx: Context) => {
   if (apiKeyEnabled) {
     console.log("validateRequestApiKey: request headers", ctx.request.headers);
     const requestApiKeyHash = ctx.request.headers.get("api-key-hash") || ctx.request.headers.get("API-KEY-HASH");
@@ -24,7 +26,7 @@ const validateRequestApiKey = async (ctx) => {
 }
 
 const port = 8888; // TODO
-const app = new Application();
+export const app = new Application();
 const router = new Router();
 
 // from compose.yaml 'environment:'
@@ -32,25 +34,13 @@ const databaseUrl = Deno.env.get("DATABASE_URL");
 if (!databaseUrl) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
-const client = new Client(databaseUrl);
+export const client = new Client(databaseUrl);
 
-await client.connect();
-
-app.use(async (context, next) => {
-  try {
-    await context.send({
-      root: STATIC_FILES_ROOT,
-      index: "index.html",
-    });
-  } catch {
-    await next();
-  }
-});
 /// Routes ///
 
 // Add DB-diagnostic endpoint
-router.get("/db-test", async (ctx) => {
-  validateRequestApiKey(ctx, apiKeyEnabled, apiKeyHash);
+router.get("/db-test", async (ctx: Context) => {
+  await validateRequestApiKey(ctx);
   try {
     // Test query
     const result = await client.queryObject`
@@ -63,18 +53,31 @@ router.get("/db-test", async (ctx) => {
       details: result.rows[0],
       database_url: databaseUrl.replace(/:[^:]*@/, ':***@') // Hide password in output
     };
-  } catch (error) {
+  } catch (error: unknown) {
     ctx.response.status = 500;
     ctx.response.body = {
       status: "error",
-      message: error.message
+      message: (error as Error).message
     };
   }
 });
 
+// Middleware for API router
 app.use(router.routes());
 app.use(router.allowedMethods());
-app.listen({ port });
 
-const scriptPath = import.meta.url.replace('file://', '').split('/app/').pop();
-console.log(`[ ${scriptPath} ] @ http://localhost:${port}`);
+// Fallback to static file server for non-API routes.
+// Serves index.html for the root route ("/").
+app.use(async (context) => {
+  await send(context, context.request.url.pathname, {
+    root: STATIC_FILES_ROOT,
+    index: "index.html",
+  });
+});
+
+if (import.meta.main) {
+  await client.connect();
+  app.listen({ port });
+  const scriptPath = import.meta.url.replace('file://', '').split('/app/').pop();
+  console.log(`[ ${scriptPath} ] @ http://localhost:${port}`);
+}
