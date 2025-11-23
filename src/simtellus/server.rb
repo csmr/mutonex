@@ -9,12 +9,11 @@ module Server
     # Set the bind option to listen on all network interfaces
     set :bind, '0.0.0.0'
 
-    # 🌟 NEW FIX: Disable Host Authorization for internal Docker network communication.
-    # Setting permitted_hosts to an empty array effectively bypasses the check.
-    set :host_authorization, { permitted_hosts: [] }
-
     # Define allowed hosts as a constant or class variable
-    ALLOWED_HOSTS = ['planet_sim', 'localhost', '127.0.0.1'].freeze
+    ALLOWED_HOSTS = ['planet_sim', 'localhost', '127.0.0.1', 'gameserver'].freeze
+
+    # Set up host authorization
+    set :host_authorization, { permitted_hosts: ALLOWED_HOSTS }
 
     # validate API key
     # - can be disabled in simtellus/.env
