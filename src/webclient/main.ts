@@ -19,8 +19,9 @@ async function main() {
   const globeView = new GlobeView(geoData, canvas);
   const lidarView = new LidarView(canvas);
 
-  // Set the initial view
+  // Set the initial view and start the animation loop
   viewManager.setActiveView(lidarView);
+  viewManager.animate();
 
   // Setup the game state provider, handling connection errors gracefully
   try {

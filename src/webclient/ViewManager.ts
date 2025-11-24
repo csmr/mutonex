@@ -23,7 +23,6 @@ export class ViewManager {
         this.renderer.setPixelRatio(window.devicePixelRatio);
 
         window.addEventListener('resize', this.onWindowResize.bind(this));
-        this.animate();
     }
 
     public setActiveView(view: IView): void {
@@ -34,7 +33,11 @@ export class ViewManager {
         this.activeView.onActivate();
     }
 
-    private animate(): void {
+    public getActiveView(): IView | null {
+        return this.activeView;
+    }
+
+    public animate(): void {
         requestAnimationFrame(this.animate.bind(this));
 
         if (this.activeView) {

@@ -1,5 +1,5 @@
 import { crypto } from 'https://deno.land/std@0.152.0/crypto/mod.ts';
-import { join } from 'https://deno.land/std@0.152.0/path/mod.ts';
+import { join, dirname } from 'https://deno.land/std@0.152.0/path/mod.ts';
 import { existsSync } from 'node:fs';
 import { generateApiKeyHash } from "../webserver/hash-utils.ts";
 
@@ -13,12 +13,15 @@ import { generateApiKeyHash } from "../webserver/hash-utils.ts";
 const cfg = {
   LEN_BYTES:   16,
   LF:          '\n',
-  ENV_PATH:    join(Deno.cwd(), '.env'),
-  CLIENT_PATH: join(Deno.cwd(), 'webclient', 'api-key-hash.ts'),
+  ENV_PATH:    join(Deno.cwd(), 'src', '.env'),
+  CLIENT_PATH: join(Deno.cwd(), 'src', 'webclient', 'api-key-hash.ts'),
   KEY_ENABLED: 'API_KEY_AUTH_ENABLE=true',
   apiKeyStr:   'API_KEY=',
   hashPrefix:  'export const API_KEY_HASH = '
 } 
+
+// Ensure the directory for the client path exists
+Deno.mkdirSync(dirname(cfg.CLIENT_PATH), { recursive: true });
 
 // from inStr, del rows with xStr, addStr row
 function cleanAndInsertRows(inStr, xStr, addStr) {
