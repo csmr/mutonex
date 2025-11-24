@@ -9,7 +9,8 @@ deno task bundle-client-esbuild-module
 tf="$RUNTIME_DIR/web.js"
 if [ -f $tf ]; then
   log "$(ls -l $tf)" 
-  cp -r webclient/assets "$RUNTIME_DIR/"
+  cp -r webclient/assets "$RUNTIME_DIR/assets"
+  cp webclient/assets/favicon.ico "$RUNTIME_DIR/"
 else
   log "client bundle fail"
   exit 1

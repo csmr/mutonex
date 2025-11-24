@@ -1,19 +1,18 @@
+import { Socket } from "./deps.ts";
 import type { GameState } from "./MockGameStateProvider.ts";
-
-declare const Phoenix: any;
 
 const PHOENIX_URL = "ws://localhost:4000/socket";
 
 type UpdateCallback = (gameState: GameState) => void;
 
 export class GameStateProvider {
-  private socket: any;
+  private socket: Socket;
   private channel: any;
   private onUpdate: UpdateCallback;
 
   constructor(onUpdate: UpdateCallback) {
     this.onUpdate = onUpdate;
-    this.socket = new Phoenix.Socket(PHOENIX_URL);
+    this.socket = new Socket(PHOENIX_URL);
   }
 
   public start(): void {

@@ -4,7 +4,7 @@
   "tasks": {
     "dev": "deno run --watch server/app.ts",
     "bundle-client": "esbuild webclient/main.ts --bundle --outfile=./dist/web.js",
-    "bundle-client-esbuild-module": "deno run -A npm:esbuild@^0.24.0 webclient/main.ts --bundle --outfile=./dist/web.js"
+    "bundle-client-esbuild-module": "deno run -A npm:esbuild@^0.24.0 webclient/main.ts --bundle --outfile=./dist/web.js --external:https://cdn.skypack.dev/three@0.136.0 --external:https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/OrbitControls.js --external:https://cdn.jsdelivr.net/npm/phoenix@1.7.11/priv/static/phoenix.mjs"
   },
   "imports": {
     "@denodeland/knex": "npm:@denodeland/knex@^2.5.4",
