@@ -12,11 +12,14 @@ export class GameStateProvider {
 
   constructor(onUpdate: UpdateCallback) {
     this.onUpdate = onUpdate;
-    this.socket = new Socket(PHOENIX_URL);
+    // Phoenix from <script>-tag 
+    this.socket = new Phoenix.Socket(PHOENIX_URL);
   }
 
   public start(): void {
     this.socket.connect();
+    console.log("Phoenix.Socket connected? --> ", this.socket.isConnected());
+
     this.channel = this.socket.channel("game:lobby", {});
     this.channel.join()
       .receive("ok", (resp: any) => {

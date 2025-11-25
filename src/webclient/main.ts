@@ -11,12 +11,14 @@ async function main() {
   }
 
   // Fetch the geographical data for the GlobeView
+  /** TODO Implement geoData and GlobeView
   const geoDataResponse = await fetch('./assets/countries.topo.json');
   const geoData = await geoDataResponse.json();
+  const globeView = new GlobeView(geoData, canvas);
+  **/
 
   // Setup the main components
   const viewManager = new ViewManager(canvas);
-  const globeView = new GlobeView(geoData, canvas);
   const lidarView = new LidarView(canvas);
 
   // Set the initial view and start the animation loop

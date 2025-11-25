@@ -1,4 +1,6 @@
-import { THREE } from "./deps.ts";
+// From <script> tags
+declare const THREE: typeof import("three");
+declare const OrbitControls: typeof import("three/examples/jsm/controls/OrbitControls");
 
 // A simple interface that all views must adhere to.
 export interface IView {

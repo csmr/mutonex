@@ -1,6 +1,7 @@
-
-import { THREE, OrbitControls } from "./deps.ts";
 import { IView } from "./ViewManager.ts";
+
+declare const THREE: typeof import("three");
+declare const OrbitControls: typeof import("three/examples/jsm/controls/OrbitControls");
 
 export class LidarView implements IView {
     public scene: THREE.Scene;
@@ -15,7 +16,7 @@ export class LidarView implements IView {
         this.camera.position.set(0, 10, 0);
         this.camera.lookAt(this.scene.position);
 
-        this.controls = new OrbitControls(this.camera, domElement);
+        this.controls = new THREE.OrbitControls(this.camera, domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
 

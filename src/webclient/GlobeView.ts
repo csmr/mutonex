@@ -1,9 +1,11 @@
-import { THREE, OrbitControls } from "./deps.ts";
 import { IView } from "./ViewManager.ts";
 import { GameState, Unit } from "./MockGameStateProvider.ts";
 
 const GLOBE_RADIUS = 5;
 const UNIT_RADIUS = 0.05;
+
+declare const THREE: typeof import("three");
+declare const OrbitControls: typeof import("three/examples/jsm/controls/OrbitControls");
 
 /**
  * Manages the 3D globe view and its interactions.
@@ -12,7 +14,7 @@ export class GlobeView implements IView {
     public scene: THREE.Scene;
     public camera: THREE.PerspectiveCamera;
 
-    private controls: OrbitControls;
+    private controls: THREE.OrbitControls;
     private globe: THREE.Group;
     private unitMeshes: Record<string, THREE.Mesh> = {};
     private sectorMeshes: Record<string, THREE.Mesh> = {};
@@ -29,7 +31,7 @@ export class GlobeView implements IView {
         this.camera.position.z = 15;
 
         // Controls
-        this.controls = new OrbitControls(this.camera, domElement);
+        this.controls = new THREE.OrbitControls(this.camera, domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.enablePan = false;
