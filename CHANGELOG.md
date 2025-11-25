@@ -1,9 +1,32 @@
 # Changelog
 
+## v0.1.0-3d-websocket-poc
+- Proof of Concept: 3D render static scene in the browser
+- Proof of Concept: WebSocket connection to Elixir/Phoenix game server
+- Dummy state payloads and scene.
+
+## 2025-10-30 to 2025-11-24
+- Add gameserver lidar and ray intersection modules and tests.
+- Fix gameserver get simtellus state.
+- Update webclient logic and dependencies.
+- Finish client-render and websocket PoC.
+
+## 2025-08-13 to 2025-08-21
+- Finalize simtellus.
+- Add gameserver entities, session, channels.
+- Add gameserver tests.
+- Add .env.template.
+- Add ci.yml build-actions.
+- Add AGENTS.md and dependency installer.
+
+## 2025-03-06 to 2025-04-27
+- Improve factions.
+- Add Elixir gameserver container and core stub.
+
 ## 2025-02-04 to 2025-02-09
-- Add database and webserver base
-- improve codebase, bootstrapping, bundling
-- API key and unique credentials
+- Add database and webserver base.
+- improve codebase, bootstrapping, bundling.
+- API key and unique credentials.
 
 ## 2024-10-21 to 2024-12-14
 
