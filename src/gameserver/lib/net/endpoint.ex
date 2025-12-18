@@ -1,13 +1,13 @@
 defmodule Mutonex.Net.Endpoint do
   use Phoenix.Endpoint, otp_app: :mutonex_server
 
-  socket "/live", Mutonex.Net.UserSocket,
+  socket "/socket", Mutonex.Net.UserSocket,
     # TODO websocket: [timeout: 60_000], # Set a reasonable timeout
     websocket: [timeout: :infinity],
     longpoll: false
 
   # Serve static assets from the "priv/static" directory
-  plug Plug.Static, at: "/", from: :mutonex_web
+  plug Plug.Static, at: "/", from: :mutonex_server
 
   @session_options [
     store: :cookie,

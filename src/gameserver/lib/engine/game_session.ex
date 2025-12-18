@@ -1,57 +1,72 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
+  alias Mutonex.Engine.Entities.Player
+  alias Mutonex.Net.Endpoint
 
-  alias Mutonex.Engine.SparseOctree
+  # Increased speed limit to accommodate client-side 120 units/s (approx 432 km/h)
+  @max_speed_kmh 500
+  @max_speed_ms (@max_speed_kmh * 1000 / 3600)
 
   # --- Client API ---
-
-  @doc """
-  Starts a new GameSession GenServer.
-  """
-  def start_link(sector_id) do
-    GenServer.start_link(__MODULE__, sector_id, name: via_tuple(sector_id))
-  end
+  def start_link(sector_id), do: GenServer.start_link(__MODULE__, sector_id, name: via_tuple(sector_id))
 
   # --- GenServer Callbacks ---
-
-  @doc """
-  Initializes the GameSession state.
-  """
   def init(sector_id) do
-    # TODO: The bounds should eventually come from the sector's definition.
-    bounds = {0, 0, 0, 10_000, 10_000, 10_000} # Using a larger, more realistic bound for a sector
-
-    # In the future, this is where we would load persistent state (relics, minerals, etc.)
-    # for this sector from the simtellus server API.
-    initial_state = %{
-      sector_id: sector_id,
-      players: %{},
-      societies: %{},
-      units: %{},
-      buildings: %{},
-      minerals: %{},
-      scene_graph: SparseOctree.new(bounds)
-    }
+    initial_state = %{sector_id: sector_id, players: %{}}
     {:ok, initial_state}
   end
 
-  def handle_cast({:move, user_id, payload}, state) do
-    # This is where the game logic from the old GameInstance.handle_move goes.
-    # It updates the state of the game session in response to a player move.
-    entity = %{id: user_id, x: payload["x"], y: payload["y"], z: payload["z"]}
-    updated_scene_graph = SparseOctree.insert(state.scene_graph, entity)
+  def handle_cast({:avatar_update, user_id, [x, y, z]}, state) do
+    current_time = System.os_time(:millisecond)
+    new_position = %{x: x, y: y, z: z}
 
-    new_state = %{state | scene_graph: updated_scene_graph}
+    player_state = Map.get(state.players, user_id)
 
-    # TODO: Here we would broadcast the state change to all subscribed clients
-    # PubSub.broadcast("game:" <> state.sector_id, "game_state_update", new_state)
-
-    {:noreply, new_state}
+    handle_player_update(player_state, user_id, new_position, current_time, state)
   end
 
   # --- Private Helpers ---
+  defp handle_player_update(nil, user_id, pos, time, state) do
+    # New player
+    new_player_state = %{player: %Player{id: user_id, position: pos}, last_update: time}
+    updated_players = Map.put(state.players, user_id, new_player_state)
+    broadcast_state_update(state.sector_id, updated_players)
+    {:noreply, %{state | players: updated_players}}
+  end
 
-  defp via_tuple(sector_id) do
-    {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+  defp handle_player_update(%{player: p, last_update: t}, _, pos, time, state) do
+    # Existing player
+    if is_move_valid?(p.position, pos, time - t) do
+      updated_player = %{p | position: pos}
+      new_player_state = %{player: updated_player, last_update: time}
+      updated_players = Map.put(state.players, p.id, new_player_state)
+      broadcast_state_update(state.sector_id, updated_players)
+      {:noreply, %{state | players: updated_players}}
+    else
+      IO.puts("Invalid move for #{p.id}")
+      {:noreply, state}
+    end
+  end
+
+  defp is_move_valid?(p1, p2, time_delta_ms) do
+    time_delta_s = time_delta_ms / 1000.0
+    dist = distance(p1, p2)
+    dist <= @max_speed_ms * time_delta_s
+  end
+
+  defp via_tuple(sector_id), do: {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+
+  defp distance(p1, p2) do
+    dx = p1.x - p2.x
+    dy = p1.y - p2.y
+    dz = p1.z - p2.z
+    :math.sqrt(dx*dx + dy*dy + dz*dz)
+  end
+
+  defp broadcast_state_update(sector_id, players_map) do
+    player_lists = Enum.map(players_map, fn {_, %{player: p}} ->
+      [p.id, p.position.x, p.position.y, p.position.z]
+    end)
+    Endpoint.broadcast("game:" <> sector_id, "state_update", %{players: player_lists})
   end
 end

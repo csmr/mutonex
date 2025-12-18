@@ -13,27 +13,40 @@ defmodule Mutonex.Net.GameChannel do
     # Subscribe to broadcasts for this game session
     # PubSub.subscribe("game:#{sector_id}")
 
+    # Send the initial state push in a separate process after join completes
+    send(self(), :enter_lobby)
     {:ok, socket}
+  end
+
+  @doc """
+  Handles the :enter_lobby message to transition client to lobby state.
+  """
+  def handle_info(:enter_lobby, socket) do
+    push(socket, "game_phase", %{phase: "lobby"})
+    # Immediately transition to gamein
+    send(self(), :enter_gamein)
+    {:noreply, socket}
+  end
+
+  def handle_info(:enter_gamein, socket) do
+    push(socket, "game_phase", %{phase: "gamein"})
+    push(socket, "game_state", build_poc_game_state())
+    {:noreply, socket}
   end
 
   @doc """
   Handles a "move" event from a client.
   Casts the event to the GameSession GenServer for processing.
   """
-  def handle_in("move", payload, socket) do
+  def handle_in("avatar_update", payload, socket) do
     sector_id = get_sector_id(socket)
     user_id = socket.assigns.user_id
 
     # The channel is stateless; it finds the game session process via the registry
     # and sends it a message. The GenServer handles the game logic.
     {:via, Registry, {Mutonex.GameRegistry, sector_id}}
-    |> GenServer.cast({:move, user_id, payload})
+    |> GenServer.cast({:avatar_update, user_id, payload})
 
-    {:noreply, socket}
-  end
-
-  def handle_in("get_game_state", _payload, socket) do
-    push(socket, "game_state", build_poc_game_state())
     {:noreply, socket}
   end
 
@@ -56,41 +69,20 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   defp build_poc_game_state do
+    alias Mutonex.Engine.TerrainGenerator
+
+    terrain = TerrainGenerator.generate_heightmap(20, 20)
+
+    # Use lists for players as Jason handles lists but not tuples
+    player_lists = [
+      ["player1", 10, 10, 0],
+      ["player2", 20, 15, 0]
+    ]
+
     %Mutonex.Engine.Entities.GameState{
       game_time: 720,
-      units: [
-        %Mutonex.Engine.Entities.Unit{
-          id: "u1",
-          type: :head,
-          position: %{x: 40.7128, y: -74.0060, z: 0},
-          society_id: "s1"
-        },
-        %Mutonex.Engine.Entities.Unit{
-          id: "u2",
-          type: :chief,
-          position: %{x: 34.0522, y: -118.2437, z: 0},
-          society_id: "s2"
-        }
-      ],
-      buildings: [
-        %Mutonex.Engine.Entities.Building{
-          id: "b1",
-          type: :power_structure,
-          position: %{x: 40.7128, y: -74.0060, z: 0},
-          society_id: "s1"
-        }
-      ],
-      societies: [
-        %Mutonex.Engine.Entities.Society{id: "s1", player_id: "player1"},
-        %Mutonex.Engine.Entities.Society{id: "s2", player_id: "player2"}
-      ],
-      minerals: [
-        %Mutonex.Engine.Entities.Mineral{
-          id: "m1",
-          type: :iron,
-          position: %{x: 51.5074, y: -0.1278, z: 0}
-        }
-      ]
+      players: player_lists,
+      terrain: terrain
     }
   end
 end

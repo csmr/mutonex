@@ -38,12 +38,14 @@ mix test
 ```
 
 ### Simtellus tests
-
-TODO
+```bash
+for t in src/simtellus/*_tests.rb; do ruby $t; done
+```
 
 ### Webserver tests
-
-TODO
+```bash
+deno test --allow-read --allow-env --allow-net src/webserver/app_tests.ts
+```
 
 ## Google Jules instructions
 
@@ -52,7 +54,7 @@ Never add or commit `.env` files into repository. Never remove `.env` files from
 
 ## Merge strategy for Google Jules
 
-Jules bots need to pay specific attention to merge strategy, in oreder to avoid 'detached HEAD' state:
+Jules bots need to pay specific attention to merge strategy, in order to avoid 'detached HEAD' state:
 Avoid checking out specific commits or tags directly. So the git HEAD reference always points to a branch.
 Perform merge operations by first checking out the target branch and then merging changes from the source branch:
 ```

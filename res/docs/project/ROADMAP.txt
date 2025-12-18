@@ -1,3 +1,7 @@
+NOTE: This document is a high-level wishlist and does not reflect the current state of the project. Some features listed here may already be implemented, while others are long-term goals.
+
+---
+
 ROADMAP
 
 Simple game rule calculator.

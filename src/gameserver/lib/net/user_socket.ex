@@ -3,12 +3,8 @@ defmodule Mutonex.Net.UserSocket do
 
   channel "game:*", Mutonex.Net.GameChannel
 
-  def connect(%{"token" => _token}, socket) do
+  def connect(_params, socket) do
     {:ok, assign(socket, :user_id, :guest)}
-  end
-
-  def connect(_params, _socket) do
-    {:error, %{reason: "unauthorized"}}
   end
 
   def id(socket), do: "user:#{socket.assigns.user_id}"

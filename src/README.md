@@ -2,7 +2,7 @@
 
 This project depends on bash, git and docker-compose. 
 
-The basic idea is that devs can run containers where game instance runs isolated.
+The basic idea is that devs can run containers where game instances run in isolation.
 
 To start, clone repo, `cd mutonex/src`, and execute `./devenv.sh`, follow output.
 
@@ -29,9 +29,9 @@ See `src/scripts/bundle-webclient.sh` for the client esbuild bundle code.
 ## Servers
 See `src/gameserver` for the game session server.
 
-See `src/webserver/start-webserver.sh`, it makes API key, contributors list, client bundle and runs server.
+See `src/webserver/start-webserver.sh`, it creates an API key, contributors list, client bundle and runs server.
 
-For planet sim, see `src/simtellus/start-simtellus.sh`, this installs ruby deps and start simtellus server.
+For planet sim, see `src/simtellus/start-simtellus.sh`, this installs ruby deps and starts the simtellus server.
 
 
 ## Database
