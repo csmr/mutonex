@@ -1,6 +1,6 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
-  alias Mutonex.Engine.Entities.Player
+  alias Mutonex.Engine.Entities.{Player, Fauna}
   alias Mutonex.Net.Endpoint
 
   # Increased speed limit to accommodate client-side 120 units/s (approx 432 km/h)
@@ -12,7 +12,10 @@ defmodule Mutonex.Engine.GameSession do
 
   # --- GenServer Callbacks ---
   def init(sector_id) do
-    initial_state = %{sector_id: sector_id, players: %{}}
+    # Spawn initial fauna
+    fauna = spawn_fauna(sector_id, 4)
+    initial_state = %{sector_id: sector_id, players: %{}, fauna: fauna}
+    schedule_fauna_tick()
     {:ok, initial_state}
   end
 
@@ -23,6 +26,20 @@ defmodule Mutonex.Engine.GameSession do
     player_state = Map.get(state.players, user_id)
 
     handle_player_update(player_state, user_id, new_position, current_time, state)
+  end
+
+  def handle_info(:tick_fauna, state) do
+    new_fauna = Enum.reduce(state.fauna, %{}, fn {id, f}, acc ->
+      # Random small movement
+      dx = (:rand.uniform() - 0.5) * 2.0
+      dz = (:rand.uniform() - 0.5) * 2.0
+      new_pos = %{f.position | x: f.position.x + dx, z: f.position.z + dz}
+      Map.put(acc, id, %{f | position: new_pos})
+    end)
+
+    broadcast_fauna_update(state.sector_id, new_fauna)
+    schedule_fauna_tick()
+    {:noreply, %{state | fauna: new_fauna}}
   end
 
   # --- Private Helpers ---
@@ -63,10 +80,33 @@ defmodule Mutonex.Engine.GameSession do
     :math.sqrt(dx*dx + dy*dy + dz*dz)
   end
 
+  defp spawn_fauna(sector_id, count) do
+    Enum.reduce(1..count, %{}, fn i, acc ->
+      id = "fauna_#{sector_id}_#{i}"
+      # Random position within typical bounds (e.g. 0-20)
+      pos = %{x: :rand.uniform() * 20, y: 0, z: :rand.uniform() * 20}
+      charm = :rand.uniform(10)
+      Map.put(acc, id, %Fauna{id: id, sector_id: sector_id, position: pos, ethnicity: :fauna_local, charm: charm})
+    end)
+  end
+
+  defp schedule_fauna_tick do
+    # 2 to 10 seconds
+    delay = :rand.uniform(8000) + 2000
+    Process.send_after(self(), :tick_fauna, delay)
+  end
+
   defp broadcast_state_update(sector_id, players_map) do
     player_lists = Enum.map(players_map, fn {_, %{player: p}} ->
       [p.id, p.position.x, p.position.y, p.position.z]
     end)
     Endpoint.broadcast("game:" <> sector_id, "state_update", %{players: player_lists})
+  end
+
+  defp broadcast_fauna_update(sector_id, fauna_map) do
+    fauna_lists = Enum.map(fauna_map, fn {_, f} ->
+      [f.id, f.position.x, f.position.y, f.position.z]
+    end)
+    Endpoint.broadcast("game:" <> sector_id, "fauna_update", %{fauna: fauna_lists})
   end
 end

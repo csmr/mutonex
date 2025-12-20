@@ -7,6 +7,8 @@ import type { PlayerTuple } from './MockGameStateProvider.ts';
 
 // A simple map to hold our player avatar meshes
 const playerMeshes: Map<string, THREE.Mesh> = new Map();
+// Map to hold fauna meshes
+const faunaMeshes: Map<string, THREE.Mesh> = new Map();
 let scene: THREE.Scene;
 
 function main() {
@@ -59,11 +61,13 @@ function main() {
     scene.add(terrainMesh);
 
     // 2. Initial Player Render
-    updatePlayerAvatars(gameState.players);
+    if (gameState.players) updatePlayerAvatars(gameState.players);
+    if (gameState.fauna) updateFaunaAvatars(gameState.fauna);
   };
 
-  const onStateUpdate = (update: { players: PlayerTuple[] }) => {
-    updatePlayerAvatars(update.players);
+  const onStateUpdate = (update: { players?: PlayerTuple[], fauna?: PlayerTuple[] }) => {
+    if (update.players) updatePlayerAvatars(update.players);
+    if (update.fauna) updateFaunaAvatars(update.fauna);
   };
 
   try {
@@ -141,7 +145,9 @@ function updatePlayerAvatars(players: PlayerTuple[]) {
 
     // Update existing players and add new ones
     for (const playerTuple of players) {
-        const [id, x, y, _z] = playerTuple;
+        // Server sends [id, x, y, z]. y is height (usually 0), x/z are 2D coordinates.
+        // We map Server X -> Client X, Server Z -> Client Z, Server Y -> Client Y (Height).
+        const [id, x, y, z] = playerTuple;
         let mesh = playerMeshes.get(id);
 
         if (!mesh) {
@@ -152,9 +158,16 @@ function updatePlayerAvatars(players: PlayerTuple[]) {
             playerMeshes.set(id, mesh);
             scene.add(mesh);
         }
-        // Update position. NOTE: Server position is 2D, we map it to our 3D ground.
-        // We'll need a function to get Y from terrain heightmap later.
-        mesh.position.set(x, 1, y);
+        // Update position. Server Y is height, but currently 0. We set height to 1 for visibility.
+        // We use Server Z for Client Z.
+        // Wait, the tuple is [id, x, y, z].
+        // If server logic uses x/y as 2D plane in standard math, often Z is height.
+        // But Entities.Player has x, y, z.
+        // Let's assume standard 3D mapping: x->x, y->y, z->z.
+        // But previously it was `mesh.position.set(x, 1, y)`.
+        // If server sends [id, x, 0, z] for a ground unit, we want x, 1, z.
+        // Let's use x and z from the tuple.
+        mesh.position.set(x, 1, z);
     }
 
     // Remove players who are no longer in the state
@@ -162,6 +175,35 @@ function updatePlayerAvatars(players: PlayerTuple[]) {
         if (!receivedPlayerIds.has(id)) {
             scene.remove(mesh);
             playerMeshes.delete(id);
+        }
+    }
+}
+
+function updateFaunaAvatars(fauna: PlayerTuple[]) {
+    const receivedFaunaIds = new Set(fauna.map(f => f[0]));
+
+    for (const faunaTuple of fauna) {
+        // Server sends [id, x, y, z].
+        const [id, x, y, z] = faunaTuple;
+        let mesh = faunaMeshes.get(id);
+
+        if (!mesh) {
+            // Fauna is a green sphere
+            const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            mesh = new THREE.Mesh(geometry, material);
+            faunaMeshes.set(id, mesh);
+            scene.add(mesh);
+        }
+        // Map server coordinates to client. Assuming y is height.
+        mesh.position.set(x, 1, z);
+    }
+
+    // Remove fauna no longer present
+    for (const [id, mesh] of faunaMeshes.entries()) {
+        if (!receivedFaunaIds.has(id)) {
+            scene.remove(mesh);
+            faunaMeshes.delete(id);
         }
     }
 }

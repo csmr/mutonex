@@ -66,11 +66,13 @@ defmodule Mutonex.Engine.Entities do
   end
 
   defmodule Fauna do
-    @moduledoc "Represents the non-player, non-charmable biosphere of a sector."
+    @moduledoc "Represents the non-player biosphere of a sector."
     @derive Jason.Encoder
     defstruct id: nil,
               sector_id: nil,
-              ethnicity: nil # :fauna_french, etc.
+              position: %{x: 0, y: 0, z: 0},
+              ethnicity: nil, # :fauna_french, etc.
+              charm: 0
   end
 
   defmodule Mineral do
