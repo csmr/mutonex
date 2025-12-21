@@ -39,8 +39,8 @@ defmodule Mutonex.Game.MixProject do
       {:jason, "~> 1.4"},
       {:plug_cowboy, "~> 2.6"},
       {:tesla, "~> 1.4"},
-      {:mox, "~> 1.0", only: :test}
+      {:mox, "~> 1.0", only: :test},
+      {:yaml_elixir, "~> 2.9"}
     ]
   end
 end
-
