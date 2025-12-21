@@ -3,13 +3,14 @@ import type { GameState, Player } from "./MockGameStateProvider.ts";
 const PHOENIX_URL = "ws://localhost:4000/socket";
 
 type InitialStateCallback = (gameState: GameState) => void;
-type StateUpdateCallback = (update: { players?: Player[], fauna?: Player[] }) => void;
+type StateUpdateCallback = (update: { players: Player[] }) => void;
 
 export class GameStateProvider {
   private socket: Socket;
   private channel: any;
   private onInitialState: InitialStateCallback;
   private onStateUpdate: StateUpdateCallback;
+  public phase: string = "lobby";
 
   constructor(onInitialState: InitialStateCallback, onStateUpdate: StateUpdateCallback) {
     this.onInitialState = onInitialState;
@@ -31,6 +32,7 @@ export class GameStateProvider {
     // Handle game phase transitions
     this.channel.on("game_phase", (payload: { phase: string }) => {
       console.log("Game Phase:", payload.phase);
+      this.phase = payload.phase;
     });
 
     // This event is now pushed by the server automatically upon join
@@ -42,10 +44,6 @@ export class GameStateProvider {
     // This event is broadcast by the server when any player moves
     this.channel.on("state_update", (payload: { players: Player[] }) => {
       this.onStateUpdate(payload);
-    });
-
-    this.channel.on("fauna_update", (payload: { fauna: Player[] }) => {
-        this.onStateUpdate(payload);
     });
   }
 

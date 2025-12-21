@@ -8,12 +8,18 @@ export function createTerrainMesh(terrain: Terrain) {
   const geometry = new THREE.PlaneGeometry(width, height, width - 1, height - 1);
 
   const vertices = geometry.attributes.position.array as number[];
-  for (let i = 0; i < terrain.data.length; i++) {
-    for (let j = 0; j < terrain.data[i].length; j++) {
-      const index = (i * width + j);
-      // The z-coordinate in PlaneGeometry corresponds to the y-axis in world space.
-      // We are rotating the plane to be our ground, so we update the 'y' vertex.
-      vertices[index * 3 + 1] = terrain.data[i][j];
+
+  // PlaneGeometry is created in the XY plane.
+  // We modify the Z coordinate to represent elevation (which becomes the local up axis relative to the plane).
+  // When we rotate the plane -90 degrees around X, the local Z axis becomes the world Y axis (Up),
+  // and the local Y axis becomes the world Z axis (Depth).
+
+  let ptr = 2; // Start at the first Z index (0=x, 1=y, 2=z)
+
+  for (const row of terrain.data) {
+    for (const z of row) {
+      vertices[ptr] = z;
+      ptr += 3; // Jump to the next vertex's Z coordinate
     }
   }
 

@@ -89,7 +89,7 @@ defmodule Mutonex.Engine.EntitiesTest do
         society = %Mutonex.Engine.Entities.Society{}
         check(society.id == nil) &&
         check(society.home_id == nil) &&
-        check(society.ethnicity == nil) &&
+        check(society.locale == nil) &&
         check(society.player_id == nil)
       end),
 
@@ -97,12 +97,12 @@ defmodule Mutonex.Engine.EntitiesTest do
         society_data = %{
           id: 100,
           home_id: 2,
-          ethnicity: :french,
+          locale: :french,
           player_id: 500
         }
         society = struct(Mutonex.Engine.Entities.Society, society_data)
         check(society.id == 100) &&
-        check(society.ethnicity == :french) &&
+        check(society.locale == :french) &&
         check(society.player_id == 500)
       end),
 
@@ -111,19 +111,22 @@ defmodule Mutonex.Engine.EntitiesTest do
         fauna = %Mutonex.Engine.Entities.Fauna{}
         check(fauna.id == nil) &&
         check(fauna.sector_id == nil) &&
-        check(fauna.ethnicity == nil)
+        check(fauna.society == nil) &&
+        check(fauna.charm == 0)
       end),
 
       test("can create a Fauna struct with specific values", fn ->
         fauna_data = %{
           id: 3,
           sector_id: 10,
-          ethnicity: :fauna_french
+          society: :fauna_french,
+          charm: 5
         }
         fauna = struct(Mutonex.Engine.Entities.Fauna, fauna_data)
         check(fauna.id == 3) &&
         check(fauna.sector_id == 10) &&
-        check(fauna.ethnicity == :fauna_french)
+        check(fauna.society == :fauna_french) &&
+        check(fauna.charm == 5)
       end),
 
       # Mineral tests

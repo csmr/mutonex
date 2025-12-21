@@ -74,7 +74,11 @@ spec = {
   # DD 4.3.5. Airpower units
   :unit_airpower_velocity_kmh => 220,
   :unit_airpower_work_hpd => 1,
-  :unit_airpower_sight_r_km => 50
+  :unit_airpower_sight_r_km => 50,
+
+  # DD [New]. Fauna units (Biosphere)
+  :unit_fauna_velocity_kmh => 40,
+  :unit_fauna_work_hpd => 12
 }
 
 limits = {
@@ -137,7 +141,8 @@ units = {
   "Local" => {:v => spec[:unit_local_velocity_kmh], :h => spec[:unit_local_work_hpd]},
   "Activist" => {:v => spec[:unit_activist_velocity_kmh], :h => spec[:unit_activist_work_hpd]},
   "Chief" => {:v => spec[:unit_chief_velocity_kmh], :h => spec[:unit_chief_work_hpd]},
-  "Airpower" => {:v => spec[:unit_airpower_velocity_kmh], :h => spec[:unit_airpower_work_hpd]}
+  "Airpower" => {:v => spec[:unit_airpower_velocity_kmh], :h => spec[:unit_airpower_work_hpd]},
+  "Fauna" => {:v => spec[:unit_fauna_velocity_kmh], :h => spec[:unit_fauna_work_hpd]}
 }
 
 mobility_score = 0

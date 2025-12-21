@@ -23,6 +23,7 @@ defmodule Mutonex.Engine.Entities do
     @derive Jason.Encoder
     defstruct players: [],
               terrain: %Mutonex.Engine.Entities.Terrain{},
+              fauna: [],
               game_time: 0
   end
 
@@ -35,6 +36,7 @@ defmodule Mutonex.Engine.Entities do
               society_id: nil,
               home_id: nil, # building_id
               sight_area: 0,
+              is_charmable: true,
               attributes: %{
                 charm: 0,
                 tribe: nil, # :potassium, :helium, etc.
@@ -61,7 +63,7 @@ defmodule Mutonex.Engine.Entities do
     @derive Jason.Encoder
     defstruct id: nil,
               home_id: nil, # building_id of the main power structure
-              ethnicity: nil, # :french, etc.
+              locale: nil, # Replaces ethnicity
               player_id: nil # nil for NPC societies
   end
 
@@ -71,8 +73,9 @@ defmodule Mutonex.Engine.Entities do
     defstruct id: nil,
               sector_id: nil,
               position: %{x: 0, y: 0, z: 0},
-              ethnicity: nil, # :fauna_french, etc.
-              charm: 0
+              society: nil, # Replaces ethnicity
+              charm: 0,
+              is_charmable: false
   end
 
   defmodule Mineral do

@@ -8,29 +8,25 @@ defmodule Mutonex.Net.GameChannel do
   """
   def join("game:" <> sector_id, _payload, socket) do
     # Find or start the GameSession process for this sector_id
-    {:ok, _pid} = start_game_session(sector_id)
+    {:ok, pid} = start_game_session(sector_id)
+
+    # Fetch initial state from the session
+    initial_data = GameSession.get_initial_state(pid)
 
     # Subscribe to broadcasts for this game session
     # PubSub.subscribe("game:#{sector_id}")
 
     # Send the initial state push in a separate process after join completes
-    send(self(), :enter_lobby)
+    send(self(), {:after_join, initial_data})
     {:ok, socket}
   end
 
   @doc """
-  Handles the :enter_lobby message to transition client to lobby state.
+  Handles the async push of initial state after join.
   """
-  def handle_info(:enter_lobby, socket) do
-    push(socket, "game_phase", %{phase: "lobby"})
-    # Immediately transition to gamein
-    send(self(), :enter_gamein)
-    {:noreply, socket}
-  end
-
-  def handle_info(:enter_gamein, socket) do
-    push(socket, "game_phase", %{phase: "gamein"})
-    push(socket, "game_state", build_poc_game_state())
+  def handle_info({:after_join, data}, socket) do
+    push(socket, "game_phase", %{phase: data.phase})
+    push(socket, "game_state", data.game_state)
     {:noreply, socket}
   end
 
@@ -66,23 +62,5 @@ defmodule Mutonex.Net.GameChannel do
       pid when is_pid(pid) ->
         {:ok, pid}
     end
-  end
-
-  defp build_poc_game_state do
-    alias Mutonex.Engine.TerrainGenerator
-
-    terrain = TerrainGenerator.generate_heightmap(20, 20)
-
-    # Use lists for players as Jason handles lists but not tuples
-    player_lists = [
-      ["player1", 10, 10, 0],
-      ["player2", 20, 15, 0]
-    ]
-
-    %Mutonex.Engine.Entities.GameState{
-      game_time: 720,
-      players: player_lists,
-      terrain: terrain
-    }
   end
 end
