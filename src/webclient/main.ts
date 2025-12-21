@@ -115,20 +115,15 @@ function main() {
             moveDir.normalize();
             localPosition.add(moveDir.multiplyScalar(AVATAR_SPEED * delta));
 
+            // Camera follow logic
+            camera.position.x = localPosition.x + 5; // maintain offset
+            camera.position.z = localPosition.z + 20; // maintain offset
+            camera.position.y = 20; // fixed height
+            controls.target.set(localPosition.x, 0, localPosition.z);
+
             // Check if position changed significantly to send update
             if (localPosition.distanceTo(lastSentPosition) > 0.1) {
-                gameStateProvider.sendAvatarPosition([localPosition.x, localPosition.z, 0]); // Note: Server uses X/Y/Z but 2D is X/Y mapped to client X/Z?
-                // Wait, previous code: [10 + sin..., 10 + cos..., 0]. Server logs: [14.8..., 8.6..., 0].
-                // Client `updatePlayerAvatars`: `mesh.position.set(x, 1, y);` -> server X maps to client X, server Y maps to client Z.
-                // So when sending, we should probably send [x, z, 0] or [x, y, 0]?
-                // The server entities.ex says: `position: %{x: 0, y: 0, z: 0}`.
-                // If the game is 2D heightmap, usually X and Y are the coordinates.
-                // Client renders X and Z (Y is up).
-                // So client X -> Server X. Client Z -> Server Y.
-                // The previous mock was: [10 + sin, 10 + cos, 0].
-                // It sent [x, y, 0].
-                // So I should send [localPosition.x, localPosition.z, 0].
-
+                gameStateProvider.sendAvatarPosition([localPosition.x, localPosition.z, 0]);
                 lastSentPosition.copy(localPosition);
             }
         }
