@@ -10,6 +10,7 @@ const playerMeshes: Map<string, THREE.Mesh> = new Map();
 // Map to hold fauna meshes and their target positions for interpolation
 const faunaMeshes: Map<string, THREE.Mesh> = new Map();
 const faunaTargets: Map<string, THREE.Vector3> = new Map();
+const faunaAnchors: Map<string, THREE.Vector3> = new Map(); // Server positions
 let scene: THREE.Scene;
 
 function main() {
@@ -77,7 +78,8 @@ function main() {
 
     // --- Avatar Controls ---
     const keysPressed: { [key: string]: boolean } = {};
-    const AVATAR_SPEED = 120.0; // Units per second
+    const AVATAR_SPEED = 2.0; // Units per second (approx 2 km/s simulated)
+    const FAUNA_SPEED = 0.5; // Units per second
     const localPosition = new THREE.Vector3(10, 0, 10); // Start at default
     let lastSentPosition = localPosition.clone();
     let lastTime = performance.now();
@@ -99,25 +101,34 @@ function main() {
         lastTime = now;
 
         // --- Fauna Interpolation ---
-        // Smoothly move fauna towards target positions
+        // Wandering logic: Move towards local target, update local target from anchor
         for (const [id, mesh] of faunaMeshes.entries()) {
-            const target = faunaTargets.get(id);
+            let target = faunaTargets.get(id);
+            const anchor = faunaAnchors.get(id);
+
+            // If no target or reached target, pick new wander point around anchor
+            if (!target || mesh.position.distanceTo(target) < 0.1) {
+                if (anchor) {
+                    // Pick random point within 2.0 units of anchor
+                    const theta = Math.random() * Math.PI * 2;
+                    const r = Math.random() * 2.0;
+                    const wx = anchor.x + r * Math.cos(theta);
+                    const wz = anchor.z + r * Math.sin(theta);
+                    target = new THREE.Vector3(wx, 1, wz); // Keep y=1 for now
+                    faunaTargets.set(id, target);
+                }
+            }
+
             if (target) {
-                // Simple lerp: move 50% of the distance per second, or fixed speed?
-                // Let's use a fixed speed for "travel" feel.
-                // Distance to cover
                 const dist = mesh.position.distanceTo(target);
                 if (dist > 0.05) {
-                    const speed = 2.0; // Units per second
-                    const step = speed * delta;
+                    const step = FAUNA_SPEED * delta;
                     if (step >= dist) {
                         mesh.position.copy(target);
                     } else {
                         const direction = new THREE.Vector3().subVectors(target, mesh.position).normalize();
                         mesh.position.add(direction.multiplyScalar(step));
                     }
-                } else {
-                    mesh.position.copy(target);
                 }
             }
         }
@@ -210,11 +221,19 @@ function updateFaunaAvatars(fauna: PlayerTuple[]) {
 
             // Set initial position directly
             mesh.position.set(x, 1, z);
-            faunaTargets.set(id, new THREE.Vector3(x, 1, z));
+            faunaAnchors.set(id, new THREE.Vector3(x, 1, z));
+            faunaTargets.set(id, new THREE.Vector3(x, 1, z)); // Initial target is anchor
         } else {
-            // Update target for interpolation
-            // Map server coordinates to client. Assuming y is height.
-            faunaTargets.set(id, new THREE.Vector3(x, 1, z));
+            // Update anchor from server
+            const newAnchor = new THREE.Vector3(x, 1, z);
+            const oldAnchor = faunaAnchors.get(id);
+
+            // If anchor moved significantly (teleport), snap mesh
+            if (oldAnchor && oldAnchor.distanceTo(newAnchor) > 5.0) {
+                 mesh.position.copy(newAnchor);
+                 faunaTargets.set(id, newAnchor);
+            }
+            faunaAnchors.set(id, newAnchor);
         }
     }
 
@@ -224,6 +243,7 @@ function updateFaunaAvatars(fauna: PlayerTuple[]) {
             scene.remove(mesh);
             faunaMeshes.delete(id);
             faunaTargets.delete(id);
+            faunaAnchors.delete(id);
         }
     }
 }

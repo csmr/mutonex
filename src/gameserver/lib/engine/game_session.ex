@@ -4,8 +4,9 @@ defmodule Mutonex.Engine.GameSession do
   alias Mutonex.Engine.TerrainGenerator
   alias Mutonex.Net.Endpoint
 
-  # Increased speed limit to accommodate client-side 120 units/s (approx 432 km/h)
-  @max_speed_kmh 500
+  # Speed limit: 2.0 units/s (at 1 unit=1km) is 2 km/s = 7200 km/h.
+  # Set limit high to allow this "fast travel" mode.
+  @max_speed_kmh 8000
   @max_speed_ms (@max_speed_kmh * 1000 / 3600)
 
   # --- Client API ---
