@@ -39,7 +39,8 @@ defmodule Mutonex.Engine.GameSession do
       phase: :lobby,
       fauna: fauna,
       minerals: minerals,
-      conveyors: []
+      conveyors: [],
+      buildings: []
     }
 
     # Simulate lobby wait time
@@ -66,7 +67,8 @@ defmodule Mutonex.Engine.GameSession do
       terrain: state.terrain,
       fauna: fauna_to_list(state.fauna),
       minerals: state.minerals,
-      conveyors: state.conveyors
+      conveyors: state.conveyors,
+      buildings: state.buildings
     }
 
     response = %{
