@@ -4,8 +4,7 @@ defmodule Mutonex.Engine.Mineral do
   """
   alias Mutonex.Engine.Entities.{Mineral, ConveyorBelt}
 
-  # CWD is src/gameserver
-  @elements_path Path.expand("../../res/elements.yml", File.cwd!)
+  @elements_path Path.expand("../../../res/elements.yml", __DIR__)
   @external_resource @elements_path
 
   # Load elements map at compile time
@@ -34,7 +33,8 @@ defmodule Mutonex.Engine.Mineral do
           z: :rand.uniform() * bounds.z
         },
         type: get_random_type(),
-        amount: :rand.uniform(5000) + 500
+        amount: :rand.uniform(5000) + 500,
+        size: 2.0
       }
     end)
   end
@@ -48,6 +48,25 @@ defmodule Mutonex.Engine.Mineral do
       mineral_id: mineral_id,
       building_id: building_id,
       status: :building
+    }
+  end
+
+  @doc """
+  Returns the bounding box of the mineral as %{min: %{x,y,z}, max: %{x,y,z}}.
+  """
+  def get_bounding_box(%Mineral{position: pos, size: size}) do
+    half_size = size / 2.0
+    %{
+      min: %{
+        x: pos.x - half_size,
+        y: pos.y - half_size,
+        z: pos.z - half_size
+      },
+      max: %{
+        x: pos.x + half_size,
+        y: pos.y + half_size,
+        z: pos.z + half_size
+      }
     }
   end
 end

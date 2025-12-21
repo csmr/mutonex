@@ -26,6 +26,7 @@ defmodule Mutonex.Engine.Entities do
               fauna: [],
               minerals: [], # Added minerals list
               conveyors: [], # Added conveyors list
+              buildings: [], # Added buildings list
               game_time: 0
   end
 
@@ -87,7 +88,8 @@ defmodule Mutonex.Engine.Entities do
     defstruct id: nil,
               position: %{x: 0, y: 0, z: 0},
               type: nil, # :iron, :potassium, etc.
-              amount: 1000 # Default amount
+              amount: 1000, # Default amount
+              size: 2.0 # Side length of the bounding cube (in km)
   end
 
   defmodule ConveyorBelt do
