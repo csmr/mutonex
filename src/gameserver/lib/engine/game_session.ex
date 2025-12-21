@@ -78,9 +78,10 @@ defmodule Mutonex.Engine.GameSession do
     case Map.get(state.fauna, fauna_id) do
       nil -> {:noreply, state} # Fauna might have been removed
       f ->
-        # Random small movement
-        dx = (:rand.uniform() - 0.5) * 2.0
-        dz = (:rand.uniform() - 0.5) * 2.0
+        # Random small movement (reduced range for "short" travel)
+        # 0.5 magnitude max
+        dx = (:rand.uniform() - 0.5) * 0.5
+        dz = (:rand.uniform() - 0.5) * 0.5
         new_pos = %{f.position | x: f.position.x + dx, z: f.position.z + dz}
         updated_fauna_entity = %{f | position: new_pos}
 
