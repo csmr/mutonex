@@ -25,18 +25,21 @@ module Server
     end
 
     def test_planet_state_endpoint
+      header 'Host', 'localhost'
       get '/planet_state?lat=30&lon=40'
       assert_equal(200, last_response.status)
       assert(last_response.body.include?('temperature'))
     end
 
     def test_store_artifact_endpoint
+      header 'Host', 'localhost'
       post '/store_artifact', { lat: 30, lon: 40, name: 'Artifact1' }.to_json, { 'CONTENT_TYPE' => 'application/json' }
       assert_equal(200, last_response.status)
       assert(last_response.body.include?('success'))
     end
 
     def test_simulation_update_endpoint
+      header 'Host', 'localhost'
       get '/simulation_update'
       assert_equal(200, last_response.status)
       assert(last_response.body.include?('updated'))
@@ -58,4 +61,3 @@ end
 # Run the tests
 extend Server::Tests
 run_tests
-Server::Tests.run_tests

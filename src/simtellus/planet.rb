@@ -126,8 +126,6 @@ module Planet
 
   ############################ NEW CODE
 
-    require 'numeric'
-
     # Calculates the solar declination angle for a given day of the year.
     # The declination is the angle between the sun's rays and the plane of the Earth's equator.
     # Returns the declination angle in radians.

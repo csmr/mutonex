@@ -10,7 +10,7 @@ gem_installed() {
 
 # Install gem deps if not installed
 if ! gem_installed sinatra || ! gem_installed puma; then
-  gem install sinatra json dotenv rack numeric rackup puma
+  gem install sinatra json dotenv rack rackup puma
 else
   echo "Gems puma & sinatra present, skip gem install" 
 fi
