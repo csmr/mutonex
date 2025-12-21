@@ -69,7 +69,6 @@ services:
     container_name: mutonphoenix
     volumes:
       - ./gameserver:/app
-      - ./res:/app/res
     working_dir: /app
     command: sh -c "mix deps.get && mix phx.server" # Install deps and start Phoenix server
     depends_on:

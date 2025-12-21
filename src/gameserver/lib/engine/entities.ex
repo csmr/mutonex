@@ -24,6 +24,8 @@ defmodule Mutonex.Engine.Entities do
     defstruct players: [],
               terrain: %Mutonex.Engine.Entities.Terrain{},
               fauna: [],
+              minerals: [], # Added minerals list
+              conveyors: [], # Added conveyors list
               game_time: 0
   end
 
@@ -55,6 +57,7 @@ defmodule Mutonex.Engine.Entities do
               chief_id: nil,
               sight_area: 0,
               function: nil, # :resource_conversion, etc.
+              connected_mineral_ids: [], # List of mineral_ids connected via conveyor
               history: %{} # {build_year, build_style}
   end
 
@@ -83,6 +86,16 @@ defmodule Mutonex.Engine.Entities do
     @derive Jason.Encoder
     defstruct id: nil,
               position: %{x: 0, y: 0, z: 0},
-              type: nil # :iron, :potassium, etc.
+              type: nil, # :iron, :potassium, etc.
+              amount: 1000 # Default amount
+  end
+
+  defmodule ConveyorBelt do
+    @moduledoc "Represents a conveyor belt connecting a mineral to a building."
+    @derive Jason.Encoder
+    defstruct id: nil,
+              mineral_id: nil,
+              building_id: nil,
+              status: :building # :building, :active
   end
 end
