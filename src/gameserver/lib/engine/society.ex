@@ -4,10 +4,9 @@ defmodule Mutonex.Engine.Society do
   """
   alias Mutonex.Engine.Entities.Society
 
-  @regions_path "./res/regions.yaml"
+  # CWD is src/gameserver, so we go up two levels to reach res/regions.yaml
+  @regions_path Path.expand("../../res/regions.yaml", File.cwd!)
 
-  # We use a module attribute to load the regions once at compile time.
-  # This avoids disk I/O at runtime.
   # Note: @external_resource tells Mix to recompile this module if the file changes.
   @external_resource @regions_path
   @regions YamlElixir.read_from_file!(@regions_path)

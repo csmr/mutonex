@@ -2,6 +2,7 @@ defmodule Mutonex.Engine.GameSession do
   use GenServer
   alias Mutonex.Engine.Entities.{Player, GameState, Fauna}
   alias Mutonex.Engine.TerrainGenerator
+  alias Mutonex.Engine.Mineral, as: MineralLogic
   alias Mutonex.Net.Endpoint
 
   # Speed limit: 2.0 units/s (at 1 unit=1km) is 2 km/s = 7200 km/h.
@@ -27,13 +28,18 @@ defmodule Mutonex.Engine.GameSession do
     # Schedule tick for EACH fauna individually
     Enum.each(fauna, fn {id, _} -> schedule_fauna_tick(id) end)
 
+    # Spawn minerals
+    minerals = MineralLogic.spawn_minerals(5, %{x: 20, z: 20})
+
     state = %{
       sector_id: sector_id,
       players: initial_players,
       terrain: terrain,
       game_time: 720,
       phase: :lobby,
-      fauna: fauna
+      fauna: fauna,
+      minerals: minerals,
+      conveyors: []
     }
 
     # Simulate lobby wait time
@@ -58,7 +64,9 @@ defmodule Mutonex.Engine.GameSession do
       game_time: state.game_time,
       players: player_lists,
       terrain: state.terrain,
-      fauna: fauna_to_list(state.fauna)
+      fauna: fauna_to_list(state.fauna),
+      minerals: state.minerals,
+      conveyors: state.conveyors
     }
 
     response = %{
