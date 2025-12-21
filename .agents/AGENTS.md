@@ -6,7 +6,7 @@ Mutonex is implemented with a functional style where possible, using Elixir, Rub
 
 
 ## Code Guidelines:
-1. Functional style code, mix-ins, modules.
+1. Functional programming code, mix-ins, modules.
 2. Don't repeat yourself (DRY).
 3. Expressions formatted one thing per line.
 4. One thing functions, limit blocks to >11 lines.
@@ -21,15 +21,21 @@ Working with this project has two avenues:
 
 First read `src/devenv.sh` script, to see how `src/.env` and `src/data/.env.postgres`files are generated.
 
+Read the game design document `./docs/mutonex-design-document.html` Table of Contents, and use that as an index for finding implementation design related details.
 
-##  Running Tests
 
-### Gameserver tests
-To install development dependencies and execute tests, run the following script:
+## Install dependencies
+
+To install development dependencies and execute gameserver tests, run the following script:
 
 ```bash
 .agents/agent_setup.sh
 ```
+
+
+##  Running Tests
+
+### Gameserver tests
 
 The gameserver tests can also be executed from the `src/gameserver` dir with command:
 
@@ -50,6 +56,8 @@ deno test --allow-read --allow-env --allow-net src/webserver/app_tests.ts
 ## Google Jules instructions
 
 Never add or commit `.env` files into repository. Never remove `.env` files from `.gitignore` file. 
+
+Name git branches with prefix: feat-|bugfix-|mainteinance- and use date postfix: -YYYYMMDDHHMM (instead of random number).
 
 
 ## Merge strategy for Google Jules
