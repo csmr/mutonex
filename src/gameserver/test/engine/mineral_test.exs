@@ -9,10 +9,28 @@ defmodule Mutonex.Engine.MineralTest do
     assert %Mineral{} = List.first(minerals)
   end
 
-  test "spawned minerals have valid types" do
+  test "spawned minerals have valid types and size" do
     [mineral | _] = Mutonex.Engine.Mineral.spawn_minerals(1, %{x: 10, z: 10})
-    assert is_binary(mineral.type) or is_atom(mineral.type)
+    assert is_binary(mineral.type)
+    assert String.length(mineral.type) > 0
     assert mineral.amount > 0
+    assert mineral.size == 2.0
+  end
+
+  test "get_random_type returns a valid element name" do
+    type = Mutonex.Engine.Mineral.get_random_type()
+    assert is_binary(type)
+    assert String.match?(type, ~r/^[A-Z][a-z]+/)
+  end
+
+  test "get_bounding_box returns correct coordinates" do
+    mineral = %Mineral{position: %{x: 10, y: 10, z: 10}, size: 2.0}
+    bbox = Mutonex.Engine.Mineral.get_bounding_box(mineral)
+
+    assert bbox.min.x == 9.0
+    assert bbox.max.x == 11.0
+    assert bbox.min.y == 9.0
+    assert bbox.max.y == 11.0
   end
 
   test "build_conveyor creates a valid struct" do
