@@ -3,7 +3,7 @@ import type { GameState, Player } from "./MockGameStateProvider.ts";
 const PHOENIX_URL = "ws://localhost:4000/socket";
 
 type InitialStateCallback = (gameState: GameState) => void;
-type StateUpdateCallback = (update: { players: Player[] }) => void;
+type StateUpdateCallback = (update: { players?: Player[], fauna?: Player[] }) => void;
 
 export class GameStateProvider {
   private socket: Socket;
@@ -44,6 +44,10 @@ export class GameStateProvider {
     // This event is broadcast by the server when any player moves
     this.channel.on("state_update", (payload: { players: Player[] }) => {
       this.onStateUpdate(payload);
+    });
+
+    this.channel.on("fauna_update", (payload: { fauna: Player[] }) => {
+        this.onStateUpdate(payload);
     });
   }
 

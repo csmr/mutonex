@@ -140,7 +140,8 @@ function main() {
         if (keysPressed['a'] || keysPressed['arrowleft']) moveDir.x -= 1;
         if (keysPressed['d'] || keysPressed['arrowright']) moveDir.x += 1;
 
-        if (moveDir.lengthSq() > 0) {
+        // Only allow movement in gamein phase
+        if (gameStateProvider.phase === "gamein" && moveDir.lengthSq() > 0) {
             moveDir.normalize();
             localPosition.add(moveDir.multiplyScalar(AVATAR_SPEED * delta));
 
@@ -184,13 +185,6 @@ function updatePlayerAvatars(players: PlayerTuple[]) {
         }
         // Update position. Server Y is height, but currently 0. We set height to 1 for visibility.
         // We use Server Z for Client Z.
-        // Wait, the tuple is [id, x, y, z].
-        // If server logic uses x/y as 2D plane in standard math, often Z is height.
-        // But Entities.Player has x, y, z.
-        // Let's assume standard 3D mapping: x->x, y->y, z->z.
-        // But previously it was `mesh.position.set(x, 1, y)`.
-        // If server sends [id, x, 0, z] for a ground unit, we want x, 1, z.
-        // Let's use x and z from the tuple.
         mesh.position.set(x, 1, z);
     }
 
