@@ -1,7 +1,9 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
   alias Mutonex.Engine.Entities.{Player, GameState, Fauna}
+  alias Mutonex.Engine.FaunaBehavior
   alias Mutonex.Engine.TerrainGenerator
+  alias Mutonex.Engine.SparseOctree
   alias Mutonex.Engine.Mineral, as: MineralLogic
   alias Mutonex.Net.Endpoint
 
@@ -23,8 +25,19 @@ defmodule Mutonex.Engine.GameSession do
     terrain = TerrainGenerator.generate_heightmap(20, 20)
     initial_players = %{}
 
-    # Spawn initial fauna
-    fauna = spawn_fauna(sector_id, 4)
+    # Initialize Octree (20x20x20 bounds)
+    octree = SparseOctree.new({0, 0, 0, 20, 20, 20})
+
+    # Spawn initial fauna using behavior module
+    fauna = FaunaBehavior.spawn(sector_id, 4)
+
+    # Insert initial fauna into Octree
+    # Store wrapper map as entity in Octree
+    octree = Enum.reduce(fauna, octree, fn {_, f}, acc ->
+      wrapper = %{x: f.position.x, y: f.position.y, z: f.position.z, id: f.id, type: :fauna}
+      SparseOctree.insert(acc, wrapper)
+    end)
+
     # Schedule tick for EACH fauna individually
     Enum.each(fauna, fn {id, _} -> schedule_fauna_tick(id) end)
 
@@ -38,6 +51,7 @@ defmodule Mutonex.Engine.GameSession do
       game_time: 720,
       phase: :lobby,
       fauna: fauna,
+      octree: octree,
       minerals: minerals,
       conveyors: [],
       buildings: []
@@ -54,12 +68,6 @@ defmodule Mutonex.Engine.GameSession do
     player_lists = Enum.map(state.players, fn {_, %{player: p}} ->
       [p.id, p.position.x, p.position.y, p.position.z]
     end)
-
-    # Convert fauna map to list for client (initial state needs to include it if we want client to render immediately)
-    # Note: GameState struct might not have :fauna field yet in this branch?
-    # I should check entities.ex if GameState has fauna.
-    # If not, I can't put it in GameState struct easily without updating it.
-    # But for now, let's focus on logic.
 
     game_state = %GameState{
       game_time: state.game_time,
@@ -88,24 +96,31 @@ defmodule Mutonex.Engine.GameSession do
   def handle_info({:tick_fauna, fauna_id}, state) do
     case Map.get(state.fauna, fauna_id) do
       nil -> {:noreply, state} # Fauna might have been removed
-      f ->
-        # Random small movement (reduced range for "short" travel)
-        # 0.5 magnitude max
-        dx = (:rand.uniform() - 0.5) * 0.5
-        dz = (:rand.uniform() - 0.5) * 0.5
-        new_pos = %{f.position | x: f.position.x + dx, z: f.position.z + dz}
-        updated_fauna_entity = %{f | position: new_pos}
+      current_fauna ->
+        updated_fauna = FaunaBehavior.move(current_fauna)
+        new_fauna_map = Map.put(state.fauna, fauna_id, updated_fauna)
 
-        new_fauna_map = Map.put(state.fauna, fauna_id, updated_fauna_entity)
+        # Update Octree
+        # We must use the exact same wrapper structure as inserted/previous update
+        old_wrapper = %{x: current_fauna.position.x, y: current_fauna.position.y, z: current_fauna.position.z, id: current_fauna.id, type: :fauna}
+        new_wrapper = %{x: updated_fauna.position.x, y: updated_fauna.position.y, z: updated_fauna.position.z, id: updated_fauna.id, type: :fauna}
 
-        # Broadcast only this fauna update (or all, but optimization suggests specific)
-        # Current client expects a list of fauna.
-        broadcast_fauna_update(state.sector_id, %{fauna_id => updated_fauna_entity})
+        new_octree = SparseOctree.update(state.octree, old_wrapper, new_wrapper)
+
+        # Pilot: Query Octree for players within range (e.g., 50km/units)
+        # Just to verify functionality
+        _nearby = SparseOctree.query_range(new_octree, new_wrapper, 50)
+        # IO.inspect(nearby, label: "Entities near moving fauna #{fauna_id}")
+
+        # Broadcast only this fauna update
+        # We pass a map to `broadcast_fauna_update`, which calls `fauna_to_list`, which converts it to `[[id, x, y, z]]`.
+        # The broadcast sends `%{fauna: [[id, x, y, z]]}` which matches Client expectation.
+        broadcast_fauna_update(state.sector_id, %{fauna_id => updated_fauna})
 
         # Schedule next tick for THIS fauna
         schedule_fauna_tick(fauna_id)
 
-        {:noreply, %{state | fauna: new_fauna_map}}
+        {:noreply, %{state | fauna: new_fauna_map, octree: new_octree}}
     end
   end
 
@@ -161,21 +176,8 @@ defmodule Mutonex.Engine.GameSession do
     :math.sqrt(dx*dx + dy*dy + dz*dz)
   end
 
-  defp spawn_fauna(sector_id, count) do
-    Enum.reduce(1..count, %{}, fn i, acc ->
-      id = "fauna_#{sector_id}_#{i}"
-      # Random position within typical bounds (e.g. 0-20)
-      pos = %{x: :rand.uniform() * 20, y: 0, z: :rand.uniform() * 20}
-      # Charm range: -5 to 20
-      charm = :rand.uniform(26) - 6
-      Map.put(acc, id, %Fauna{id: id, sector_id: sector_id, position: pos, society: :fauna_local, charm: charm})
-    end)
-  end
-
   defp schedule_fauna_tick(fauna_id) do
-    # 2 to 10 seconds random delay
-    delay = :rand.uniform(8000) + 2000
-    Process.send_after(self(), {:tick_fauna, fauna_id}, delay)
+    Process.send_after(self(), {:tick_fauna, fauna_id}, FaunaBehavior.tick_delay())
   end
 
   defp fauna_to_list(fauna_map) do
