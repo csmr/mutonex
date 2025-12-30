@@ -11,6 +11,8 @@ if [ -f $tf ]; then
   log "$(ls -l $tf)" 
   cp -r webclient/assets "$RUNTIME_DIR/assets"
   cp webclient/assets/favicon.ico "$RUNTIME_DIR/"
+  # Copy entry point
+  cp webclient/mutonex.html "$RUNTIME_DIR/index.html"
 else
   log "client bundle fail"
   exit 1

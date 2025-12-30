@@ -7,7 +7,7 @@ defmodule Mutonex.Net.Endpoint do
     longpoll: false
 
   # Serve static assets from the "priv/static" directory
-  plug Plug.Static, at: "/", from: :mutonex_server
+  plug Plug.Static, at: "/", from: "priv/static"
 
   @session_options [
     store: :cookie,
@@ -24,6 +24,7 @@ defmodule Mutonex.Net.Endpoint do
   plug(Plug.Session, @session_options)
   plug Mutonex.Net.Plugs.Auth # Our authentication plug
   plug :health_check
+  plug :serve_index
 
   defp health_check(conn, _opts) do
     if conn.request_path == "/health" do
@@ -33,4 +34,14 @@ defmodule Mutonex.Net.Endpoint do
     end
   end
 
+  defp serve_index(conn, _opts) do
+    if conn.request_path == "/" do
+      conn
+      |> put_resp_content_type("text/html")
+      |> send_file(200, "priv/static/index.html")
+      |> halt()
+    else
+      conn
+    end
+  end
 end
