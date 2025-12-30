@@ -60,7 +60,7 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - webserver
+      - gameserver
     profiles:
       - production
 
@@ -70,6 +70,7 @@ services:
     volumes:
       - ./gameserver:/app
       - ./res:/app/res
+      - ./dist:/app/priv/static
     working_dir: /app
     command: sh -c "mix deps.get && mix phx.server" # Install deps and start Phoenix server
     depends_on:
