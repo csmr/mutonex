@@ -27,9 +27,9 @@ See `src/scripts/bundle-webclient.sh` for the client esbuild bundle code.
 
 
 ## Servers
-See `src/gameserver` for the game session server.
+See `src/gameserver` for the game session server, which also serves the webclient static assets.
 
-See `src/webserver/start-webserver.sh`, it creates an API key, contributors list, client bundle and runs server.
+See `src/scripts/build_and_watch_webclient.sh`, it creates an API key, contributors list, client bundle. The `webclient_builder` service in `compose.yaml` runs this script.
 
 For planet sim, see `src/simtellus/start-simtellus.sh`, this installs ruby deps and starts the simtellus server.
 

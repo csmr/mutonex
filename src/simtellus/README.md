@@ -36,7 +36,7 @@ Updates the simulation state and advances the date.
     ```
 
 ### Server API key authentication
-If `API_KEY_AUTH_ENABLED=true` in `./src/simtellus/.env`, the server http endpoint will look for api key parameter in requests, gives 401 if key not present. API keys are generated on every `./src/start-webserver.sh` run, (`scripts/generate-api-key.js`).
+If `API_KEY_AUTH_ENABLED=true` in `./src/simtellus/.env`, the server http endpoint will look for api key parameter in requests, gives 401 if key not present. API keys are generated on every `./src/scripts/build_and_watch_webclient.sh` run, (`scripts/generate-api-key.js`).
 
 
 ## Controlling the Ruby Server Container
