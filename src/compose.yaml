@@ -1,14 +1,14 @@
 version: '3.8'
 
 services:
-  webserver:
+  webclient_builder:
     image: denoland/deno:2.5.6
     container_name: mutondeno
     volumes:
       - .:/app
       - ./dist:/app/dist
     working_dir: /app
-    command: sh -c "/app/webserver/start-webserver.sh"
+    command: sh -c "./scripts/build_and_watch_webclient.sh"
     depends_on:
       postgres:
         condition: service_healthy
@@ -18,9 +18,6 @@ services:
     environment:
       PLANET_SIM_URL: http://planet_sim:4567
       API_KEY_AUTH_ENABLE: ${API_KEY_AUTH_ENABLE}
-    ports:
-      # binds container port 8888 to only hosts 127.0.0.1 (localhost)
-      - "127.0.0.1:8888:8888"
 
   planet_sim:
     image: ruby:alpine
@@ -54,8 +51,8 @@ services:
     image: nginx:latest
     container_name: mutonginx
     volumes:
-      - ./webserver/nginx.conf:/etc/nginx/nginx.conf
-      - ./webserver/certs:/etc/nginx/certs
+      - ./conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./conf/certs:/etc/nginx/certs
     ports:
       - "80:80"
       - "443:443"
