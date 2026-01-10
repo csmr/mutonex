@@ -14,7 +14,7 @@ defmodule Mutonex.Net.Endpoint do
     key: "_mutonex_web_key",
     max_age: 1209600,
     same_site: "Lax",
-    signing_salt: System.get_env("PHX_SIGNING_SALT") || "fallback_salt_for_dev_mode_only_12345"
+    signing_salt: System.get_env("PHX_SIGNING_SALT") || "dev_fallback_salt"
   ]
 
   # Plug to handle token authentication
