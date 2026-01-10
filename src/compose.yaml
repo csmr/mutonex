@@ -77,7 +77,8 @@ services:
       - ./data/.env.postgres
       - ./.env
     environment:
-      PLANET_SIM_URL: http://planet_sim:4567 
+      PLANET_SIM_URL: http://planet_sim:4567
+      PHX_SIGNING_SALT: ${PHX_SIGNING_SALT}
     ports:
       - "4000:4000" # Default Phoenix port
 
