@@ -27,3 +27,16 @@ log "Appended $CRED_PATH to $ENV_PATH."
 echo "UID=$(id -u)" >> $ENV_PATH
 echo "GID=$(id -g)" >> $ENV_PATH
 log "Appended current user UID & GID to $ENV_PATH."
+
+### Generate PHX_SIGNING_SALT if missing
+if ! grep -q "PHX_SIGNING_SALT=." $ENV_PATH; then
+    SALT=$(head -c 48 /dev/urandom | base64)
+    # Use sed to replace the empty var with the generated salt
+    # Using | as delimiter to avoid issues with base64 chars
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '' "s|PHX_SIGNING_SALT=|PHX_SIGNING_SALT=$SALT|" "$ENV_PATH"
+    else
+      sed -i "s|PHX_SIGNING_SALT=|PHX_SIGNING_SALT=$SALT|" "$ENV_PATH"
+    fi
+    log "Generated and injected PHX_SIGNING_SALT."
+fi

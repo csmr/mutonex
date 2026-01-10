@@ -14,11 +14,14 @@ defmodule Mutonex.Net.Endpoint do
     key: "_mutonex_web_key",
     max_age: 1209600,
     same_site: "Lax",
-    signing_salt: "some_long_and_random_string_for_signing_salt"
+    signing_salt: System.get_env("PHX_SIGNING_SALT") || "fallback_salt_for_dev_mode_only_12345"
   ]
 
   # Plug to handle token authentication
-  plug Plug.Parsers, parsers: [:urlencoded, :multipart, :json], json_decoder: Jason
+  plug Plug.Parsers,
+       parsers: [:urlencoded, :multipart, :json],
+       json_decoder: Jason
+
   plug(Plug.MethodOverride)
   plug(Plug.Head)
   plug(Plug.Session, @session_options)
