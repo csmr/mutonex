@@ -40,7 +40,9 @@ defmodule Mutonex.Game.MixProject do
       {:plug_cowboy, "~> 2.6"},
       {:tesla, "~> 1.4"},
       {:mox, "~> 1.0", only: :test},
-      {:yaml_elixir, "~> 2.9"}
+      {:yaml_elixir, "~> 2.9"},
+      {:ecto_sql, "~> 3.10"},
+      {:postgrex, ">= 0.0.0"}
     ]
   end
 end
