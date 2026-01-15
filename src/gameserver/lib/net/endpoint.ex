@@ -2,7 +2,6 @@ defmodule Mutonex.Net.Endpoint do
   use Phoenix.Endpoint, otp_app: :mutonex_server
 
   socket "/socket", Mutonex.Net.UserSocket,
-    # TODO websocket: [timeout: 60_000], # Set a reasonable timeout
     websocket: [timeout: :infinity],
     longpoll: false
 
@@ -25,9 +24,14 @@ defmodule Mutonex.Net.Endpoint do
   plug(Plug.MethodOverride)
   plug(Plug.Head)
   plug(Plug.Session, @session_options)
-  plug Mutonex.Net.Plugs.Auth # Our authentication plug
+
+  # Public plugs (before Auth)
   plug :health_check
   plug :serve_index
+  plug :db_check
+
+  # Protected plugs
+  plug Mutonex.Net.Plugs.Auth
 
   defp health_check(conn, _opts) do
     if conn.request_path == "/health" do
@@ -37,11 +41,51 @@ defmodule Mutonex.Net.Endpoint do
     end
   end
 
+  defp db_check(conn, _opts) do
+    if conn.request_path == "/db-test" do
+      # In decoupled tests, Repo might not be started. Check process alive first.
+      repo_pid = Process.whereis(Mutonex.Server.Repo)
+
+      cond do
+        repo_pid == nil ->
+          conn
+          |> put_resp_content_type("application/json")
+          |> send_resp(500, Jason.encode!(%{status: "error", message: "Repo not started"}))
+          |> halt()
+
+        true ->
+          try do
+            case Mutonex.Server.Repo.query("SELECT 1") do
+              {:ok, _} ->
+                conn
+                |> put_resp_content_type("application/json")
+                |> send_resp(200, Jason.encode!(%{status: "connected", database_url: "configured"}))
+                |> halt()
+              {:error, _} ->
+                conn
+                |> put_resp_content_type("application/json")
+                |> send_resp(500, Jason.encode!(%{status: "error", message: "Database connection failed"}))
+                |> halt()
+            end
+          rescue
+            _ ->
+              conn
+              |> put_resp_content_type("application/json")
+              |> send_resp(500, Jason.encode!(%{status: "error", message: "Database connection crashed"}))
+              |> halt()
+          end
+      end
+    else
+      conn
+    end
+  end
+
   defp serve_index(conn, _opts) do
     if conn.request_path == "/" do
+      path = Application.app_dir(:mutonex_server, "priv/static/index.html")
       conn
       |> put_resp_content_type("text/html")
-      |> send_file(200, "priv/static/index.html")
+      |> send_file(200, path)
       |> halt()
     else
       conn
