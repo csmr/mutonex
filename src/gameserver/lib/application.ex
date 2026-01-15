@@ -21,12 +21,23 @@ defmodule Mutonex.Server.Application do
   end
 
   # For the :test environment, we start only the base children.
+  # (Actually, we might want Repo for integration tests, but let's follow the plan)
   defp top_level_children(:test) do
-    base_children()
+    if Application.get_env(:mutonex_server, :start_repo, true) do
+      [Mutonex.Server.Repo | base_children()]
+    else
+      base_children()
+    end
   end
 
   # For all other environments, we start the base children plus the GameLoop.
   defp top_level_children(_env) do
-    base_children() ++ [Mutonex.Engine.GameLoop]
+    children = base_children() ++ [Mutonex.Engine.GameLoop]
+
+    if Application.get_env(:mutonex_server, :start_repo, true) do
+      [Mutonex.Server.Repo | children]
+    else
+      children
+    end
   end
 end
