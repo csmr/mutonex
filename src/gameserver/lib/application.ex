@@ -32,7 +32,7 @@ defmodule Mutonex.Server.Application do
 
   # For all other environments, we start the base children plus the GameLoop.
   defp top_level_children(_env) do
-    children = base_children() ++ [Mutonex.Engine.GameLoop]
+    children = base_children() ++ [Mutonex.Simtellus.Simulation, Mutonex.Engine.GameLoop]
 
     if Application.get_env(:mutonex_server, :start_repo, true) do
       [Mutonex.Server.Repo | children]
