@@ -27,9 +27,12 @@ defmodule Mutonex.Simtellus.Planet do
   def sector_area(lat) do
     lat_rad = lat * :math.pi() / 180
     lat_plus_10_rad = (lat + 10) * :math.pi() / 180
-
     diff = abs(:math.sin(lat_plus_10_rad) - :math.sin(lat_rad))
-    2 * :math.pi() * :math.pow(@planet_radius, 2) * diff * (10.0 / 360.0)
+
+    2 * :math.pi() *
+      :math.pow(@planet_radius, 2) *
+      diff *
+      (10.0 / 360.0)
   end
 
   # EMField Module
@@ -50,12 +53,14 @@ defmodule Mutonex.Simtellus.Planet do
   # Orbit Module
 
   def orbital_effect(yearday) do
-    1 + 0.033 * :math.cos(2 * :math.pi() * (yearday - 3) / 365.0)
+    theta = 2 * :math.pi() * (yearday - 3) / 365.0
+    1 + 0.033 * :math.cos(theta)
   end
 
   def declination_angle(yearday) do
-    axial_tilt_rad = @axial_tilt * :math.pi() / 180
-    -axial_tilt_rad * :math.cos(2.0 * :math.pi() / 365.0 * (yearday + 10))
+    tilt_rad = @axial_tilt * :math.pi() / 180
+    theta = 2.0 * :math.pi() / 365.0 * (yearday + 10)
+    -tilt_rad * :math.cos(theta)
   end
 
   def hour_angle(hour) do
@@ -67,10 +72,12 @@ defmodule Mutonex.Simtellus.Planet do
     decl_rad = declination_angle(yearday)
     h_rad = hour_angle(hour)
 
-    cos_zen = :math.sin(lat_rad) * :math.sin(decl_rad) +
-              :math.cos(lat_rad) * :math.cos(decl_rad) * :math.cos(h_rad)
+    sin_term = :math.sin(lat_rad) * :math.sin(decl_rad)
+    cos_term = :math.cos(lat_rad) *
+               :math.cos(decl_rad) *
+               :math.cos(h_rad)
 
-    :math.acos(min(max(cos_zen, -1.0), 1.0))
+    :math.acos(min(max(sin_term + cos_term, -1.0), 1.0))
   end
 
   def irradiance_daily_wm2(lat, yearday) do
