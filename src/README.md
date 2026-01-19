@@ -31,7 +31,7 @@ See `src/gameserver` for the game session server, which also serves the webclien
 
 See `src/scripts/build_and_watch_webclient.sh`, it creates an API key, contributors list, client bundle. The `webclient_builder` service in `compose.yaml` runs this script.
 
-For planet sim, see `src/simtellus/start-simtellus.sh`, this installs ruby deps and starts the simtellus server.
+The planet simulation logic (Simtellus) is now integrated directly into `src/gameserver`.
 
 
 ## Database
