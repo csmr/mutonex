@@ -10,6 +10,8 @@ tf="$RUNTIME_DIR/web.js"
 if [ -f $tf ]; then
   log "$(ls -l $tf)" 
   cp -r webclient/assets "$RUNTIME_DIR/assets"
+  # Merge generated geometry assets into the distribution assets folder
+  cp -r res/geometry "$RUNTIME_DIR/assets/"
   cp webclient/assets/favicon.ico "$RUNTIME_DIR/"
   # Copy entry point
   cp webclient/mutonex.html "$RUNTIME_DIR/index.html"
