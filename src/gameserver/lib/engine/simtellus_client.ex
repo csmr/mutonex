@@ -40,4 +40,14 @@ defmodule Mutonex.Engine.SimtellusClient do
         {:error, error}
     end
   end
+
+  @doc """
+  Checks if the Simtellus Simulation is running and available.
+  """
+  def is_available? do
+    case Process.whereis(Mutonex.Simtellus.Simulation) do
+      nil -> false
+      _pid -> true
+    end
+  end
 end
