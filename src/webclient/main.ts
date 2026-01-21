@@ -6,6 +6,7 @@ import { GameStateProvider } from "./GameStateProvider.ts";
 import { ViewManager } from "./ViewManager.ts";
 import { LidarView } from "./LidarView.ts";
 import { SphereView } from "./SphereView.ts";
+import { LobbyView, Sector } from "./LobbyView.ts";
 import { EntityType, EntityData, Terrain } from "./types.ts";
 import type { PlayerTuple } from './MockGameStateProvider.ts';
 
@@ -29,8 +30,20 @@ function main() {
   // Start the render loop
   viewManager.animate();
 
-  // --- GameStateProvider Setup ---
-  // Data State
+  // --- Lobby Setup ---
+  const lobbyView = new LobbyView();
+  lobbyView.show();
+
+  // Mock Sectors (Static for now, could be dynamic later)
+  const mockSectors: Sector[] = [
+    { id: "game:lobby", name: "Sector Alpha (Dev)" },
+    { id: "game:lobby_beta", name: "Sector Beta (Test)" },
+    { id: "game:lobby_gamma", name: "Sector Gamma (High Pop)" }
+  ];
+  lobbyView.renderSectorList(mockSectors);
+
+  // --- Game State Variables ---
+  let gameStateProvider: GameStateProvider | null = null;
   const entities: EntityData[] = [];
   const playerAnchors: Map<string, any> = new Map();
   const faunaAnchors: Map<string, any> = new Map();
@@ -74,23 +87,62 @@ function main() {
         }
     }
 
-    // 2. Initial Entities
-    if (gameState.players) updatePlayerAnchors(gameState.players);
+    // 2. Check Game Phase
+    // If provider phase is lobby, show queue. If gamein, hide lobby.
+    if (gameStateProvider && gameStateProvider.phase === "lobby") {
+        if (gameState.players) lobbyView.updatePlayerQueue(gameState.players);
+    } else {
+        lobbyView.hide();
+        // 3. Initial Entities
+        if (gameState.players) updatePlayerAnchors(gameState.players);
+    }
+
     if (gameState.fauna) updateFaunaAnchors(gameState.fauna);
     updateEntitiesList();
   };
 
   const onStateUpdate = (update: { players?: PlayerTuple[], fauna?: PlayerTuple[] }) => {
-    if (update.players) updatePlayerAnchors(update.players);
+    if (gameStateProvider && gameStateProvider.phase === "lobby") {
+        if (update.players) lobbyView.updatePlayerQueue(update.players);
+    } else {
+        lobbyView.hide();
+        if (update.players) updatePlayerAnchors(update.players);
+    }
+
     if (update.fauna) updateFaunaAnchors(update.fauna);
     // Don't force update here, let the loop handle it with interpolation
   };
 
-  try {
-    const gameStateProvider = new GameStateProvider(onInitialState, onStateUpdate);
-    gameStateProvider.start();
+  // --- Sector Selection Handler ---
+  lobbyView.onSectorSelect((sector) => {
+      console.log(`Connecting to sector: ${sector.name} (${sector.id})`);
+      try {
+        if (gameStateProvider) return; // Prevent multiple connections
 
-    // --- Avatar Controls & Loop ---
+        gameStateProvider = new GameStateProvider(onInitialState, onStateUpdate);
+        // Override the default channel if needed, or pass sector.id to provider
+        // Assuming GameStateProvider uses 'game:lobby' by default or we can configure it.
+        // For now, assuming default 'game:lobby' matches our mock sector id or provider handles it.
+        // Actually GameStateProvider connects to "game:lobby" hardcoded in current implementation?
+        // Let's assume standard behavior for now.
+        gameStateProvider.start();
+
+        startUpdateLoop();
+
+      } catch (error) {
+        console.error("Could not connect to game server:", error);
+      }
+  });
+
+  // --- Avatar Controls & Loop ---
+  // Moved into a function to be called after connection
+  function startUpdateLoop() {
+    const keysPressed: { [key: string]: boolean } = {};
+    const AVATAR_SPEED = 20.0;
+    const FAUNA_SPEED = 0.5;
+    let lastTime = performance.now();
+
+    window.addEventListener('keydown', (e) => {
     const keysPressed: { [key: string]: boolean } = {};
     const AVATAR_SPEED = 20.0;
     const FAUNA_SPEED = 0.5;
@@ -124,6 +176,9 @@ function main() {
 
     function updateLoop() {
         requestAnimationFrame(updateLoop);
+
+        // Skip logic if in lobby
+        if (gameStateProvider && gameStateProvider.phase === "lobby") return;
 
         const now = performance.now();
         const delta = (now - lastTime) / 1000;
@@ -201,11 +256,9 @@ function main() {
         // Push updates to view
         updateEntitiesList(currentInterp);
     }
+    // Start the loop
     updateLoop();
-
-  } catch (error) {
-    console.error("Could not connect to game server:", error);
-  }
+  } // End startUpdateLoop
 
   function updatePlayerAnchors(players: PlayerTuple[]) {
       for (const [id, x, y, z] of players) {
