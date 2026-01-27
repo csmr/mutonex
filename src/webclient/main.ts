@@ -1,5 +1,4 @@
 // Declare THREE as a global variable to access it from the <script> tag
-// declare const THREE: any; // Now in global_types.ts
 import "./global_types.ts";
 
 import { GameStateProvider } from "./GameStateProvider.ts";
@@ -88,7 +87,6 @@ function main() {
     }
 
     // 2. Check Game Phase
-    // If provider phase is lobby, show queue. If gamein, hide lobby.
     if (gameStateProvider && gameStateProvider.phase === "lobby") {
         if (gameState.players) lobbyView.updatePlayerQueue(gameState.players);
     } else {
@@ -110,7 +108,6 @@ function main() {
     }
 
     if (update.fauna) updateFaunaAnchors(update.fauna);
-    // Don't force update here, let the loop handle it with interpolation
   };
 
   // --- Sector Selection Handler ---
@@ -120,11 +117,6 @@ function main() {
         if (gameStateProvider) return; // Prevent multiple connections
 
         gameStateProvider = new GameStateProvider(onInitialState, onStateUpdate);
-        // Override the default channel if needed, or pass sector.id to provider
-        // Assuming GameStateProvider uses 'game:lobby' by default or we can configure it.
-        // For now, assuming default 'game:lobby' matches our mock sector id or provider handles it.
-        // Actually GameStateProvider connects to "game:lobby" hardcoded in current implementation?
-        // Let's assume standard behavior for now.
         gameStateProvider.start();
 
         startUpdateLoop();
@@ -135,14 +127,7 @@ function main() {
   });
 
   // --- Avatar Controls & Loop ---
-  // Moved into a function to be called after connection
   function startUpdateLoop() {
-    const keysPressed: { [key: string]: boolean } = {};
-    const AVATAR_SPEED = 20.0;
-    const FAUNA_SPEED = 0.5;
-    let lastTime = performance.now();
-
-    window.addEventListener('keydown', (e) => {
     const keysPressed: { [key: string]: boolean } = {};
     const AVATAR_SPEED = 20.0;
     const FAUNA_SPEED = 0.5;
@@ -151,18 +136,15 @@ function main() {
     window.addEventListener('keydown', (e) => {
         keysPressed[e.key.toLowerCase()] = true;
 
-        // Toggle View
         if (e.key === 'Tab') {
             e.preventDefault();
             const current = viewManager.getActiveView();
             const next = current === lidarView ? sphereView : lidarView;
             viewManager.setActiveView(next);
-            // Sync terrain/entities immediately
             if (currentTerrain) next.updateTerrain(currentTerrain);
             updateEntitiesList();
         }
 
-        // Toggle Lidar Mode
         if (e.key.toLowerCase() === 'l') {
              lidarMode = lidarMode === 'vertical' ? 'horizontal' : 'vertical';
              lidarView.setScanMode(lidarMode);
@@ -177,7 +159,6 @@ function main() {
     function updateLoop() {
         requestAnimationFrame(updateLoop);
 
-        // Skip logic if in lobby
         if (gameStateProvider && gameStateProvider.phase === "lobby") return;
 
         const now = performance.now();
@@ -186,44 +167,23 @@ function main() {
 
         // --- Fauna Interpolation ---
         const currentInterp = new Map<string, any>();
-
         for (const [id, anchor] of faunaAnchors) {
             let target = faunaTargets.get(id);
-            // If no target or reached target, pick new wander point around anchor
-            // We store current simulated position in the target map for simplicity or track separately
-            // Actually, let's track simulated pos separately?
-            // For PoC, let's just assume we interpolate FROM anchor TO wander target.
-            // But anchor changes.
-            // Let's implement simple wandering:
-
-            // If we don't have a 'simulated' position, start at anchor
             if (!target) {
                 target = anchor.clone();
                 faunaTargets.set(id, target);
             }
 
-            // Move target towards a wander point?
-            // Reuse logic: target is the current position. We move it.
-            // If it is far from anchor, move back.
-
             const dist = target.distanceTo(anchor);
             if (dist > 5.0) {
-                 // Too far, move back to anchor
                  const dir = new THREE.Vector3().subVectors(anchor, target).normalize();
                  target.add(dir.multiplyScalar(FAUNA_SPEED * delta));
             } else {
-                 // Wander randomly
-                 // Simple random walk
-                 const theta = (Math.random() - 0.5) * 2.0; // randomness
-                 // We need persistent direction for smooth wandering.
-                 // For now, just jitter.
                  target.x += (Math.random() - 0.5) * FAUNA_SPEED * delta * 2;
                  target.z += (Math.random() - 0.5) * FAUNA_SPEED * delta * 2;
             }
-
             currentInterp.set(id, target);
         }
-
 
         // --- Player Movement ---
         const moveDir = new THREE.Vector3(0, 0, 0);
@@ -232,11 +192,10 @@ function main() {
         if (keysPressed['a'] || keysPressed['arrowleft']) moveDir.x -= 1;
         if (keysPressed['d'] || keysPressed['arrowright']) moveDir.x += 1;
 
-        if (gameStateProvider.phase === "gamein" && moveDir.lengthSq() > 0) {
+        if (gameStateProvider && gameStateProvider.phase === "gamein" && moveDir.lengthSq() > 0) {
             moveDir.normalize();
             const moveVec = moveDir.multiplyScalar(AVATAR_SPEED * delta);
 
-            // Update active view controls target/camera
             const activeView = viewManager.getActiveView();
             if (activeView) {
                 activeView.camera.position.add(moveVec);
@@ -253,12 +212,10 @@ function main() {
             }
         }
 
-        // Push updates to view
         updateEntitiesList(currentInterp);
     }
-    // Start the loop
     updateLoop();
-  } // End startUpdateLoop
+  }
 
   function updatePlayerAnchors(players: PlayerTuple[]) {
       for (const [id, x, y, z] of players) {
