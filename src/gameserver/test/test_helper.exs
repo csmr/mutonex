@@ -4,4 +4,4 @@ ExUnit.start()
 Application.ensure_all_started(:mox)
 
 # Define mocks for any global modules
-Mox.defmock(Mutonex.Engine.SimtellusClientMock, for: Mutonex.Engine.SimtellusClientBehaviour)
+# Mox.defmock(Mutonex.Engine.SimtellusClientMock, for: Mutonex.Engine.SimtellusClientBehaviour)

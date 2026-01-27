@@ -9,6 +9,13 @@ defmodule Mutonex.Net.Router do
     plug Mutonex.Net.Plugs.Auth
   end
 
+  scope "/", Mutonex.Net.Controllers do
+    pipe_through :api
+
+    get "/", PageController, :index
+    get "/health", HealthController, :index
+  end
+
   scope "/api", Mutonex.Net.Controllers do
     pipe_through :api
 
