@@ -36,7 +36,10 @@ This document summarizes the analysis of 19+ branches developed since November 1
 - **Deno Webserver:** The standalone `webserver` service is deprecated by the Phoenix static asset serving logic.
 - **Inline Fauna Logic:** Old versions of `GameSession` with inline fauna movement are superseded by the `FaunaSystem` and `FaunaBehavior` modules.
 
-## Recommendations for release-v0.2.x
-1. **Port all unique files** listed above.
-2. **Refactor Endpoint** to delegating routing of diagnostic and static endpoints to the Router where appropriate, or at least clean up the redundant `/db-test` vs `/api/db-test`.
-3. **Verify Auth Plug:** While remaining a development stub, ensure it's positioned correctly in the pipeline.
+## Integration Status for release-v0.2.17
+All identified improvements and unique files have been ported to the `release-v0.2.17` branch.
+
+1. **Ported Assets:** `infra/`, `src/res/geodata/slice_geodata.py`, `src/scripts/hash-utils.ts`, and all relevant documentation files have been integrated.
+2. **Refactored Routing:** The `Mutonex.Net.Endpoint` has been cleaned up, with diagnostic (`/health`, `/db-test`) and static endpoints now managed through the `Mutonex.Net.Router` and dedicated controllers.
+3. **Enhanced Auth:** The `Mutonex.Net.Plugs.Auth` has been updated to support both `Authorization: Bearer` and `api-key-hash` headers, aligning it with the newly added hashing utilities and existing tests.
+4. **Clean Workspace:** Redundant `remote_` files and deprecated logic from legacy branches have been removed or consolidated.

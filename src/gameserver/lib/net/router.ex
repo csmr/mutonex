@@ -14,6 +14,7 @@ defmodule Mutonex.Net.Router do
 
     get "/", PageController, :index
     get "/health", HealthController, :index
+    get "/db-test", DiagController, :db_test
   end
 
   scope "/api", Mutonex.Net.Controllers do

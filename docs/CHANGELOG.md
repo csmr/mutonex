@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.2.17 - The Consolidation Release
+- **Backend Consolidation:**
+    - Replaced Deno webserver with Phoenix static asset serving, simplifying architecture.
+    - Ported Simtellus (Ruby) to Elixir GenServer, achieving near-zero latency for simulation calls.
+    - Implemented `Mutonex.Net.Router` and specialized controllers for health, diagnostics, and SPA entry.
+- **Game Engine & Systems:**
+    - Introduced "Systems" architecture with `FaunaSystem` and `FaunaBehavior`.
+    - Added `SparseOctree` spatial partitioning for high-performance entity management.
+    - Implemented Society, Mineral, and Building logic based on `rule-calculator.rb` constraints.
+    - Refactored `GameSession` into a state machine with `:booting`, `:lobby`, and `:gamein` phases.
+- **Webclient Refactor:**
+    - Implemented `LidarView` with GPU-accelerated rendering and scan resolution toggling.
+    - Added `LobbyView` for sector selection and real-time player queue visualization.
+    - Unified rendering under `ViewManager` using the Strategy pattern.
+    - Integrated extruded Unicode geometry assets for all game entities.
+- **Infrastructure & Tooling:**
+    - Added Terraform scripts for GCP (GKE Autopilot) and Hetzner (Docker Compose on VPS).
+    - Ported advanced geodata processing scripts (`slice_geodata.py`) for terrain geodata import.
+    - Improved developer experience with `devenv.sh` and automated credential/salt generation.
+- **Security:**
+    - Integrated SHA-256 API key hashing and header-based authentication in the network pipeline.
+
 ## v0.1.0-3d-websocket-poc
 - Proof of Concept: 3D render static scene in the browser
 - Proof of Concept: WebSocket connection to Elixir/Phoenix game server
