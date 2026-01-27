@@ -25,7 +25,6 @@ This document summarizes the analysis of 19+ branches developed since November 1
 ### 2. Documentation and Project Tracking
 - **Consolidation Plans:** `todo/game_module_consolidation_plan.md`, `todo/account_plan.md`.
 - **Octree Review:** `todo/octree_review.md`.
-- **Master Docs:** `agents_master.md`, `master_design_doc.html`.
 - **Itineraries/Reports:** `LOGICAL_INTEGRATION_REPORT.md`, `COMPARISON_REPORT.md`, `REVIEW_OUTCOME.md`.
 
 ### 3. Architectural Cleanup
