@@ -45,9 +45,11 @@ defmodule Mutonex.Engine.FaunaBehavior do
   """
   def move(%Fauna{position: pos} = fauna) do
     # Random small movement (reduced range for "short" travel)
-    # 0.5 magnitude max = 0.5 km
-    dx = (:rand.uniform() - 0.5) * 0.5
-    dz = (:rand.uniform() - 0.5) * 0.5
+    # Target Speed: ~40 km/h (~0.011 km/s)
+    # Avg Tick: 6s => Dist: ~0.066 km
+    # Range +/- 0.07 km covers this.
+    dx = (:rand.uniform() - 0.5) * 0.14
+    dz = (:rand.uniform() - 0.5) * 0.14
     new_pos = %{pos | x: pos.x + dx, z: pos.z + dz}
 
     %{fauna | position: new_pos}
