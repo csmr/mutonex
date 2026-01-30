@@ -4,17 +4,22 @@ defmodule Mutonex.Simtellus.Simulation do
   alias Mutonex.Simtellus.Planet
 
   @sector_size 10
-  @lat_divisions div(180, @sector_size)
-  @lon_divisions div(360, @sector_size)
+  @lat_divs div(180, @sector_size)
+  @lon_divs div(360, @sector_size)
   @default_years_before 100
-  # Default start date: 2088-01-01
   @default_start_date ~D[2088-01-01]
 
   defmodule State do
-    defstruct [:sector_states, :artifacts, :current_date, :start_date, :ready]
+    defstruct [
+      :sector_states,
+      :artifacts,
+      :current_date,
+      :start_date,
+      :ready
+    ]
   end
 
-  # Client API
+  # --- Client API ---
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -28,57 +33,66 @@ defmodule Mutonex.Simtellus.Simulation do
     GenServer.call(__MODULE__, {:get_artifacts, lat, lon})
   end
 
-  def add_artifact(lat, lon, artifact) do
-    GenServer.cast(__MODULE__, {:add_artifact, lat, lon, artifact})
+  def add_artifact(lat, lon, art) do
+    msg = {:add_artifact, lat, lon, art}
+    GenServer.cast(__MODULE__, msg)
   end
 
-  def current_date() do
+  def current_date do
     GenServer.call(__MODULE__, :current_date)
   end
 
-  # Debug/Test helper
-  def advance_date() do
+  def advance_date do
     GenServer.call(__MODULE__, :advance_date)
   end
 
-  # GenServer Callbacks
+  # --- GenServer Callbacks ---
 
   @impl true
   def init(opts) do
-    start_date = Keyword.get(opts, :start_date, @default_start_date)
-    years_before = Keyword.get(opts, :years_before, @default_years_before)
+    sd = Keyword.get(opts, :start_date, @default_start_date)
+    yb = Keyword.get(
+      opts,
+      :years_before,
+      @default_years_before
+    )
 
     state = %State{
       sector_states: %{},
       artifacts: %{},
-      current_date: start_date,
-      start_date: start_date,
+      current_date: sd,
+      start_date: sd,
       ready: false
     }
 
-    {:ok, state, {:continue, {:init_simulation, years_before}}}
+    {:ok, state, {:continue, {:init_simulation, yb}}}
   end
 
   @impl true
-  def handle_continue({:init_simulation, years_before}, state) do
-    Logger.info("Initializing Simtellus simulation with #{years_before} years of history...")
+  def handle_continue({:init_simulation, years}, state) do
+    Logger.info("Initializing Simtellus simulation...")
 
-    # Initialize default values
-    initial_sector_states =
-      for lat_index <- (-@lat_divisions)..(@lat_divisions),
-          lon_index <- 0..(@lon_divisions),
+    states =
+      for lat_idx <- (-@lat_divs)..@lat_divs,
+          lon_idx <- 0..@lon_divs,
           into: %{} do
-        lat = lat_index * @sector_size
-        lon = lon_index * @sector_size
+        lat = lat_idx * @sector_size
+        lon = lon_idx * @sector_size
         key = sector_key(lat, lon)
-        {key, %{energy: 0, temperature: 15.0, rainfall: 0, historical_min_temp: 15.0, historical_max_temp: 15.0}}
+
+        val = %{
+          energy: 0,
+          temperature: 15.0,
+          rainfall: 0,
+          historical_min_temp: 15.0,
+          historical_max_temp: 15.0
+        }
+
+        {key, val}
       end
 
-    state = %{state | sector_states: initial_sector_states}
-
-    # Run history
-    state = run_history(state, years_before)
-
+    acc = %{state | sector_states: states}
+    state = run_history(acc, years)
     Logger.info("Simtellus simulation initialized.")
     {:noreply, %{state | ready: true}}
   end
@@ -95,9 +109,10 @@ defmodule Mutonex.Simtellus.Simulation do
   end
 
   @impl true
-  def handle_call({:get_artifacts, lat, lon}, _from, state) do
-    key = sector_key(lat, lon)
-    {:reply, Map.get(state.artifacts, key, []), state}
+  def handle_call({:get_artifacts, la, lo}, _from, state) do
+    key = sector_key(la, lo)
+    val = Map.get(state.artifacts, key, [])
+    {:reply, val, state}
   end
 
   @impl true
@@ -112,30 +127,39 @@ defmodule Mutonex.Simtellus.Simulation do
   end
 
   @impl true
-  def handle_cast({:add_artifact, lat, lon, artifact}, state) do
+  def handle_cast({:add_artifact, lat, lon, art}, state) do
     key = sector_key(lat, lon)
-    new_artifacts = Map.update(state.artifacts, key, [artifact], fn existing -> existing ++ [artifact] end)
-    {:noreply, %{state | artifacts: new_artifacts}}
+
+    new_arts =
+      Map.update(state.artifacts, key, [art], fn existing ->
+        existing ++ [art]
+      end)
+
+    {:noreply, %{state | artifacts: new_arts}}
   end
 
   @impl true
   def handle_info(:tick_simulation, state) do
-    new_state = advance_simulation_day(state)
-    {:noreply, new_state}
+    {:noreply, advance_simulation_day(state)}
   end
 
-  # Private Functions
+  # --- Private Functions ---
 
   defp sector_key(lat, lon) do
-    lat_index = floor(lat / @sector_size)
-    lon_index = floor(lon / @sector_size)
-    "#{lat_index}_#{lon_index}"
+    # Normalize lat/lon
+    lat = max(-90, min(90, lat))
+    lon = if lon < 0, do: lon + 360, else: lon
+    lon = lon - 360 * floor(lon / 360)
+
+    l_idx = floor(lat / @sector_size)
+    o_idx = floor(lon / @sector_size)
+    "#{l_idx}_#{o_idx}"
   end
 
-  defp run_history(state, years_before) do
-    Enum.reduce(1..years_before, state, fn year, acc_state ->
-      past_date = Date.add(acc_state.start_date, -year * 365)
-      update_simulation_for_date(acc_state, past_date)
+  defp run_history(state, years) do
+    Enum.reduce(1..years, state, fn year, acc ->
+      date = Date.add(acc.start_date, -year * 365)
+      update_simulation_for_date(acc, date)
     end)
   end
 
@@ -148,31 +172,29 @@ defmodule Mutonex.Simtellus.Simulation do
   defp update_simulation_for_date(state, date) do
     yearday = Date.day_of_year(date)
 
-    new_sector_states =
-      Map.new(state.sector_states, fn {key, current_sector_state} ->
-        # We need to extract lat/lon from key or store it.
-        # Storing it is expensive? calculating from key is easy.
-        [lat_idx_s, _lon_idx_s] = String.split(key, "_")
-        lat = String.to_integer(lat_idx_s) * @sector_size
-        # lon = String.to_integer(lon_idx_s) * @sector_size # Unused but good for ref
+    new_states =
+      Map.new(state.sector_states, fn {key, cur} ->
+        [lat_s, _] = String.split(key, "_")
+        lat = String.to_integer(lat_s) * @sector_size
 
-        new_energy = Planet.irradiance_daily_wm2(lat, yearday)
-        new_temp = Planet.temp(yearday, lat, 0, 0)
-        new_rainfall = 5.0 # Mock
+        new_e = Planet.irradiance_daily_wm2(lat, yearday)
+        new_t = Planet.temp(yearday, lat, 0, 0)
+        new_r = 5.0
 
-        historical_min = min(current_sector_state.historical_min_temp || new_temp, new_temp)
-        historical_max = max(current_sector_state.historical_max_temp || new_temp, new_temp)
+        h_min = min(cur.historical_min_temp || new_t, new_t)
+        h_max = max(cur.historical_max_temp || new_t, new_t)
 
-        new_val = %{
-          energy: new_energy,
-          temperature: new_temp,
-          rainfall: new_rainfall,
-          historical_min_temp: historical_min,
-          historical_max_temp: historical_max
+        val = %{
+          energy: new_e,
+          temperature: new_t,
+          rainfall: new_r,
+          historical_min_temp: h_min,
+          historical_max_temp: h_max
         }
-        {key, new_val}
+
+        {key, val}
       end)
 
-    %{state | sector_states: new_sector_states}
+    %{state | sector_states: new_states}
   end
 end
