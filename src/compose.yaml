@@ -53,11 +53,11 @@ services:
     image: elixir:latest
     container_name: mutonphoenix
     volumes:
-      - ./gameserver:/app
-      - ./res:/app/res
-      - ./dist:/app/priv/static
+       - ./gameserver:/app
+       - ./res:/res
+       - ./dist:/app/priv/static
     working_dir: /app
-    command: sh -c "mix deps.get && mix phx.server" # Install deps and start Phoenix server
+    command: sh -c "mix deps.get && mix phx.server"
     depends_on:
       postgres:
         condition: service_healthy
