@@ -3,45 +3,41 @@ defmodule Mutonex.Net.GameChannel do
   alias Mutonex.Engine.GameSession
 
   @doc """
-  Handles a player joining a specific game sector channel.
-  Finds or starts the corresponding GameSession GenServer.
+  Handles a player joining a game sector channel.
   """
   def join("game:" <> sector_id, _payload, socket) do
-    # Find or start the GameSession process for this sector_id
+    # Find or start the GameSession process
     {:ok, pid} = start_game_session(sector_id)
 
     # Fetch initial state from the session
     initial_data = GameSession.get_initial_state(pid)
 
-    # Subscribe to broadcasts for this game session
-    # PubSub.subscribe("game:#{sector_id}")
-
-    # Send the initial state push in a separate process after join completes
+    # Send initial state push async after join
     send(self(), {:after_join, initial_data})
+
+    # Notify GameSession that a player joined
+    uid = Map.get(socket.assigns, :user_id, "guest")
+    GenServer.cast(pid, {:player_joined, uid})
+
     {:ok, socket}
   end
 
-  @doc """
-  Handles the async push of initial state after join.
-  """
+  @doc "Handles the async push of initial state after join."
   def handle_info({:after_join, data}, socket) do
     push(socket, "game_phase", %{phase: data.phase})
     push(socket, "game_state", data.game_state)
     {:noreply, socket}
   end
 
-  @doc """
-  Handles a "move" event from a client.
-  Casts the event to the GameSession GenServer for processing.
-  """
+  @doc "Handles a move event from a client."
   def handle_in("avatar_update", payload, socket) do
     sector_id = get_sector_id(socket)
     user_id = socket.assigns.user_id
 
-    # The channel is stateless; it finds the game session process via the registry
-    # and sends it a message. The GenServer handles the game logic.
-    {:via, Registry, {Mutonex.GameRegistry, sector_id}}
-    |> GenServer.cast({:avatar_update, user_id, payload})
+    # Cast the event to the GameSession GenServer
+    registry = Mutonex.GameRegistry
+    via = {:via, Registry, {registry, sector_id}}
+    GenServer.cast(via, {:avatar_update, user_id, payload})
 
     {:noreply, socket}
   end
@@ -53,12 +49,15 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   defp start_game_session(sector_id) do
-    via_tuple = {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+    registry = Mutonex.GameRegistry
+    via = {:via, Registry, {registry, sector_id}}
 
-    case GenServer.whereis(via_tuple) do
+    case GenServer.whereis(via) do
       nil ->
         spec = {GameSession, sector_id}
-        DynamicSupervisor.start_child(Mutonex.GameSessionSupervisor, spec)
+        sup = Mutonex.GameSessionSupervisor
+        DynamicSupervisor.start_child(sup, spec)
+
       pid when is_pid(pid) ->
         {:ok, pid}
     end

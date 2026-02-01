@@ -1,35 +1,35 @@
 defmodule Mutonex.Engine.Mineral do
   @moduledoc """
-  Handles Mineral logic, including spawning and management.
+  Handles Mineral logic, spawning and management.
   """
   alias Mutonex.Engine.Entities.{Mineral, ConveyorBelt}
+  alias Mutonex.Utils.Resource
 
-  @elements_path Path.expand("../../../res/elements.yml", __DIR__)
+  # Resolve path for elements.yml (local & container)
+  @elements_path Resource.resolve_path(
+    "elements.yml",
+    __DIR__
+  )
+
   @external_resource @elements_path
 
   # Load elements map at compile time
-  # Format in YAML is "Number: Name"
-  # We want a list of names or atoms.
   @elements YamlElixir.read_from_file!(@elements_path)
             |> Enum.map(fn {_k, v} -> v end)
 
-  @doc """
-  Returns a random mineral type from the loaded elements.
-  """
-  def get_random_type do
-    Enum.random(@elements)
-  end
+  @doc "Returns a random mineral type."
+  def get_random_type, do: Enum.random(@elements)
 
-  @doc """
-  Spawns a list of minerals with random types and positions.
-  """
+  @doc "Spawns minerals with random types and positions."
   def spawn_minerals(count, bounds) do
     Enum.map(1..count, fn i ->
+      uid = System.unique_integer([:positive])
+
       %Mineral{
-        id: "mineral_#{i}_#{System.unique_integer([:positive])}",
+        id: "mineral_#{i}_#{uid}",
         position: %{
           x: :rand.uniform() * bounds.x,
-          y: 0, # Assuming ground level
+          y: 0,
           z: :rand.uniform() * bounds.z
         },
         type: get_random_type(),
@@ -39,34 +39,23 @@ defmodule Mutonex.Engine.Mineral do
     end)
   end
 
-  @doc """
-  Creates a conveyor belt connecting a mineral to a building.
-  """
-  def build_conveyor(mineral_id, building_id) do
+  @doc "Creates conveyor belt mineral -> building."
+  def build_conveyor(min_id, bld_id) do
     %ConveyorBelt{
-      id: "conveyor_#{mineral_id}_#{building_id}",
-      mineral_id: mineral_id,
-      building_id: building_id,
+      id: "conveyor_#{min_id}_#{bld_id}",
+      mineral_id: min_id,
+      building_id: bld_id,
       status: :building
     }
   end
 
-  @doc """
-  Returns the bounding box of the mineral as %{min: %{x,y,z}, max: %{x,y,z}}.
-  """
-  def get_bounding_box(%Mineral{position: pos, size: size}) do
-    half_size = size / 2.0
+  @doc "Returns the bounding box of the mineral."
+  def get_bounding_box(%Mineral{position: p, size: s}) do
+    half = s / 2.0
+
     %{
-      min: %{
-        x: pos.x - half_size,
-        y: pos.y - half_size,
-        z: pos.z - half_size
-      },
-      max: %{
-        x: pos.x + half_size,
-        y: pos.y + half_size,
-        z: pos.z + half_size
-      }
+      min: %{x: p.x - half, y: p.y - half, z: p.z - half},
+      max: %{x: p.x + half, y: p.y + half, z: p.z + half}
     }
   end
 end

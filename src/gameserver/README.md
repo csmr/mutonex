@@ -1,42 +1,21 @@
-## Game Engine
+# Mutonex Gameserver
 
-Game session instances, sector scene graphs, game rule computation.
+Elixir/Phoenix server for game sessions and simulation.
 
-### Server
+## Developer Access
 
-Elixir project, with Phoenix and WebSockets.
+- **3D View**: `http://localhost:4000/`
+  (Auto-joins default sector)
+- **Lobby**: `http://localhost:4000/?join=false`
+- **Diagnostics**: `http://localhost:4000/api/db-test`
 
-### Project structure
-```
-├── lib
-│   ├── application.ex          # Application entry point
-│   ├── engine
-│   │   ├── entities.ex         # Game entity data structures
-│   │   ├── game_session.ex     # Game session state management
-│   │   ├── lidar.ex            # Rendering style
-│   │   └── sparse_octree.ex    # Scene graph data structure
-│   └── net
-│       ├── endpoint.ex         # Phoenix endpoint configuration
-│       ├── game_channel.ex     # WebSocket channel for game instances
-│       └── user_socket.ex      # User socket for WebSocket connections
-├── mix.exs                     # Elixir project configuration
-├── README.md                   # This file
-└── test
-    ├── engine
-    │   ├── entities_test.exs       # Tests for entities.ex
-    │   ├── lidar_test.ex
-    │   └── sparse_octree_test.exs  # Tests for sparse_octree.ex
-    ├── gameserver_test.exs         # Tests for the application
-    └── test.run.sh                 # Script to run tests
-```
+## Project Structure
 
+- `lib/engine`: Core game logic and systems.
+- `lib/net`: Phoenix channels and controllers.
+- `lib/simtellus`: Planet simulation logic.
+- `lib/utils`: Shared utilities.
 
-### Test run in a container
+## Testing
 
-To run the tests inside the gameserver container, use:
-
-```
-$ docker-compose run gameserver mix test
-
-```
-
+Run tests with `mix test`.
