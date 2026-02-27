@@ -5,6 +5,7 @@ import {
     EntityType,
     Terrain
 } from "./types.ts";
+import { LidarVertexShader, LidarFragmentShader } from "./LidarShaders.ts";
 
 // --- Configuration ---
 const LIDAR_FOV = 90; // Degrees horizontal
@@ -14,15 +15,24 @@ export class LidarView implements IView {
     public scene: any; // THREE.Scene
     public camera: any; // THREE.PerspectiveCamera
 
-    private samplesH = 120;
-    private samplesV = 240;
+    private samplesH = 480;
+    private samplesV = 270; // Dense sampling required for full depth texture coverage
+    public currentMode: 'vertical' | 'horizontal' = 'horizontal'; // Default to horizontal/cheapo
+    public entropy: number = 0.1; // Parametric signal loss (0=no noise, 1=max)
 
     // The "Virtual" scene contains the actual geometry
     private virtualScene: any; // THREE.Scene
     private virtualMeshes: Map<string, any> = new Map();
 
-    // The Render Target stores depth information
+    // The Render Target stores depth information in its COLOUR buffer.
+    // A plain RGBA/UnsignedByteType render target is used rather than a
+    // DepthTexture because WebGL2 DepthFormat textures cannot be sampled
+    // from vertex shaders (returns 0.0 universally).
+    // The virtualScene is rendered with overrideMaterial = depthMaterial
+    // (THREE.MeshDepthMaterial, BasicDepthPacking) which writes NDC depth
+    // packed as a greyscale value into the colour buffer red channel.
     private renderTarget: any; // THREE.WebGLRenderTarget
+    private depthMaterial: any; // THREE.MeshDepthMaterial
 
     public controls: any; // OrbitControls
     private renderer: any | null = null;
@@ -52,7 +62,13 @@ export class LidarView implements IView {
             0.1,
             1000
         );
-        this.camera.position.set(0, 10, 20);
+        // Camera at (0,8,20), target at default (0,0,0):
+        // offset = (0,8,20), phi = arccos(8/21.5) ≈ 68° from north pole.
+        // Camera looks (90-68)=22° below horizontal — ground fills lower screen
+        // without needing any mouse interaction.
+        // IMPORTANT: do NOT set controls.target to (0,0,Z) — that would move
+        // the orbit centre while keeping phi=0 (north pole), making camera look straight down.
+        this.camera.position.set(0, 8, 20);
 
         // Use global OrbitControls
         const THREE_ANY = (window as any).THREE;
@@ -61,8 +77,10 @@ export class LidarView implements IView {
             domElement
         );
         this.controls.enableDamping = true;
-        this.controls.autoRotate = true;
-        this.controls.autoRotateSpeed = 0.5;
+        // autoRotate OFF: default view must be deterministic for developers.
+        this.controls.autoRotate = false;
+        // Leave controls.target at default (0,0,0).  Any target.set() call on
+        // a camera that started on the Y axis would preserve phi=0 = straight down.
 
         // 2. Setup Virtual Scene
         this.virtualScene = new THREE.Scene();
@@ -70,24 +88,23 @@ export class LidarView implements IView {
         this.virtualScene.background = black;
 
         // 3. Setup Render Target
-        const dt = new THREE.DepthTexture(w, h);
-
-        const rtParams = {
+        // Plain RGBA colour render target — depth is written into the colour
+        // buffer by a MeshDepthMaterial override pass, not a DepthTexture.
+        // This avoids the WebGL2 restriction that prevents depth textures from
+        // being sampled in vertex shaders.
+        this.renderTarget = new THREE.WebGLRenderTarget(w, h, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
             format: THREE.RGBAFormat,
-            type: THREE.FloatType,
-            depthBuffer: true,
-            depthTexture: dt
-        };
+            type: THREE.UnsignedByteType,
+        });
 
-        this.renderTarget = new THREE.WebGLRenderTarget(
-            w,
-            h,
-            rtParams
-        );
-        const dTex = this.renderTarget.depthTexture;
-        dTex.type = THREE.FloatType;
+        // MeshDepthMaterial writes NDC depth into the colour buffer as a
+        // BasicDepthPacking greyscale float — readable as tDepth.r in the
+        // vertex shader with values in [near/far .. 1.0].
+        this.depthMaterial = new THREE.MeshDepthMaterial({
+            depthPacking: THREE.BasicDepthPacking,
+        });
 
         // 4. Initialize Lidar Shader & Geometry
         this.lidarMaterial = this.createLidarShader();
@@ -96,15 +113,41 @@ export class LidarView implements IView {
         // 5. Initialize Loader
         this.loader = new THREE.BufferGeometryLoader();
         this.createGroundGrid();
+
+        // **TEST SPHERE** — remove after terrain rendering is confirmed.
+        // Camera at (0,8,20) looking at origin (~22° below horizontal).
+        // Sphere at (0,1,10): camera-to-sphere distance ≈ sqrt(49+100)=12.2 units.
+        // brightness = clamp(1-12.2/30, 0.05, 1.0) = 0.59 — clearly visible bright green.
+        const debugGeo = new THREE.SphereGeometry(1.5, 16, 16);
+        const debugMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const debugMesh = new THREE.Mesh(debugGeo, debugMat);
+        debugMesh.position.set(0, 1.5, 10);
+        this.virtualScene.add(debugMesh);
     }
 
     public setScanMode(mode: 'vertical' | 'horizontal') {
+        this.currentMode = mode;
         if (mode === 'vertical') {
-            this.samplesH = 120;
-            this.samplesV = 240;
+            this.samplesH = 480;
+            this.samplesV = 270;
         } else {
-            this.samplesH = 240;
-            this.samplesV = 240;
+            this.samplesH = 160;
+            this.samplesV = 100;
+        }
+
+        if (this.lidarMaterial) {
+            this.lidarMaterial.uniforms.scanMode.value = mode === 'vertical' ? 0.0 : 1.0;
+        }
+        if (mode === 'vertical') {
+            this.samplesH = 480;
+            this.samplesV = 270;
+        } else {
+            // Horizontal mode uses the SAME dense sample grid as vertical.
+            // The scan-line visual band effect is applied in the fragment shader
+            // (gl_FragCoord.y mod filter), NOT by reducing sample density.
+            // Fewer samples = less depth texture coverage = black regions.
+            this.samplesH = 480;
+            this.samplesV = 270;
         }
         this.rebuildLidarPoints();
     }
@@ -115,12 +158,16 @@ export class LidarView implements IView {
             this.lidarPoints.geometry.dispose();
         }
 
+        // Both horizontal and vertical modes use THREE.Points.
+        // The scan-line visual effect for horizontal mode is produced entirely
+        // in the fragment shader (band-period discard), NOT by LineSegments geometry.
+        // This eliminates depth-discontinuity line artifacts.
         const geometry = new THREE.BufferGeometry();
         const positions: number[] = [];
         const uvs: number[] = [];
 
-        for (let x = 0; x < this.samplesH; x++) {
-            for (let y = 0; y < this.samplesV; y++) {
+        for (let y = 0; y < this.samplesV; y++) {
+            for (let x = 0; x < this.samplesH; x++) {
                 positions.push(0, 0, 0);
                 const u = x / (this.samplesH - 1);
                 const v = y / (this.samplesV - 1);
@@ -128,22 +175,11 @@ export class LidarView implements IView {
             }
         }
 
-        const posAttr = new THREE.Float32BufferAttribute(
-            positions,
-            3
-        );
-        const uvAttr = new THREE.Float32BufferAttribute(
-            uvs,
-            2
-        );
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
 
-        geometry.setAttribute('position', posAttr);
-        geometry.setAttribute('uv', uvAttr);
-
-        this.lidarPoints = new THREE.Points(
-            geometry,
-            this.lidarMaterial
-        );
+        this.lidarPoints = new THREE.Points(geometry, this.lidarMaterial);
+        this.lidarPoints.frustumCulled = false;
         this.scene.add(this.lidarPoints);
     }
 
@@ -162,73 +198,21 @@ export class LidarView implements IView {
                 value: new THREE.Matrix4()
             },
             resolution: { value: resolution },
-            time: { value: 0 }
+            time: { value: 0 },
+            scanMode: { value: this.currentMode === 'vertical' ? 0.0 : 1.0 },
+            entropy: { value: this.entropy },
+            // diagMode: 0.0 = normal rendering, 1.0 = diagnostic (red=elevated, blue=ground).
+            // Toggle from browser console: lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
+            diagMode: { value: 0.0 }
         };
 
         const psStr = POINT_SIZE.toFixed(1);
+        const resolvedVertexShader = LidarVertexShader.replace("POINT_SIZE_VALUE", psStr);
 
         return new THREE.ShaderMaterial({
             uniforms: uniforms,
-            vertexShader: `
-                uniform sampler2D tDepth;
-                uniform float cameraNear;
-                uniform float cameraFar;
-                uniform mat4 viewInverse;
-                uniform mat4 projectionInverse;
-                uniform float time;
-
-                varying float vDepth;
-                varying vec2 vUv;
-
-                vec3 getWPos(vec2 uv, float depth) {
-                    vec4 n = vec4(
-                        uv*2.0-1.0,
-                        depth*2.0-1.0,
-                        1.0
-                    );
-                    vec4 v = projectionInverse * n;
-                    v /= v.w;
-                    vec4 w = viewInverse * v;
-                    return w.xyz;
-                }
-
-                void main() {
-                    vUv = uv;
-                    float d = texture2D(tDepth, uv).r;
-                    vDepth = d;
-
-                    if(d >= 0.99) {
-                        gl_Position = vec4(
-                            2.0,
-                            2.0,
-                            2.0,
-                            1.0
-                        );
-                        gl_PointSize = 0.0;
-                        return;
-                    }
-
-                    vec3 w = getWPos(uv, d);
-                    gl_Position = projectionMatrix *
-                                  modelViewMatrix *
-                                  vec4(w, 1.0);
-
-                    vec4 vp = modelViewMatrix *
-                              vec4(w, 1.0);
-                    gl_PointSize = ${psStr} /
-                                   -vp.z * 10.0;
-                }
-            `,
-            fragmentShader: `
-                varying float vDepth;
-                varying vec2 vUv;
-
-                void main() {
-                    float modY = mod(gl_FragCoord.y, 2.0);
-                    if (modY > 1.0) discard;
-                    gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
-                }
-            `,
+            vertexShader: resolvedVertexShader,
+            fragmentShader: LidarFragmentShader,
             transparent: true,
             blending: THREE.AdditiveBlending
         });
@@ -239,16 +223,18 @@ export class LidarView implements IView {
     }
 
     public updateEntities(entities: EntityData[]) {
-        const charMap: {[key in EntityType]: string[]} = {
+        const charMap: { [key in EntityType]: string[] } = {
             'player': ['🧙', '𐇑', '𐇒'],
             'fauna': ['🦗', '🌱', '🌲'],
-            'building': ['👷', '🤖', '🧕'],
+            'unit': ['👷', '🤖', '🧕'],
+            'building': ['🏛'],
+            'society': ['🎪', '🏘', '🏙'],
             'mineral': ['⭓', '⬠', '💎']
         };
 
         const activeIds = new Set<string>();
 
-        for(const entity of entities) {
+        for (const entity of entities) {
             activeIds.add(entity.id);
 
             const chars = charMap[entity.type] || ['?'];
@@ -285,54 +271,75 @@ export class LidarView implements IView {
             const hex = cp!.toString(16).toUpperCase();
             let geometry = this.geometryCache.get(hex);
 
+            const mat = new THREE.MeshBasicMaterial({
+                color: 0xffffff
+            });
+
             if (!geometry) {
-                const url = `assets/geometry/${hex}.json`;
-                this.loader.load(url, (loadedGeo: any) => {
-                    this.geometryCache.set(hex, loadedGeo);
-                    const ex = this.virtualMeshes.get(id);
-                    if (ex) {
-                        ex.geometry = loadedGeo;
-                    }
-                });
                 const b = new THREE.BoxGeometry(
                     0.5,
                     0.5,
                     0.5
                 );
-                geometry = b;
+
+                mesh = new THREE.Mesh(b, mat);
+                this.virtualScene.add(mesh);
+                this.virtualMeshes.set(id, mesh);
+
+                const url = `assets/geometry/${hex}.json`;
+                this.loader.load(url, (loadedGeo: any) => {
+                    this.geometryCache.set(hex, loadedGeo);
+
+                    const ex = this.virtualMeshes.get(id);
+                    if (ex && ex.geometry === b) {
+                        // Reconstruct the mesh safely instead of hot-swapping geometries
+                        this.virtualScene.remove(ex);
+                        ex.geometry.dispose();
+
+                        const newMesh = new THREE.Mesh(loadedGeo, mat);
+                        newMesh.position.copy(ex.position);
+
+                        this.virtualScene.add(newMesh);
+                        this.virtualMeshes.set(id, newMesh);
+                    }
+                });
+            } else {
+                mesh = new THREE.Mesh(geometry, mat);
+                this.virtualScene.add(mesh);
+                this.virtualMeshes.set(id, mesh);
             }
-
-            const mat = new THREE.MeshBasicMaterial({
-                color: 0xffffff
-            });
-            mesh = new THREE.Mesh(geometry, mat);
-
-            this.virtualScene.add(mesh);
-            this.virtualMeshes.set(id, mesh);
         } else {
             const cp = char.codePointAt(0);
             const hex = cp!.toString(16).toUpperCase();
             const realGeo = this.geometryCache.get(hex);
             if (realGeo && mesh.geometry !== realGeo) {
                 if (mesh.geometry.type === 'BoxGeometry') {
-                    mesh.geometry = realGeo;
+                    // Reconstruct the mesh safely instead of hot-swapping geometries
+                    this.virtualScene.remove(mesh);
+                    mesh.geometry.dispose();
+
+                    const newMesh = new THREE.Mesh(realGeo, mesh.material);
+                    newMesh.position.copy(mesh.position);
+
+                    this.virtualScene.add(newMesh);
+                    this.virtualMeshes.set(id, newMesh);
+                    mesh = newMesh; // Point our local reference to the new mesh 
                 }
             }
         }
 
         mesh.position.copy(pos);
-        mesh.lookAt(this.camera.position);
     }
 
     private createGroundGrid() {
         const geo = new THREE.PlaneGeometry(
             200,
             200,
-            20,
-            20
+            100,
+            100
         );
         const mat = new THREE.MeshBasicMaterial({
-            wireframe: true
+            wireframe: false
         });
         const plane = new THREE.Mesh(geo, mat);
         plane.rotation.x = -Math.PI / 2;
@@ -354,6 +361,7 @@ export class LidarView implements IView {
         if (this.lidarMaterial) {
             const u = this.lidarMaterial.uniforms;
             u.time.value += deltaTime;
+            if (u.entropy) u.entropy.value = this.entropy;
         }
         this.virtualScene.updateMatrixWorld(true);
     }
@@ -362,8 +370,8 @@ export class LidarView implements IView {
         this.renderer = renderer;
         const uniforms = this.lidarMaterial.uniforms;
 
-        const dTex = this.renderTarget.depthTexture;
-        uniforms.tDepth.value = dTex;
+        // Bind the colour texture (which contains depth-packed data) to tDepth.
+        uniforms.tDepth.value = this.renderTarget.texture;
         uniforms.cameraNear.value = this.camera.near;
         uniforms.cameraFar.value = this.camera.far;
 
@@ -372,11 +380,16 @@ export class LidarView implements IView {
         const mw = this.camera.matrixWorld;
         uniforms.viewInverse.value.copy(mw);
 
+        // Render the virtualScene into the render target using the depth
+        // material override — this writes NDC depth into the colour buffer.
         const currentRT = renderer.getRenderTarget();
         renderer.setRenderTarget(this.renderTarget);
-        renderer.setClearColor(0x000000);
+        renderer.setClearColor(0xffffff, 1); // white = far plane (depth 1.0)
         renderer.clear();
+        const prevOverride = this.virtualScene.overrideMaterial;
+        this.virtualScene.overrideMaterial = this.depthMaterial;
         renderer.render(this.virtualScene, this.camera);
+        this.virtualScene.overrideMaterial = prevOverride;
         renderer.setRenderTarget(currentRT);
     }
 
