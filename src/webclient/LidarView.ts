@@ -24,15 +24,19 @@ export class LidarView implements IView {
     private virtualScene: any; // THREE.Scene
     private virtualMeshes: Map<string, any> = new Map();
 
-    // The Render Target stores depth information in its COLOUR buffer.
-    // A plain RGBA/UnsignedByteType render target is used rather than a
-    // DepthTexture because WebGL2 DepthFormat textures cannot be sampled
-    // from vertex shaders (returns 0.0 universally).
-    // The virtualScene is rendered with overrideMaterial = depthMaterial
-    // (THREE.MeshDepthMaterial, BasicDepthPacking) which writes NDC depth
-    // packed as a greyscale value into the colour buffer red channel.
-    private renderTarget: any; // THREE.WebGLRenderTarget
-    private depthMaterial: any; // THREE.MeshDepthMaterial
+    // FloatType RGBA render target — depth is stored as a full-precision
+    // 32-bit float in the R channel.
+    //
+    // We do NOT use a DepthTexture (WebGL2 prevents vertex shader sampling)
+    // and NOT UnsignedByteType (the 0.1/1000 near/far ratio maps all visible
+    // geometry to byte 252-255, losing all depth discrimination).
+    //
+    // The depth pass renders virtualScene with overrideMaterial = linearDepthMaterial,
+    // a custom shader that writes `z_view / cameraFar` directly into R.
+    // Sky background is cleared to white (d=1.0) and suppressed during this
+    // pass so the scene's black background cannot override the clear.
+    private renderTarget: any;      // THREE.WebGLRenderTarget (FloatType)
+    private linearDepthMaterial: any; // custom ShaderMaterial
 
     public controls: any; // OrbitControls
     private renderer: any | null = null;
@@ -87,23 +91,41 @@ export class LidarView implements IView {
         const black = new THREE.Color(0x000000);
         this.virtualScene.background = black;
 
-        // 3. Setup Render Target
-        // Plain RGBA colour render target — depth is written into the colour
-        // buffer by a MeshDepthMaterial override pass, not a DepthTexture.
-        // This avoids the WebGL2 restriction that prevents depth textures from
-        // being sampled in vertex shaders.
+        // 3. Setup Render Target — FloatType for full-precision linear depth.
+        // EXT_color_buffer_float is confirmed available in this WebGL2 context.
+        // UnsignedByteType (8-bit) is unusable: with near=0.1/far=1000 all
+        // visible geometry maps to byte 252–255, indistinguishable and discarded.
         this.renderTarget = new THREE.WebGLRenderTarget(w, h, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
             format: THREE.RGBAFormat,
-            type: THREE.UnsignedByteType,
+            type: THREE.FloatType,
         });
 
-        // MeshDepthMaterial writes NDC depth into the colour buffer as a
-        // BasicDepthPacking greyscale float — readable as tDepth.r in the
-        // vertex shader with values in [near/far .. 1.0].
-        this.depthMaterial = new THREE.MeshDepthMaterial({
-            depthPacking: THREE.BasicDepthPacking,
+        // Linear depth material — writes z_view / cameraFar into R channel
+        // as a full 32-bit float.  z_view is the positive view-space depth
+        // (distance along the camera -Z axis).  Sky background is cleared
+        // to white (d=1.0) so the vertex shader can discard it with d > 0.99.
+        this.linearDepthMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                far: { value: this.camera.far }
+            },
+            vertexShader: `
+                varying float vViewZ;
+                void main() {
+                    vec4 vPos = modelViewMatrix * vec4(position, 1.0);
+                    vViewZ = -vPos.z; // positive depth along -Z
+                    gl_Position = projectionMatrix * vPos;
+                }
+            `,
+            fragmentShader: `
+                uniform float far;
+                varying float vViewZ;
+                void main() {
+                    // Store linear depth [0,1] as full-precision float in R.
+                    gl_FragColor = vec4(vViewZ / far, 0.0, 0.0, 1.0);
+                }
+            `,
         });
 
         // 4. Initialize Lidar Shader & Geometry
@@ -380,16 +402,22 @@ export class LidarView implements IView {
         const mw = this.camera.matrixWorld;
         uniforms.viewInverse.value.copy(mw);
 
-        // Render the virtualScene into the render target using the depth
-        // material override — this writes NDC depth into the colour buffer.
+        // Depth pass: render virtualScene with linear depth material.
+        // Suppress virtualScene.background during this pass so the explicit
+        // white clear (d=1.0 sentinel for sky) is not overridden by the
+        // scene's black background colour.
         const currentRT = renderer.getRenderTarget();
         renderer.setRenderTarget(this.renderTarget);
-        renderer.setClearColor(0xffffff, 1); // white = far plane (depth 1.0)
+        renderer.setClearColor(0xffffff, 1);
         renderer.clear();
         const prevOverride = this.virtualScene.overrideMaterial;
-        this.virtualScene.overrideMaterial = this.depthMaterial;
+        const prevBackground = this.virtualScene.background;
+        this.virtualScene.overrideMaterial = this.linearDepthMaterial;
+        this.virtualScene.background = null;  // let explicit clear stand
+        this.linearDepthMaterial.uniforms.far.value = this.camera.far;
         renderer.render(this.virtualScene, this.camera);
         this.virtualScene.overrideMaterial = prevOverride;
+        this.virtualScene.background = prevBackground;
         renderer.setRenderTarget(currentRT);
     }
 
