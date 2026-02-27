@@ -30,6 +30,11 @@ function main() {
 
   viewManager.setActiveView(lidarView);
 
+  // Debug handle — deterministic console access with no guessing.
+  // Usage: window.__mutonex.lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
+  // Usage: window.__mutonex.renderer for readRenderTargetPixels probing
+  window.__mutonex = { lidarView, viewManager, renderer: (viewManager as any).renderer };
+
   // Start the render loop
   viewManager.animate();
 
@@ -164,15 +169,24 @@ function main() {
   lobbyView.onSectorSelect(joinSector);
 
   // --- Auto-join for developers ---
+  lobbyView.show();
   const params = new URLSearchParams(
     window.location.search
   );
   if (params.get("join") !== "false") {
-    console.log("Auto-joining first sector...");
-    joinSector(mockSectors[0]);
-  } else {
-    // Show lobby only if NOT auto-joining
-    lobbyView.show();
+    console.log("Auto-joining first sector in 2 seconds...");
+    setTimeout(() => {
+      joinSector(mockSectors[0]);
+
+      console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
+      console.log("%cMUTONEX WEBCLIENT DEBUG CONTROLS:", "color: #00ff00; font-weight: bold;");
+      console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
+      console.log("W,A,S,D   : Move Avatar");
+      console.log("Tab       : Toggle View (Lidar/Sphere)");
+      console.log("L         : Toggle Lidar Mode (Horiz/Vert)");
+      console.log("[ and ]   : Adjust Lidar Entropy (Noise)");
+      console.log("=======================================");
+    }, 2000);
   }
 
   // --- Avatar Controls & Loop ---
@@ -202,6 +216,15 @@ function main() {
         lidarMode = isVert ? "horizontal" : "vertical";
         lidarView.setScanMode(lidarMode);
         console.log("Lidar Mode:", lidarMode);
+      }
+
+      if (e.key === "[") {
+        lidarView.entropy = Math.max(0.0, lidarView.entropy - 0.1);
+        console.log("Lidar Entropy:", lidarView.entropy);
+      }
+      if (e.key === "]") {
+        lidarView.entropy = Math.min(1.0, lidarView.entropy + 0.1);
+        console.log("Lidar Entropy:", lidarView.entropy);
       }
     });
 

@@ -13,8 +13,15 @@ declare global {
     interface Window {
         THREE: any;
         Phoenix: any;
+        // Debug handle — exposes runtime objects to the browser console.
+        // Access: window.__mutonex.lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
+        __mutonex: {
+            lidarView: any;
+            viewManager: any;
+            renderer: any;
+        };
     }
 }
 
 // Ensure this file is treated as a module
-export {};
+export { };
