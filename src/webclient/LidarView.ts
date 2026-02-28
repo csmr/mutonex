@@ -15,11 +15,12 @@ export class LidarView implements IView {
     public camera: any; // THREE.PerspectiveCamera
 
     // Dot Rendering Parameters
-    public dotRadius = 2.0; // Defines the base hardware gl_PointSize (gl_PointSize = dotRadius * 2.0)
+    public dotRadiusMin = 1.0; // Radius for objects far away (vDist >= 30.0)
+    public dotRadiusMax = 4.0; // Radius for objects very close (vDist == 0.0)
     public dotType = 1.0;   // 0.0 = square, 1.0 = circular
 
-    private samplesH = 480;
-    private samplesV = 270; // Dense sampling required for full depth texture coverage
+    private samplesH = 400;
+    private samplesV = 280; // Dense sampling required for full depth texture coverage
     public currentMode: 'vertical' | 'horizontal' = 'horizontal'; // Default to horizontal/cheapo
     public entropy: number = 0.1; // Parametric signal loss (0=no noise, 1=max)
 
@@ -166,7 +167,7 @@ export class LidarView implements IView {
         // fragment shader (gl_FragCoord.y mod band)
         // — NOT by reducing sample density.
         this.samplesH = 480;
-        this.samplesV = 270;
+        this.samplesV = 300;
 
         if (this.lidarMaterial) {
             this.lidarMaterial.uniforms
@@ -230,7 +231,8 @@ export class LidarView implements IView {
             // Toggle from browser console: lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
             diagMode: { value: 0.0 },
             dotType: { value: this.dotType },
-            dotRadius: { value: this.dotRadius }
+            dotRadiusMin: { value: this.dotRadiusMin },
+            dotRadiusMax: { value: this.dotRadiusMax }
         };
 
         return new THREE.ShaderMaterial({
@@ -389,7 +391,8 @@ export class LidarView implements IView {
             u.time.value += deltaTime;
             if (u.entropy) u.entropy.value = this.entropy;
             if (u.dotType) u.dotType.value = this.dotType;
-            if (u.dotRadius) u.dotRadius.value = this.dotRadius;
+            if (u.dotRadiusMin) u.dotRadiusMin.value = this.dotRadiusMin;
+            if (u.dotRadiusMax) u.dotRadiusMax.value = this.dotRadiusMax;
         }
         this.virtualScene.updateMatrixWorld(true);
     }
