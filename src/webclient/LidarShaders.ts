@@ -62,7 +62,7 @@ export const LidarVertexShader = `
         // Linear distance = d * far (already have it).
         vDist = d * cameraFar;
 
-        gl_PointSize = 2.0;
+        gl_PointSize = POINT_SIZE_VALUE;
     }
 `;
 
