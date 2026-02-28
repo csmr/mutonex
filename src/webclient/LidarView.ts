@@ -8,7 +8,6 @@ import {
 import { LidarVertexShader, LidarFragmentShader } from "./LidarShaders.ts";
 
 // --- Configuration ---
-const LIDAR_FOV = 90; // Degrees horizontal
 const POINT_SIZE = 2.0;
 
 export class LidarView implements IView {
@@ -40,6 +39,7 @@ export class LidarView implements IView {
 
     public controls: any; // OrbitControls
     private renderer: any | null = null;
+    private boundResize: () => void;
 
     // Resources
     private loader: any; // THREE.BufferGeometryLoader
@@ -136,6 +136,11 @@ export class LidarView implements IView {
         this.loader = new THREE.BufferGeometryLoader();
         this.createGroundGrid();
 
+        // Store bound handler once for correct
+        // add/removeEventListener pairing.
+        this.boundResize =
+            this.onWindowResize.bind(this);
+
         // **TEST SPHERE** — remove after terrain rendering is confirmed.
         // Camera at (0,8,20) looking at origin (~22° below horizontal).
         // Sphere at (0,1,10): camera-to-sphere distance ≈ sqrt(49+100)=12.2 units.
@@ -147,29 +152,23 @@ export class LidarView implements IView {
         this.virtualScene.add(debugMesh);
     }
 
-    public setScanMode(mode: 'vertical' | 'horizontal') {
+    public setScanMode(
+        mode: 'vertical' | 'horizontal'
+    ) {
         this.currentMode = mode;
-        if (mode === 'vertical') {
-            this.samplesH = 480;
-            this.samplesV = 270;
-        } else {
-            this.samplesH = 160;
-            this.samplesV = 100;
-        }
+        // Both modes use the same dense 480×270
+        // sample grid.  The horizontal scan-line
+        // visual is produced entirely in the
+        // fragment shader (gl_FragCoord.y mod band)
+        // — NOT by reducing sample density.
+        this.samplesH = 480;
+        this.samplesV = 270;
 
         if (this.lidarMaterial) {
-            this.lidarMaterial.uniforms.scanMode.value = mode === 'vertical' ? 0.0 : 1.0;
-        }
-        if (mode === 'vertical') {
-            this.samplesH = 480;
-            this.samplesV = 270;
-        } else {
-            // Horizontal mode uses the SAME dense sample grid as vertical.
-            // The scan-line visual band effect is applied in the fragment shader
-            // (gl_FragCoord.y mod filter), NOT by reducing sample density.
-            // Fewer samples = less depth texture coverage = black regions.
-            this.samplesH = 480;
-            this.samplesV = 270;
+            this.lidarMaterial.uniforms
+                .scanMode.value =
+                mode === 'vertical'
+                    ? 0.0 : 1.0;
         }
         this.rebuildLidarPoints();
     }
@@ -369,13 +368,15 @@ export class LidarView implements IView {
     }
 
     public onActivate(): void {
-        const cb = this.onWindowResize.bind(this);
-        window.addEventListener('resize', cb);
+        window.addEventListener(
+            'resize', this.boundResize
+        );
     }
 
     public onDeactivate(): void {
-        const cb = this.onWindowResize.bind(this);
-        window.removeEventListener('resize', cb);
+        window.removeEventListener(
+            'resize', this.boundResize
+        );
     }
 
     public update(deltaTime: number): void {

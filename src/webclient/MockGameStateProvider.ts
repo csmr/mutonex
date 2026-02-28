@@ -1,16 +1,14 @@
-// Defines the structure of the game state data transported from the server.
+// Defines the structure of the game state
+// data transported from the server.
 
-// Represents a player as a tuple: [id, x, y, z]
-export type PlayerTuple = [string, number, number, number];
+import { Terrain } from "./types.ts";
+export type { Terrain };
 
-export interface Terrain {
-  type: "heightmap";
-  size: {
-    width: number;
-    height: number;
-  };
-  data: number[][];
-}
+// Represents a player as a tuple:
+// [id, x, y, z]
+export type PlayerTuple = [
+  string, number, number, number
+];
 
 export interface GameState {
   game_time: number;

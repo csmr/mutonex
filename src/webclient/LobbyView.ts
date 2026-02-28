@@ -19,6 +19,7 @@ export class LobbyView {
   private selectedIndex: number = 0;
   private onSelectCallback:
     ((sector: Sector) => void) | null = null;
+  private boundInput: (e: KeyboardEvent) => void;
   private isConnected: boolean = false;
 
   constructor() {
@@ -42,9 +43,10 @@ export class LobbyView {
       throw new Error("Lobby view container not found");
     }
 
+    this.boundInput =
+      this.handleInput.bind(this);
     window.addEventListener(
-      "keydown",
-      this.handleInput.bind(this)
+      "keydown", this.boundInput
     );
   }
 

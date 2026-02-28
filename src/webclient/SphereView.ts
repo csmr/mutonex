@@ -8,8 +8,9 @@ export class SphereView implements IView {
     public camera: any;
     public controls: any;
 
-    private playerMeshes: Map<string, any> = new Map(); // THREE.Mesh
-    private faunaMeshes: Map<string, any> = new Map(); // THREE.Mesh
+    private playerMeshes: Map<string, any> = new Map();
+    private faunaMeshes: Map<string, any> = new Map();
+    private boundResize: () => void;
 
     constructor(domElement: HTMLCanvasElement) {
         this.scene = new THREE.Scene();
@@ -31,6 +32,8 @@ export class SphereView implements IView {
         this.controls.minDistance = 5;
         this.controls.maxDistance = 500;
         this.controls.maxPolarAngle = Math.PI / 2;
+        this.boundResize =
+            this.onWindowResize.bind(this);
     }
 
     public updateTerrain(terrain: Terrain): void {
@@ -81,11 +84,15 @@ export class SphereView implements IView {
     }
 
     public onActivate(): void {
-        window.addEventListener('resize', this.onWindowResize.bind(this));
+        window.addEventListener(
+            'resize', this.boundResize
+        );
     }
 
     public onDeactivate(): void {
-        window.removeEventListener('resize', this.onWindowResize.bind(this));
+        window.removeEventListener(
+            'resize', this.boundResize
+        );
     }
 
     private onWindowResize(): void {
