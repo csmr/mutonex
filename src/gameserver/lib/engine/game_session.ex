@@ -1,171 +1,241 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
-  alias Mutonex.Engine.Entities.{Player, GameState, Fauna}
+  require Logger
+  alias Mutonex.Engine.Entities.{Player, GameState}
   alias Mutonex.Engine.TerrainGenerator
+  alias Mutonex.Engine.SparseOctree
+  alias Mutonex.Engine.Mineral, as: MineralLogic
   alias Mutonex.Net.Endpoint
+  alias Mutonex.Engine.SimtellusClient
+  alias Mutonex.Engine.Systems.FaunaSystem
 
-  # Speed limit: 2.0 units/s (at 1 unit=1km) is 2 km/s = 7200 km/h.
-  # Set limit high to allow this "fast travel" mode.
+  # 2.0 units/s (1 unit=1km) is 2 km/s = 7200 km/h.
   @max_speed_kmh 8000
   @max_speed_ms (@max_speed_kmh * 1000 / 3600)
 
   # --- Client API ---
-  def start_link(sector_id), do: GenServer.start_link(__MODULE__, sector_id, name: via_tuple(sector_id))
+
+  def start_link(sector_id) do
+    name = via_tuple(sector_id)
+    GenServer.start_link(__MODULE__, sector_id, name: name)
+  end
 
   def get_initial_state(pid) do
     GenServer.call(pid, :get_initial_state)
   end
 
   # --- GenServer Callbacks ---
+
   def init(sector_id) do
-    # Generate terrain once per session
-    terrain = TerrainGenerator.generate_heightmap(20, 20)
-    initial_players = %{}
-
-    # Spawn initial fauna
-    fauna = spawn_fauna(sector_id, 4)
-    # Schedule tick for EACH fauna individually
-    Enum.each(fauna, fn {id, _} -> schedule_fauna_tick(id) end)
-
     state = %{
       sector_id: sector_id,
-      players: initial_players,
-      terrain: terrain,
+      players: %{},
+      terrain: nil,
       game_time: 720,
-      phase: :lobby,
-      fauna: fauna
+      phase: :booting, # Wait for Simtellus
+      fauna: %{},
+      octree: nil,
+      minerals: [],
+      conveyors: [],
+      buildings: [],
+      pending_start: false
     }
 
-    # Simulate lobby wait time
-    Process.send_after(self(), :start_game, 5000)
-
+    send(self(), :check_simtellus)
     {:ok, state}
   end
 
   def handle_call(:get_initial_state, _from, state) do
-    # Convert players map to list for client
-    player_lists = Enum.map(state.players, fn {_, %{player: p}} ->
-      [p.id, p.position.x, p.position.y, p.position.z]
-    end)
+    fauna =
+      if state.octree do
+        fauna_to_list(state.fauna)
+      else
+        []
+      end
 
-    # Convert fauna map to list for client (initial state needs to include it if we want client to render immediately)
-    # Note: GameState struct might not have :fauna field yet in this branch?
-    # I should check entities.ex if GameState has fauna.
-    # If not, I can't put it in GameState struct easily without updating it.
-    # But for now, let's focus on logic.
+    terrain =
+      state.terrain || %Mutonex.Engine.Entities.Terrain{}
 
     game_state = %GameState{
       game_time: state.game_time,
-      players: player_lists,
-      terrain: state.terrain,
-      fauna: fauna_to_list(state.fauna)
+      players: players_to_list(state.players),
+      terrain: terrain,
+      fauna: fauna,
+      minerals: state.minerals,
+      conveyors: state.conveyors,
+      buildings: state.buildings
     }
 
     response = %{
       phase: Atom.to_string(state.phase),
       game_state: game_state
     }
+
     {:reply, response, state}
   end
 
-  def handle_info(:start_game, state) do
-    new_state = %{state | phase: :gamein}
-    Endpoint.broadcast("game:" <> state.sector_id, "game_phase", %{phase: "gamein"})
-    {:noreply, new_state}
-  end
+  def handle_info(:check_simtellus, state) do
+    client =
+      Application.get_env(
+        :mutonex_server,
+        :simtellus_client,
+        SimtellusClient
+      )
 
-  # Handle individual fauna tick
-  def handle_info({:tick_fauna, fauna_id}, state) do
-    case Map.get(state.fauna, fauna_id) do
-      nil -> {:noreply, state} # Fauna might have been removed
-      f ->
-        # Random small movement (reduced range for "short" travel)
-        # 0.5 magnitude max
-        dx = (:rand.uniform() - 0.5) * 0.5
-        dz = (:rand.uniform() - 0.5) * 0.5
-        new_pos = %{f.position | x: f.position.x + dx, z: f.position.z + dz}
-        updated_fauna_entity = %{f | position: new_pos}
+    case client.is_available?() do
+      true ->
+        Logger.info("Simtellus available.")
 
-        new_fauna_map = Map.put(state.fauna, fauna_id, updated_fauna_entity)
+        if state.pending_start do
+          start_game_session(state)
+        else
+          Logger.info("Moving to Lobby.")
+          topic = "game:#{state.sector_id}"
+          msg = %{phase: "lobby"}
+          Endpoint.broadcast(topic, "game_phase", msg)
+          {:noreply, %{state | phase: :lobby}}
+        end
 
-        # Broadcast only this fauna update (or all, but optimization suggests specific)
-        # Current client expects a list of fauna.
-        broadcast_fauna_update(state.sector_id, %{fauna_id => updated_fauna_entity})
-
-        # Schedule next tick for THIS fauna
-        schedule_fauna_tick(fauna_id)
-
-        {:noreply, %{state | fauna: new_fauna_map}}
+      false ->
+        Process.send_after(self(), :check_simtellus, 1000)
+        {:noreply, state}
     end
   end
 
-  def handle_cast({:avatar_update, user_id, [x, y, z]}, %{phase: :gamein} = state) do
-    current_time = System.os_time(:millisecond)
-    new_position = %{x: x, y: y, z: z}
+  def handle_info({:tick_fauna, id}, state) do
+    case state.phase do
+      :gamein ->
+        {fauna, octree} =
+          FaunaSystem.process_tick(state, id)
 
-    player_state = Map.get(state.players, user_id)
+        {:noreply, %{state | fauna: fauna, octree: octree}}
 
-    handle_player_update(player_state, user_id, new_position, current_time, state)
+      _ ->
+        {:noreply, state}
+    end
   end
 
-  def handle_cast({:avatar_update, _user_id, _pos}, %{phase: :lobby} = state) do
-    # Ignore moves in lobby
-    {:noreply, state}
+  def handle_cast({:player_joined, _}, state) do
+    case state.phase do
+      :lobby ->
+        Logger.info("Player joined. Initializing...")
+        start_game_session(state)
+
+      :booting ->
+        Logger.info("Player joined during boot. Queuing...")
+        {:noreply, %{state | pending_start: true}}
+
+      _ ->
+        {:noreply, state}
+    end
+  end
+
+  def handle_cast({:avatar_update, uid, pos_list}, state) do
+    case state.phase do
+      :gamein ->
+        [x, y, z] = pos_list
+        time = System.os_time(:millisecond)
+        pos = %{x: x, y: y, z: z}
+        player = Map.get(state.players, uid)
+        handle_player_update(player, uid, pos, time, state)
+
+      _ ->
+        {:noreply, state}
+    end
   end
 
   # --- Private Helpers ---
-  defp handle_player_update(nil, user_id, pos, time, state) do
-    # New player
-    new_player_state = %{player: %Player{id: user_id, position: pos}, last_update: time}
-    updated_players = Map.put(state.players, user_id, new_player_state)
-    broadcast_state_update(state.sector_id, updated_players)
-    {:noreply, %{state | players: updated_players}}
+
+  defp start_game_session(state) do
+    terrain = TerrainGenerator.generate_heightmap(20, 20)
+    octree = SparseOctree.new({0, 0, 0, 20, 20, 20})
+
+    {fauna, octree} =
+      FaunaSystem.initialize(state.sector_id, 4, octree)
+
+    minerals =
+      MineralLogic.spawn_minerals(5, %{x: 20, z: 20})
+
+    new_state = %{
+      state
+      | phase: :gamein,
+        terrain: terrain,
+        octree: octree,
+        fauna: fauna,
+        minerals: minerals,
+        pending_start: false
+    }
+
+    game_state = %GameState{
+      game_time: state.game_time,
+      players: players_to_list(state.players),
+      terrain: terrain,
+      fauna: fauna_to_list(fauna),
+      minerals: minerals,
+      conveyors: state.conveyors,
+      buildings: state.buildings
+    }
+
+    topic = "game:#{state.sector_id}"
+    msg = %{phase: "gamein"}
+    Endpoint.broadcast(topic, "game_phase", msg)
+    Endpoint.broadcast(topic, "game_state", game_state)
+    {:noreply, new_state}
   end
 
-  defp handle_player_update(%{player: p, last_update: t}, _, pos, time, state) do
-    # Existing player
-    if is_move_valid?(p.position, pos, time - t) do
-      updated_player = %{p | position: pos}
-      new_player_state = %{player: updated_player, last_update: time}
-      updated_players = Map.put(state.players, p.id, new_player_state)
-      broadcast_state_update(state.sector_id, updated_players)
-      {:noreply, %{state | players: updated_players}}
+  defp handle_player_update(nil, uid, pos, time, state) do
+    player = %Player{id: uid, position: pos}
+    p_state = %{player: player, last_update: time}
+    updated = Map.put(state.players, uid, p_state)
+    broadcast_state_update(state.sector_id, updated)
+    {:noreply, %{state | players: updated}}
+  end
+
+  defp handle_player_update(p_state, _, pos, time, state) do
+    %{player: player, last_update: last_time} = p_state
+
+    if is_move_valid?(
+         player.position,
+         pos,
+         time - last_time
+       ) do
+      updated_player = %{player | position: pos}
+      new_p_state = %{
+        player: updated_player,
+        last_update: time
+      }
+      updated = Map.put(
+        state.players,
+        player.id,
+        new_p_state
+      )
+      broadcast_state_update(state.sector_id, updated)
+      {:noreply, %{state | players: updated}}
     else
-      IO.puts("Invalid move for #{p.id}")
       {:noreply, state}
     end
   end
 
-  defp is_move_valid?(p1, p2, time_delta_ms) do
-    time_delta_s = time_delta_ms / 1000.0
-    dist = distance(p1, p2)
-    dist <= @max_speed_ms * time_delta_s
+  defp is_move_valid?(p1, p2, dt_ms) do
+    dt_s = dt_ms / 1000.0
+    distance(p1, p2) <= @max_speed_ms * dt_s
   end
 
-  defp via_tuple(sector_id), do: {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+  defp via_tuple(sector_id) do
+    {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+  end
 
   defp distance(p1, p2) do
     dx = p1.x - p2.x
     dy = p1.y - p2.y
     dz = p1.z - p2.z
-    :math.sqrt(dx*dx + dy*dy + dz*dz)
+    :math.sqrt(dx * dx + dy * dy + dz * dz)
   end
 
-  defp spawn_fauna(sector_id, count) do
-    Enum.reduce(1..count, %{}, fn i, acc ->
-      id = "fauna_#{sector_id}_#{i}"
-      # Random position within typical bounds (e.g. 0-20)
-      pos = %{x: :rand.uniform() * 20, y: 0, z: :rand.uniform() * 20}
-      # Charm range: -5 to 20
-      charm = :rand.uniform(26) - 6
-      Map.put(acc, id, %Fauna{id: id, sector_id: sector_id, position: pos, society: :fauna_local, charm: charm})
+  defp players_to_list(players_map) do
+    Enum.map(players_map, fn {_, %{player: p}} ->
+      [p.id, p.position.x, p.position.y, p.position.z]
     end)
-  end
-
-  defp schedule_fauna_tick(fauna_id) do
-    # 2 to 10 seconds random delay
-    delay = :rand.uniform(8000) + 2000
-    Process.send_after(self(), {:tick_fauna, fauna_id}, delay)
   end
 
   defp fauna_to_list(fauna_map) do
@@ -175,14 +245,9 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp broadcast_state_update(sector_id, players_map) do
-    player_lists = Enum.map(players_map, fn {_, %{player: p}} ->
-      [p.id, p.position.x, p.position.y, p.position.z]
-    end)
-    Endpoint.broadcast("game:" <> sector_id, "state_update", %{players: player_lists})
-  end
-
-  defp broadcast_fauna_update(sector_id, fauna_map) do
-    fauna_lists = fauna_to_list(fauna_map)
-    Endpoint.broadcast("game:" <> sector_id, "fauna_update", %{fauna: fauna_lists})
+    list = players_to_list(players_map)
+    topic = "game:#{sector_id}"
+    msg = %{players: list}
+    Endpoint.broadcast(topic, "state_update", msg)
   end
 end

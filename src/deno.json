@@ -1,6 +1,11 @@
 {
-  "dependencies": {
+  "compilerOptions": {
+    "lib": [
+      "deno.window",
+      "dom"
+    ]
   },
+  "dependencies": {},
   "tasks": {
     "dev": "deno run --watch server/app.ts",
     "bundle-client": "esbuild webclient/main.ts --bundle --outfile=./dist/web.js",

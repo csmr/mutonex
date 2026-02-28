@@ -13,7 +13,7 @@ config :mutonex_server,
 config :mutonex_server, Mutonex.Net.Endpoint,
   url: [host: "localhost"],
   render_errors: [
-    formats: [html: false],
+    formats: [json: Mutonex.Net.ErrorJSON, html: Mutonex.Net.ErrorHTML],
     layout: false
   ],
   pubsub_server: Mutonex.PubSub,

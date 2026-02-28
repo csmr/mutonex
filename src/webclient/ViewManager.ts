@@ -1,21 +1,24 @@
-// From <script> tags
-declare const THREE: typeof import("three");
-declare const OrbitControls: typeof import("three/examples/jsm/controls/OrbitControls");
+import "./global_types.ts";
+import { EntityData, Terrain } from "./types.ts";
 
 // A simple interface that all views must adhere to.
 export interface IView {
-    scene: THREE.Scene;
-    camera: THREE.Camera;
+    scene: any; // THREE.Scene
+    camera: any; // THREE.Camera
+    controls?: any; // THREE.OrbitControls
     update(deltaTime: number): void;
+    updateEntities(entities: EntityData[]): void;
+    updateTerrain(terrain: Terrain): void;
     onActivate(): void;
     onDeactivate(): void;
+    preRender?(renderer: any): void; // THREE.WebGLRenderer
 }
 
 /**
  * Manages the active view and the main render loop.
  */
 export class ViewManager {
-    private renderer: THREE.WebGLRenderer;
+    private renderer: any; // THREE.WebGLRenderer
     private activeView: IView | null = null;
     private clock = new THREE.Clock();
 
@@ -45,6 +48,9 @@ export class ViewManager {
         if (this.activeView) {
             const deltaTime = this.clock.getDelta();
             this.activeView.update(deltaTime);
+            if (this.activeView.preRender) {
+                this.activeView.preRender(this.renderer);
+            }
             this.renderer.render(this.activeView.scene, this.activeView.camera);
         }
     }

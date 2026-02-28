@@ -1,7 +1,7 @@
 import { crypto } from 'https://deno.land/std@0.152.0/crypto/mod.ts';
 import { join } from 'https://deno.land/std@0.152.0/path/mod.ts';
 import { existsSync } from 'node:fs';
-import { generateApiKeyHash } from "../webserver/hash-utils.ts";
+import { generateApiKeyHash } from "./hash-utils.ts";
 
 /* 
  * Generates unique API key

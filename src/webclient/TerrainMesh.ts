@@ -1,7 +1,7 @@
 // Declare THREE as a global variable to access it from the <script> tag
 declare const THREE: any;
 
-import type { Terrain } from './MockGameStateProvider.ts';
+import type { Terrain } from './types.ts';
 
 export function createTerrainMesh(terrain: Terrain) {
   const { width, height } = terrain.size;

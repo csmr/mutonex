@@ -1,48 +1,69 @@
-import type { GameState, Player } from "./MockGameStateProvider.ts";
-
-const PHOENIX_URL = "ws://localhost:4000/socket";
+import type {
+  GameState,
+  PlayerTuple
+} from "./MockGameStateProvider.ts";
 
 type InitialStateCallback = (gameState: GameState) => void;
-type StateUpdateCallback = (update: { players: Player[] }) => void;
+type StateUpdateCallback = (
+  update: { players?: PlayerTuple[]; fauna?: PlayerTuple[] }
+) => void;
 
 export class GameStateProvider {
-  private socket: Socket;
+  private socket: any;
   private channel: any;
   private onInitialState: InitialStateCallback;
   private onStateUpdate: StateUpdateCallback;
+  private sectorId: string;
   public phase: string = "lobby";
 
-  constructor(onInitialState: InitialStateCallback, onStateUpdate: StateUpdateCallback) {
+  constructor(
+    sectorId: string,
+    onInitialState: InitialStateCallback,
+    onStateUpdate: StateUpdateCallback
+  ) {
+    this.sectorId = sectorId;
     this.onInitialState = onInitialState;
     this.onStateUpdate = onStateUpdate;
-    // Phoenix is globally available from a <script> tag in mutonex.html
-    this.socket = new (window as any).Phoenix.Socket(PHOENIX_URL);
+
+    const loc = window.location;
+    const isHttps = loc.protocol === "https:";
+    const protocol = isHttps ? "wss:" : "ws:";
+    const host = loc.host || "localhost:4000";
+    const url = `${protocol}//${host}/socket`;
+
+    // Phoenix is globally available
+    const Phoenix = (window as any).Phoenix;
+    this.socket = new Phoenix.Socket(url);
   }
 
   public start(): void {
     this.socket.connect();
 
-    this.channel = this.socket.channel("game:lobby", {});
-    this.channel.join()
+    this.channel = this.socket.channel(this.sectorId, {});
+    this.channel
+      .join()
       .receive("ok", () => {
         console.log("Joined channel successfully");
       })
-      .receive("error", (resp: any) => { console.log("Unable to join channel", resp); });
+      .receive("error", (resp: any) => {
+        console.log("Unable to join channel", resp);
+      });
 
-    // Handle game phase transitions
-    this.channel.on("game_phase", (payload: { phase: string }) => {
+    this.channel.on("game_phase", (payload: any) => {
       console.log("Game Phase:", payload.phase);
       this.phase = payload.phase;
     });
 
-    // This event is now pushed by the server automatically upon join
     this.channel.on("game_state", (payload: GameState) => {
       console.log("Received initial game state:", payload);
       this.onInitialState(payload);
     });
 
-    // This event is broadcast by the server when any player moves
-    this.channel.on("state_update", (payload: { players: Player[] }) => {
+    this.channel.on("state_update", (payload: any) => {
+      this.onStateUpdate(payload);
+    });
+
+    this.channel.on("fauna_update", (payload: any) => {
       this.onStateUpdate(payload);
     });
   }
@@ -52,7 +73,9 @@ export class GameStateProvider {
     if (this.socket) this.socket.disconnect();
   }
 
-  public sendAvatarPosition(position: [number, number, number]): void {
+  public sendAvatarPosition(
+    position: [number, number, number]
+  ): void {
     this.channel.push("avatar_update", position);
   }
 }

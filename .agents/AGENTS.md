@@ -1,8 +1,8 @@
  # AGENTS.md: Development Guidelines for AI Agents
 
-Mutonex implementation strives to reach four standards: secure,  pragmatic, succinct and accessible.
+Mutonex implementation strives to reach four standards: secure, pragmatic, succinct and accessible.
 
-Mutonex is implemented with a functional style where possible, using Elixir, Ruby, and Deno JavaScript interpreters. The implementation minimizes coupling between modules and especially seeks to minimize coupling and dependencies in test scripts, which should be standalone and exist for each module.
+Mutonex is implemented with a functional style where possible, using Elixir and Deno JavaScript interpreters. The implementation minimizes coupling between modules and especially seeks to minimize coupling and dependencies in test scripts, which should be standalone and exist for each module.
 
 
 ## Code Guidelines:
@@ -16,42 +16,47 @@ Mutonex is implemented with a functional style where possible, using Elixir, Rub
 ## Getting Started
 
 Working with this project has two avenues:
-1. For testing and agentic development, tests are executed standalone in local scope (deno, elixir, ruby interpreter).
+1. For testing and agentic development, tests are executed standalone in local scope (deno, elixir interpreter).
 2. For development and hosting purposes, each Mutonex component runs in a container defined in `compose.yaml`, and `.env` files must be generated.
 
-First read `src/devenv.sh` script, to see how `src/.env` and `src/data/.env.postgres`files are generated.
+First read `src/devenv.sh` script, to see how `src/.env` and `src/data/.env.postgres` files are generated.
 
 Read the game design document `./docs/mutonex-design-document.html` Table of Contents, and use that as an index for finding implementation design related details.
 
+Read the game design document `./docs/mutonex-design-document.html` Table of Contents, and use that as an index for finding implementation design related details.
 
 ## Install dependencies
 
 To install development dependencies and execute gameserver tests, run the following script:
 
 ```bash
-.agents/agent_setup.sh
+bash .agents/agent_setup.sh
 ```
 
+## Running Tests
 
-##  Running Tests
+### Gameserver & Simulation tests
 
-### Gameserver tests
-
-The gameserver tests can also be executed from the `src/gameserver` dir with command:
+The gameserver now absorbs both the web serving logic and the Simtellus planet simulation. All backend logic is tested via Elixir's ExUnit. Execute from the `src/gameserver` directory:
 
 ```bash
 mix test
 ```
 
-### Simtellus tests
+This covers:
+- Core game loop and session management.
+- Simtellus planet simulation (`Mutonex.Simtellus`).
+- Network layer (Router, Channels, Controllers).
+- Database connectivity and repository logic.
+
+### Webclient verification
+
+To verify the webclient, ensure it can be successfully bundled:
+
 ```bash
-for t in src/simtellus/*_tests.rb; do ruby $t; done
+cd src && bash scripts/bundle-webclient.sh
 ```
 
-### Webserver tests
-```bash
-deno test --allow-read --allow-env --allow-net src/webserver/app_tests.ts
-```
 
 ## Google Jules instructions
 

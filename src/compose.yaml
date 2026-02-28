@@ -1,14 +1,14 @@
 version: '3.8'
 
 services:
-  webserver:
+  webclient_builder:
     image: denoland/deno:2.5.6
     container_name: mutondeno
     volumes:
       - .:/app
       - ./dist:/app/dist
     working_dir: /app
-    command: sh -c "/app/webserver/start-webserver.sh"
+    command: sh -c "./scripts/build_and_watch_webclient.sh"
     depends_on:
       postgres:
         condition: service_healthy
@@ -16,22 +16,7 @@ services:
       - ./data/.env.postgres
       - ./.env
     environment:
-      PLANET_SIM_URL: http://planet_sim:4567
       API_KEY_AUTH_ENABLE: ${API_KEY_AUTH_ENABLE}
-    ports:
-      # binds container port 8888 to only hosts 127.0.0.1 (localhost)
-      - "127.0.0.1:8888:8888"
-
-  planet_sim:
-    image: ruby:alpine
-    env_file:
-      - ./.env
-      - ./simtellus/.env
-    volumes:
-      - ./simtellus:/app
-    command: sh /app/start-simtellus.sh
-    ports:
-      - "4567:4567"
 
   postgres:
     image: postgres:latest
@@ -40,12 +25,16 @@ services:
       - ./data/.env.postgres
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-      - ./data/conf/postgresql.conf:/etc/postgresql/postgresql.conf
+      - type: bind
+        source: ./data/conf/postgresql.conf
+        target: /etc/postgresql/postgresql.conf
       - ./data/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
       interval: 30s
       timeout: 30s
       retries: 4
@@ -54,13 +43,13 @@ services:
     image: nginx:latest
     container_name: mutonginx
     volumes:
-      - ./webserver/nginx.conf:/etc/nginx/nginx.conf
-      - ./webserver/certs:/etc/nginx/certs
+      - ./conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./conf/certs:/etc/nginx/certs
     ports:
       - "80:80"
       - "443:443"
     depends_on:
-      - webserver
+      - gameserver
     profiles:
       - production
 
@@ -70,8 +59,9 @@ services:
     volumes:
       - ./gameserver:/app
       - ./res:/app/res
+      - ./dist:/app/priv/static
     working_dir: /app
-    command: sh -c "mix deps.get && mix phx.server" # Install deps and start Phoenix server
+    command: sh -c "mix deps.get && mix phx.server"
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,9 +69,9 @@ services:
       - ./data/.env.postgres
       - ./.env
     environment:
-      PLANET_SIM_URL: http://planet_sim:4567 
+      PHX_SIGNING_SALT: ${PHX_SIGNING_SALT}
     ports:
-      - "4000:4000" # Default Phoenix port
+      - "4000:4000"
 
 networks:
   default:

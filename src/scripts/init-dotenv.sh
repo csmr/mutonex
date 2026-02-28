@@ -1,7 +1,6 @@
 #!/bin/bash
 
-### Generates `.env` from template if none ###
-### - depends on `.env.template` and `.env.postgres`
+### Generates .env from template if missing ###
 
 source ./scripts/app.config.sh
 
@@ -9,21 +8,15 @@ ENV_PATH="$BASE_DIR/.env"
 TPL_PATH="$ENV_PATH.template"
 CRED_PATH="$DATA_HOME/.env.postgres"
 
-if [ -f $ENV_PATH ]; then
-  log "$ENV_PATH exists, exit."
-  exit 0
-fi
-cat $TPL_PATH > $ENV_PATH 
-log "Created $ENV_PATH file."
+[ -f $ENV_PATH ] && log "$ENV_PATH exists." && exit 0
 
-if [ ! -f $CRED_PATH ]; then
-  log "No $CRED_PATH to append."
-  exit 1
-fi
+cat $TPL_PATH > $ENV_PATH
 cat $CRED_PATH >> $ENV_PATH
-log "Appended $CRED_PATH to $ENV_PATH."
 
-### To run container as current user
 echo "UID=$(id -u)" >> $ENV_PATH
 echo "GID=$(id -g)" >> $ENV_PATH
-log "Appended current user UID & GID to $ENV_PATH."
+
+# Generate random signing salt
+echo "PHX_SIGNING_SALT=$(head -c 48 /dev/urandom | base64)" >> $ENV_PATH
+
+log "Created $ENV_PATH with credentials and salt."
