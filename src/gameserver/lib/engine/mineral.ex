@@ -27,10 +27,12 @@ defmodule Mutonex.Engine.Mineral do
 
       %Mineral{
         id: "mineral_#{i}_#{uid}",
+        # Cluster within Lidar view frustum: [-5, 5] on X, [5, 15] on Z
+        # Camera spawns at (0, 10, 20) looking towards origin (0, 0, 0)
         position: %{
-          x: :rand.uniform() * bounds.x,
+          x: (:rand.uniform() * 10 - 5),
           y: 0,
-          z: :rand.uniform() * bounds.z
+          z: (:rand.uniform() * 10 + 5)
         },
         type: get_random_type(),
         amount: :rand.uniform(5000) + 500,

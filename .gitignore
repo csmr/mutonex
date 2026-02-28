@@ -2,6 +2,7 @@
 *.lock
 res/RAW/*
 temp/*
+src/.deno_cache
 src/data/postgres
 src/data/.env.postgres
 src/dist

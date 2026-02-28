@@ -21,9 +21,9 @@ defmodule Mutonex.Engine.FaunaBehavior do
   def spawn(sector_id, count) do
     Enum.reduce(1..count, %{}, fn i, acc ->
       id = "fauna_#{sector_id}_#{i}"
-      # Random position within typical bounds (e.g. 0-20)
-      # 20 units = 20 km sector width
-      pos = %{x: :rand.uniform() * 20, y: 0, z: :rand.uniform() * 20}
+      # Cluster within Lidar view frustum: [-5, 5] on X, [5, 15] on Z
+      # Camera spawns at (0, 10, 20) looking towards origin (0, 0, 0)
+      pos = %{x: (:rand.uniform() * 10 - 5), y: 0, z: (:rand.uniform() * 10 + 5)}
       # Charm range: -5 to 20
       charm = :rand.uniform(26) - 6
 

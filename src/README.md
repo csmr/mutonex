@@ -23,15 +23,10 @@ To generate the `.env` file, `dev-env.sh` startup runs `src/scripts/init-databas
 
 
 ## Client pack
-See `src/scripts/bundle-webclient.sh` for the client esbuild bundle code.
-
+See `src/scripts/build_and_watch_webclient.sh`. It creates an API key, contributors list, and client bundle. The `webclient_builder` service in `compose.yaml` runs this script using Deno and esbuild to place the final pack into `src/dist`.
 
 ## Servers
-See `src/gameserver` for the game session server, which also serves the webclient static assets.
-
-See `src/scripts/build_and_watch_webclient.sh`, it creates an API key, contributors list, client bundle. The `webclient_builder` service in `compose.yaml` runs this script.
-
-The planet simulation logic (Simtellus) is now integrated directly into `src/gameserver`.
+See `src/gameserver` for the unified Elixir Phoenix application. It handles the websocket game session server, directly integrates the planet simulation logic (Simtellus), and serves the client web bundle as static HTTP assets.
 
 
 ## Database
