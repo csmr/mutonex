@@ -5,6 +5,7 @@ export const LidarVertexShader = `
     uniform float cameraNear;
     uniform float cameraFar;
     uniform float scanMode;
+    uniform float dotRadius;
 
     varying float vRawDepth;
     varying float vDist;
@@ -62,7 +63,13 @@ export const LidarVertexShader = `
         // Linear distance = d * far (already have it).
         vDist = d * cameraFar;
 
-        gl_PointSize = POINT_SIZE_VALUE;
+        if (scanMode >= 0.5) {
+            // Horizontal (default) scan mode - parametrizable point size
+            gl_PointSize = max(1.0, dotRadius * 2.0);
+        } else {
+            // High-res (vertical) scan mode - fixed pixel size
+            gl_PointSize = 2.0;
+        }
     }
 `;
 
@@ -71,6 +78,7 @@ export const LidarFragmentShader = `
     uniform float entropy;
     uniform float time;
     uniform float diagMode;
+    uniform float dotType;
 
     varying float vRawDepth;
     varying float vDist;
@@ -109,7 +117,14 @@ export const LidarFragmentShader = `
         // the scan-line LIDAR aesthetic without any geometry-level line drawing.
         // Band period: 12px, band width: 2px => ~1089/12 = 90 visible scan lines.
         if (scanMode >= 0.5) {
+            // 1. Scanline discard
             if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
+            
+            // 2. Circular dot mask
+            if (dotType > 0.5) {
+                vec2 pt = gl_PointCoord - vec2(0.5);
+                if (dot(pt, pt) > 0.25) discard;
+            }
         }
 
         // Entropy-based signal loss: randomly drop a fraction of pixels.

@@ -8,11 +8,15 @@ import {
 import { LidarVertexShader, LidarFragmentShader } from "./LidarShaders.ts";
 
 // --- Configuration ---
-const POINT_SIZE = 2.0;
+// Point size is now dynamically controlled by LidarView instances.
 
 export class LidarView implements IView {
     public scene: any; // THREE.Scene
     public camera: any; // THREE.PerspectiveCamera
+
+    // Dot Rendering Parameters
+    public dotRadius = 2.0; // Defines the base hardware gl_PointSize (gl_PointSize = dotRadius * 2.0)
+    public dotType = 1.0;   // 0.0 = square, 1.0 = circular
 
     private samplesH = 480;
     private samplesV = 270; // Dense sampling required for full depth texture coverage
@@ -224,15 +228,14 @@ export class LidarView implements IView {
             entropy: { value: this.entropy },
             // diagMode: 0.0 = normal rendering, 1.0 = diagnostic (red=elevated, blue=ground).
             // Toggle from browser console: lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
-            diagMode: { value: 0.0 }
+            diagMode: { value: 0.0 },
+            dotType: { value: this.dotType },
+            dotRadius: { value: this.dotRadius }
         };
-
-        const psStr = POINT_SIZE.toFixed(1);
-        const resolvedVertexShader = LidarVertexShader.replace("POINT_SIZE_VALUE", psStr);
 
         return new THREE.ShaderMaterial({
             uniforms: uniforms,
-            vertexShader: resolvedVertexShader,
+            vertexShader: LidarVertexShader,
             fragmentShader: LidarFragmentShader,
             transparent: true,
             blending: THREE.AdditiveBlending
@@ -385,6 +388,8 @@ export class LidarView implements IView {
             const u = this.lidarMaterial.uniforms;
             u.time.value += deltaTime;
             if (u.entropy) u.entropy.value = this.entropy;
+            if (u.dotType) u.dotType.value = this.dotType;
+            if (u.dotRadius) u.dotRadius.value = this.dotRadius;
         }
         this.virtualScene.updateMatrixWorld(true);
     }
