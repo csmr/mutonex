@@ -1,5 +1,5 @@
 defmodule Mutonex.Net.Controllers.DiagController do
-  use Phoenix.Controller
+  use Phoenix.Controller, formats: [:html, :json]
   require Logger
 
   def db_test(conn, _params) do
