@@ -201,12 +201,10 @@
                 <div class="toc-entry toc-level-2"><a href="#session-mech">4.9. Session Mechanics</a></div>
                 
                 <div class="toc-entry toc-level-1"><a href="#av-design">5. Audio-Visual Design</a></div>
-                <div class="toc-entry toc-level-1"><a href="#tech-design">6. Overview of the Technical Design</a></div>
-                <div class="toc-entry toc-level-1"><a href="#system-design">7. System Design</a></div>
-                <div class="toc-entry toc-level-1"><a href="#ui">8. User Interface</a></div>
-                <div class="toc-entry toc-level-1"><a href="#nfr">9. Non-Functional Requirements</a></div>
-                <div class="toc-entry toc-level-1"><a href="#testing">10. Testing Requirements</a></div>
-                <div class="toc-entry toc-level-1"><a href="#deliverables">11. Deliverables</a></div>
+                <div class="toc-entry toc-level-1"><a href="#ui">6. User Interface</a></div>
+                <div class="toc-entry toc-level-1"><a href="#nfr">7. Non-Functional Requirements</a></div>
+                <div class="toc-entry toc-level-1"><a href="#testing">8. Testing Requirements</a></div>
+                <div class="toc-entry toc-level-1"><a href="#deliverables">9. Deliverables</a></div>
             </div>
 
             <h2 id="overview">1. Overview</h2>
@@ -738,43 +736,7 @@
             <p>Most of the detail outlined in the section 1.3. Game experience outline is the spec at the moment.</p>
             <p>Once design and implementation has been resolved, this section may be expanded.</p>
 
-            <h2 id="tech-design">6. Overview of the Technical Design</h2>
-            <p>Technology Overview</p>
-            <p>Browser client</p>
-            <ul>
-                <li>in-game 3D view</li>
-                <li>Menu System</li>
-                <li>Exported functions for Exoplanet Sim</li>
-                <li>Exported functions for game session</li>
-                <li>Guidebook</li>
-            </ul>
-            <p>Multiplayer Game server</p>
-            <ul>
-                <li>Just maintains the Index of game sessions</li>
-                <li>Index of authenticated clients</li>
-                <li>Index of client BB and move vectors</li>
-                <li>Functions for validating client session</li>
-                <li>Functions for validating move vectors</li>
-            </ul>
-            <p>Exoplanet Simulation server</p>
-            <ul>
-                <li>Simulation Expression Module Factory: consumes game session rulesets, generates function to resolve sector state for in-client-eval</li>
-                <li>Public API for storing game session relic</li>
-            </ul>
-            <p>Mutonex Authority</p>
-            <ul>
-                <li>index of registered users</li>
-                <li>index of valid sessions</li>
-                <li>public API to challenge session validity</li>
-            </ul>
-            <p>Mutonex Scoreboards</p>
-            <p>Module description</p>
-            <p>Issues and dependencies</p>
-
-            <h2 id="system-design">7: System Design</h2>
-            <p>To be specified.</p>
-
-            <h2 id="ui">8: User Interface</h2>
+            <h2 id="ui">6: User Interface</h2>
             <p>Basic UI contains view of the game world at center, around which are, clockwise from top left:</p>
             <ul>
                 <li>Status symbol for player state</li>
@@ -785,14 +747,14 @@
             <p>Player can leave the game session at any time from Game Menu.</p>
             <p>Interact menu contains enabled actions, such as charm and video meet.</p>
             <p>Policy menu allows the player to change the current Policy for Society units.</p>
-            <p><b>8.1. UI Graphic Design</b></p>
+            <p><b>6.1. UI Graphic Design</b></p>
             <p>UI concept drafts are the initial spec for the user interface graphical layout.</p>
-            <p><b>8.2. User Interface Accessibility</b></p>
+            <p><b>6.2. User Interface Accessibility</b></p>
             <p>Mutonex game UI conforms to WGAC 2.1 standard in terms of button, font and symbol sizes, and color contrasts.</p>
             <p>Users are able to increase button, font and symbol sizes, to enable convinience for people with reduced vision.</p>
             <p>Users are able to change the default colors for units and symbols, as this feature enables people with alternate color vision to set colors they are able to differentiate between.</p>
 
-            <h2 id="nfr">9: Non-Functional Requirements</h2>
+            <h2 id="nfr">7: Non-Functional Requirements</h2>
             <p>Accessibility</p>
             <p>licensing</p>
             <p>language</p>

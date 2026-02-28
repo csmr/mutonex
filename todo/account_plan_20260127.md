@@ -1,5 +1,7 @@
 # Implementation Plan: Gameserver Accounts & Authentication
 
+**STATUS: COMPLETED**
+*Note: Integrated successfully within `gameserver/lib/net` for unified websocket authentication and routing.*
 ## Goal
 Migrate web endpoint responsibilities to the Elixir/Phoenix `gameserver`, implementing a minimal, secure user account system and token-based authentication for WebSocket connections.
 

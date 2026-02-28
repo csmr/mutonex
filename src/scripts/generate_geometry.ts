@@ -18,7 +18,7 @@ const FONT_PATHS = [
     "/usr/share/fonts/opentype/unifont/unifont_upper.otf",
     "/usr/share/fonts/opentype/unifont/unifont_csur.otf"
 ];
-const OUTPUT_DIR = "src/res/geometry";
+const OUTPUT_DIR = "res/geometry";
 
 // --- Exported for unit testing ---
 

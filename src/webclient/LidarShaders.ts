@@ -5,6 +5,8 @@ export const LidarVertexShader = `
     uniform float cameraNear;
     uniform float cameraFar;
     uniform float scanMode;
+    uniform float dotRadiusMin;
+    uniform float dotRadiusMax;
 
     varying float vRawDepth;
     varying float vDist;
@@ -62,7 +64,15 @@ export const LidarVertexShader = `
         // Linear distance = d * far (already have it).
         vDist = d * cameraFar;
 
-        gl_PointSize = POINT_SIZE_VALUE;
+        if (scanMode >= 0.5) {
+            // Horizontal (default) scan mode - interpolate dot size based on distance
+            float distT = clamp(vDist / 30.0, 0.0, 1.0); 
+            float currentRadius = mix(dotRadiusMax, dotRadiusMin, distT);
+            gl_PointSize = max(1.0, currentRadius * 2.0);
+        } else {
+            // High-res (vertical) scan mode - fixed pixel size
+            gl_PointSize = 2.0;
+        }
     }
 `;
 
@@ -71,6 +81,7 @@ export const LidarFragmentShader = `
     uniform float entropy;
     uniform float time;
     uniform float diagMode;
+    uniform float dotType;
 
     varying float vRawDepth;
     varying float vDist;
@@ -104,12 +115,26 @@ export const LidarFragmentShader = `
             return;
         }
 
-        // Horizontal scanline mode (scanMode = 1.0, >= 0.5):
-        // Discard fragments outside narrow horizontal bands to produce
-        // the scan-line LIDAR aesthetic without any geometry-level line drawing.
-        // Band period: 12px, band width: 2px => ~1089/12 = 90 visible scan lines.
+        float shapeAlpha = 1.0;
+
         if (scanMode >= 0.5) {
-            if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
+            if (dotType > 0.5) {
+                // --- DYNAMIC POINT SPRITE CIRCLES ---
+                // gl_PointCoord gives [0,1] local coordinates for the square sprite.
+                vec2 pt = gl_PointCoord - vec2(0.5);
+                float distFromCenter = length(pt);
+
+                // Anti-Aliasing: instead of a harsh discard, we smooth the edge 
+                // between 0.4 and 0.5 to eliminate the blocky 4x4 pixelation.
+                // It fades alpha to 0.0 exactly at the radius boundary.
+                shapeAlpha = 1.0 - smoothstep(0.4, 0.5, distFromCenter);
+
+                if (shapeAlpha < 0.05) discard;
+                
+            } else {
+                // --- LEGACY SQUARE/PIXEL MODE ---
+                if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
+            }
         }
 
         // Entropy-based signal loss: randomly drop a fraction of pixels.
@@ -133,6 +158,6 @@ export const LidarFragmentShader = `
         vec3 farColor  = vec3(0.05, 0.15, 0.05); // #0d260d
         vec3 color = mix(farColor, nearColor, brightness);
 
-        gl_FragColor = vec4(color, brightness);
+        gl_FragColor = vec4(color, brightness * shapeAlpha);
     }
 `;

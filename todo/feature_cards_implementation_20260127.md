@@ -41,7 +41,7 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
 
 *   **Game Session**: Implemented as `Mutonex.Engine.GameSession` (GenServer). Manages the state of a sector.
 *   **Sector**: Currently represented by `sector_id` and `Terrain` struct.
-*   **Exoplanet Sim**: Implemented in `src/simtellus` (Ruby). Provides data for terrain and environment.
+*   **Exoplanet Sim**: Implemented in `src/gameserver/lib/simtellus/` (Elixir, ported from Ruby). Provides data for terrain and environment.
 *   **Faction**: A composite concept used to determine unit/building alignment and flavor.
     *   **Society**: The group identity (e.g., "Finnish", "Fauna Local").
     *   **Element**: Elemental affinity (e.g., "Helium", "Iron").
@@ -49,6 +49,6 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
 
 ## 4. Implementation Plan for Remaining Features
 
-1.  **Unit differentiation**: Expand `Unit` struct or logic to handle `Activist` (attack) vs `Local` (work) behavior.
+1.  **[COMPLETED] Unit differentiation**: Expand `Unit` struct or logic to handle `Activist` (attack) vs `Local` (work) behavior. Fauna and Octree integration is finalized.
 2.  **Building Mechanics**: Implement `Power Structure` logic (LIDAR connection) in `GameSession`.
 3.  **Action System**: Create a system to handle actions like `charm`, `build`, `attack` triggered by clients, checking `is_charmable` flags.
