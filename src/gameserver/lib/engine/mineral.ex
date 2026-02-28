@@ -21,7 +21,7 @@ defmodule Mutonex.Engine.Mineral do
   def get_random_type, do: Enum.random(@elements)
 
   @doc "Spawns minerals with random types and positions."
-  def spawn_minerals(count, bounds) do
+  def spawn_minerals(count, _bounds) do
     Enum.map(1..count, fn i ->
       uid = System.unique_integer([:positive])
 

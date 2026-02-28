@@ -25,9 +25,12 @@
 
     // ── TEST CONFIGURATION ──────────────────────────────────────────────────
     const TEST_CONFIG = {
-        diagMode: 1.0,   // 1.0 = red/blue y-plane diagnostic, 0.0 = normal green
-        entropy: 0.0,   // 0.0 = no noise (clean read), 0.1 = default
-        scanMode: 0.0,   // 0.0 = vertical (dense points), 1.0 = horizontal bands
+        diagMode: 0.0,   // 0.0 = normal green
+        entropy: 0.0,    // no noise
+        scanMode: 1.0,   // 1.0 = horizontal bands
+        dotRadiusMin: 2.0, // smaller background dots
+        dotRadiusMax: 7.0, // HUGE foreground dots to test dynamic size
+        dotType: 1.0,    // 1.0 = circle
         cameraPos: [0, 8, 20],  // canonical default: camera above and behind
         cameraTarget: [0, 0, 0],  // orbit centre
         timeoutMs: 12000, // max ms to wait for game-in before failing

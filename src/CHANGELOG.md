@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.17 - The Consolidation Release
+## v0.2.18 - The Consolidation Release
 - **Backend Consolidation:**
     - Replaced Deno webserver with Phoenix static asset serving, simplifying architecture.
     - Ported Simtellus (Ruby) to Elixir GenServer, achieving near-zero latency for simulation calls.

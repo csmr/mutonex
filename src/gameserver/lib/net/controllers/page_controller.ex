@@ -1,5 +1,5 @@
 defmodule Mutonex.Net.Controllers.PageController do
-  use Phoenix.Controller
+  use Phoenix.Controller, formats: [:html, :json]
 
   def index(conn, _params) do
     path = Application.app_dir(:mutonex_server, "priv/static/index.html")
