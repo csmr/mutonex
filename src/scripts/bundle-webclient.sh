@@ -15,7 +15,7 @@ if [ -f $tf ]; then
   if [ -d "res/geometry" ]; then
     cp -a res/geometry/. "$RUNTIME_DIR/assets/"
   fi
-  cp webclient/assets/favicon.ico "$RUNTIME_DIR/"
+  cp res/img/favicon.ico "$RUNTIME_DIR/"
   # Copy entry point
   cp webclient/mutonex.html "$RUNTIME_DIR/index.html"
 
