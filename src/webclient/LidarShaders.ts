@@ -14,9 +14,10 @@ export const LidarVertexShader = `
     varying vec2 vUv;
     varying vec3 vWorldPos;
 
-    // MeshDepthMaterial(BasicDepthPacking) writes linear depth: d = z_view / far.
-    // z_view is the positive camera-space depth (distance along -Z axis).
-    // Reconstruct world position from screen UV and linear depth.
+    // MeshDepthMaterial(BasicDepthPacking) writes linear 
+    // depth: d = z_view / far.
+    // z_view is positive camera-space depth (-Z axis).
+    // Reconstruct world position from UV and depth.
     vec3 computeWorldPos(vec2 texCoord, float linearDepth) {
         // Linear camera-space depth (positive, along the view axis).
         float zView = linearDepth * cameraFar;
@@ -45,9 +46,9 @@ export const LidarVertexShader = `
         float d = texture2D(tDepth, uv).r;
         vRawDepth = d;
 
-        // d == 0.0: no geometry (sky / clear). Move off-screen, zero size.
-        // BasicDepthPacking clears to white (1.0) for far plane but actually
-        // sky pixels are cleared to white in preRender (setClearColor 0xffffff).
+        // d == 0.0: no geometry (sky). Move off-screen.
+        // BasicDepth clears to white (1.0) for far plane,
+        // but sky is cleared to white in preRender.
         // So d > 0.99 = background.
         if (d > 0.99) {
             gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
@@ -147,14 +148,16 @@ export const LidarFragmentShader = `
         if (noise < entropy * 0.3) discard;
 
         // Distance-based brightness.
-        // Tuned for typical viewing range: 1 (very near) to 30 (far ground edge).
-        // clamp ensures near objects stay fully bright; far objects floor at 5%.
+        // Tuned for typical viewing range: 1 to 30.
+        // clamp ensures near objects stay fully bright; 
+        // far objects floor at 5%.
         float baseBrightness = clamp(1.0 - vDist / 30.0, 0.05, 1.0);
 
         // Elevation-based contrast boost:
-        // Elevated objects (y > 0.1) get a brightness floor of 0.3 so they
-        // never vanish into the dark ground, even at range.
-        // Ground (y <= 0.1) fades naturally into near-black ambient.
+        // Elevated objects (y > 0.1) get a brightness 
+        // floor of 0.3 so they never vanish into the 
+        // dark ground, even at range.
+        // Ground fades naturally into near-black.
         float elevationBoost = step(0.1, vWorldPos.y); // 1.0 if elevated, 0.0 if ground
         float brightness = mix(baseBrightness, max(baseBrightness, 0.3), elevationBoost);
 
