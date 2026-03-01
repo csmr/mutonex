@@ -15,11 +15,13 @@ export interface LidarStyleConfig {
     samplesV: number;
     dotRadiusMin: number;
     dotRadiusMax: number;
+    geometryMode?: 'Points' | 'LineSegments';
 }
 
 export const LidarStyles: Record<string, LidarStyleConfig> = {
     pointCloud: {
         name: 'pointCloud',
+        geometryMode: 'Points',
         scanMode: 1.0,
         dotType: 1.0,
         samplesH: 480,
@@ -29,6 +31,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     },
     lineLidar: {
         name: 'lineLidar',
+        geometryMode: 'LineSegments',
         scanMode: 0.0,
         dotType: 1.0,
         samplesH: 800,
@@ -38,6 +41,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     },
     legacy: {
         name: 'legacy',
+        geometryMode: 'Points',
         scanMode: 1.0,
         dotType: 0.0,
         samplesH: 400,
@@ -199,7 +203,7 @@ export class LidarView implements IView {
         this.pendingStyleConfig = null;
 
         // Execute chunk generator across frames
-        const gen = this.chunkedGeometryGenerator(config.samplesH, config.samplesV);
+        const gen = this.chunkedGeometryGenerator(config.samplesH, config.samplesV, config.geometryMode || 'Points');
         const processChunk = () => {
             const result = gen.next();
             if (!result.done) {
@@ -225,24 +229,57 @@ export class LidarView implements IView {
         requestAnimationFrame(processChunk);
     }
 
-    private *chunkedGeometryGenerator(samplesH: number, samplesV: number): Generator<void, any, void> {
+    private *chunkedGeometryGenerator(samplesH: number, samplesV: number, geometryMode: 'Points' | 'LineSegments'): Generator<void, any, void> {
         const geometry = new THREE.BufferGeometry();
-        const totalPoints = samplesH * samplesV;
+
+        // Calculate required buffer sizes based on the geometry render type
+        let totalPoints = 0;
+        if (geometryMode === 'LineSegments') {
+            // For continuous vertical scan lines, we generate discrete pairs of vertices.
+            // Each column (x) contains (samplesV - 1) vertical segments, bounded by 2 points each.
+            totalPoints = samplesH * (samplesV - 1) * 2;
+        } else {
+            // Unconnected Point Cloud
+            totalPoints = samplesH * samplesV;
+        }
+
         const positions = new Float32Array(totalPoints * 3);
         const uvs = new Float32Array(totalPoints * 2);
 
         const chunkSize = 50000;
         let currentIdx = 0;
 
-        for (let y = 0; y < samplesV; y++) {
+        if (geometryMode === 'LineSegments') {
             for (let x = 0; x < samplesH; x++) {
-                // positions default to 0,0,0
-                uvs[currentIdx * 2] = x / (samplesH - 1);
-                uvs[currentIdx * 2 + 1] = y / (samplesV - 1);
-                currentIdx++;
+                for (let y = 0; y < samplesV - 1; y++) {
+                    const u = x / (samplesH - 1);
+                    const v1 = y / (samplesV - 1);
+                    const v2 = (y + 1) / (samplesV - 1);
 
-                if (currentIdx % chunkSize === 0) {
-                    yield; // Yield control back to main thread
+                    uvs[currentIdx * 2] = u;
+                    uvs[currentIdx * 2 + 1] = v1;
+                    currentIdx++;
+
+                    uvs[currentIdx * 2] = u;
+                    uvs[currentIdx * 2 + 1] = v2;
+                    currentIdx++;
+
+                    if (currentIdx % chunkSize === 0) {
+                        yield; // Yield control back to main thread
+                    }
+                }
+            }
+        } else {
+            for (let y = 0; y < samplesV; y++) {
+                for (let x = 0; x < samplesH; x++) {
+                    // positions default to 0,0,0
+                    uvs[currentIdx * 2] = x / (samplesH - 1);
+                    uvs[currentIdx * 2 + 1] = y / (samplesV - 1);
+                    currentIdx++;
+
+                    if (currentIdx % chunkSize === 0) {
+                        yield; // Yield control back to main thread
+                    }
                 }
             }
         }
@@ -250,10 +287,13 @@ export class LidarView implements IView {
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
-        const newPoints = new THREE.Points(geometry, this.lidarMaterial);
-        newPoints.frustumCulled = false;
+        const newGeometryGroup = (geometryMode === 'LineSegments')
+            ? new THREE.LineSegments(geometry, this.lidarMaterial)
+            : new THREE.Points(geometry, this.lidarMaterial);
 
-        return newPoints;
+        newGeometryGroup.frustumCulled = false;
+
+        return newGeometryGroup;
     }
 
     private createLidarShader(): any {

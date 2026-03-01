@@ -144,20 +144,12 @@ export const LidarFragmentShader = `
                 if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
             }
         } else {
-            // --- LINE LIDAR MODE ---
-            vec2 pt = gl_PointCoord - vec2(0.5); // [-0.5, 0.5]
-            
-            // Thin vertical line width
-            float lineAlpha = 1.0 - smoothstep(0.05, 0.15, abs(pt.x));
-            // Softly fade top and bottom to blend with adjacent samples
-            lineAlpha *= 1.0 - smoothstep(0.3, 0.5, abs(pt.y));
-            
-            // Global Line-Lidar Alpha Cap:
-            // Additive Blending sums color. At 440k+ samples overlapping heavily
-            // near the horizon, pixels blow out to white-hot instantly. 
-            // We scale the base alpha to provide additive headroom.
-            shapeAlpha = lineAlpha * 0.7;
-            if (shapeAlpha < 0.01) discard;
+            // --- LINE LIDAR MODE (THREE.LineSegments) ---
+            // WebGL natively draws 1-pixel wide continuous lines between our
+            // generated topographical vertex pairs. We no longer use gl_PointCoord
+            // (since we are not rendering Point Sprites).
+            // We apply a flat alpha scalar so AdditiveBlending has headroom to stack.
+            shapeAlpha = 0.5;
         }
 
         // Entropy-based signal loss: randomly drop a fraction of pixels.
