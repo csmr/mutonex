@@ -43,7 +43,7 @@ export const LidarVertexShader = `
 
     void main() {
         vUv = uv;
-        float d = texture2D(tDepth, uv).r;
+        float d = texture2D(tDepth, uv).a;
         vRawDepth = d;
 
         // d == 0.0: no geometry (sky). Move off-screen.
@@ -77,13 +77,14 @@ export const LidarVertexShader = `
                 gl_PointSize = dotRadiusMax;
             }
         } else {
-            // High-res (vertical) scan mode - fixed pixel size
-            gl_PointSize = 2.0;
+            // High-res (vertical) scan mode - fixed vertical stretch
+            gl_PointSize = mix(24.0, 4.0, clamp(vDist / 30.0, 0.0, 1.0));
         }
     }
 `;
 
 export const LidarFragmentShader = `
+    uniform sampler2D tDepth;
     uniform float scanMode;
     uniform float entropy;
     uniform float time;
@@ -141,6 +142,17 @@ export const LidarFragmentShader = `
                 // --- LEGACY SQUARE/PIXEL MODE ---
                 if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
             }
+        } else {
+            // --- LINE LIDAR MODE ---
+            vec2 pt = gl_PointCoord - vec2(0.5); // [-0.5, 0.5]
+            
+            // Thin vertical line width
+            float lineAlpha = 1.0 - smoothstep(0.05, 0.15, abs(pt.x));
+            // Softly fade top and bottom to blend with adjacent samples
+            lineAlpha *= 1.0 - smoothstep(0.3, 0.5, abs(pt.y));
+            
+            shapeAlpha = lineAlpha;
+            if (shapeAlpha < 0.01) discard;
         }
 
         // Entropy-based signal loss: randomly drop a fraction of pixels.
@@ -165,6 +177,13 @@ export const LidarFragmentShader = `
         vec3 nearColor = vec3(1.0, 0.77, 0.54);  // ~3800K (#ffc48a)
         vec3 farColor  = vec3(0.4, 0.1, 0.0);    // ~1700K (#661a00)
         vec3 color = mix(farColor, nearColor, brightness);
+
+        if (scanMode < 0.5) {
+            // Line-Lidar mode: sample intrinsic entity colour from .rgb
+            vec3 baseObjColor = texture2D(tDepth, vUv).rgb;
+            // Mix 25% of the object base colour into the orange laser effect
+            color = mix(color, baseObjColor, 0.25);
+        }
 
         gl_FragColor = vec4(color, brightness * shapeAlpha);
     }

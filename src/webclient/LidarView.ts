@@ -66,7 +66,7 @@ export class LidarView implements IView {
     private virtualMeshes: Map<string, any> = new Map();
 
     private renderTarget: any;
-    private linearDepthMaterial: any;
+    private baseMaterials: Map<number, any> = new Map();
 
     public controls: any;
     private renderer: any | null = null;
@@ -117,7 +117,7 @@ export class LidarView implements IView {
 
         // TEST SPHERE: Remove after terrain rendering confirmed.
         const debugGeo = new THREE.SphereGeometry(1.5, 16, 16);
-        const debugMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const debugMat = this.getLidarBaseMaterial(0xff0000);
         const debugMesh = new THREE.Mesh(debugGeo, debugMat);
         debugMesh.position.set(0, 1.5, 10);
         this.virtualScene.add(debugMesh);
@@ -135,29 +135,37 @@ export class LidarView implements IView {
             type: THREE.FloatType,
         });
 
-        // Linear depth material: writes z_view / cameraFar 
-        // into R channel as a full 32-bit float.
-        // z_view is positive view-space depth (-Z axis).
-        // Sky cleared to white (1.0) for vertex discard.
-        this.linearDepthMaterial = new THREE.ShaderMaterial({
-            uniforms: { far: { value: this.camera.far } },
-            vertexShader: `
-                varying float vViewZ;
-                void main() {
-                    vec4 vPos = modelViewMatrix * vec4(position, 1.0);
-                    vViewZ = -vPos.z; 
-                    gl_Position = projectionMatrix * vPos;
-                }
-            `,
-            fragmentShader: `
-                uniform float far;
-                varying float vViewZ;
-                void main() {
-                    gl_FragColor = vec4(vViewZ / far, 0.0, 0.0, 1.0);
-                }
-            `,
-        });
+        // FloatType allows full-precision Color (RGB) + Depth (Alpha).
+    }
 
+    private getLidarBaseMaterial(colorHex: number): any {
+        let mat = this.baseMaterials.get(colorHex);
+        if (!mat) {
+            mat = new THREE.ShaderMaterial({
+                uniforms: {
+                    far: { value: this.camera.far },
+                    uColor: { value: new THREE.Color(colorHex) }
+                },
+                vertexShader: `
+                    varying float vViewZ;
+                    void main() {
+                        vec4 vPos = modelViewMatrix * vec4(position, 1.0);
+                        vViewZ = -vPos.z; 
+                        gl_Position = projectionMatrix * vPos;
+                    }
+                `,
+                fragmentShader: `
+                    uniform float far;
+                    uniform vec3 uColor;
+                    varying float vViewZ;
+                    void main() {
+                        gl_FragColor = vec4(uColor, vViewZ / far);
+                    }
+                `,
+            });
+            this.baseMaterials.set(colorHex, mat);
+        }
+        return mat;
     }
 
     public setLidarStyle(styleName: string) {
@@ -298,6 +306,15 @@ export class LidarView implements IView {
             'mineral': ['⭓', '⬠', '💎']
         };
 
+        const colorMap: { [key in string]: number } = {
+            'player': 0x1E90FF,
+            'fauna': 0x228B22,
+            'unit': 0xFFA500,
+            'building': 0x8B4513,
+            'society': 0x00CED1,
+            'mineral': 0x800080
+        };
+
         const activeIds = new Set<string>();
 
         for (const entity of entities) {
@@ -307,8 +324,9 @@ export class LidarView implements IView {
             const idLen = entity.id.length;
             const charIdx = entity.id.charCodeAt(idLen - 1);
             const char = chars[charIdx % chars.length];
+            const colorHex = colorMap[entity.type] || 0xffffff;
 
-            this.updateVirtualEntity(entity, char);
+            this.updateVirtualEntity(entity, char, colorHex);
         }
 
         for (const [id, mesh] of this.virtualMeshes) {
@@ -319,18 +337,18 @@ export class LidarView implements IView {
         }
     }
 
-    private updateVirtualEntity(entity: EntityData, char: string) {
-        let mesh = this.getOrCreateMesh(entity.id, char);
+    private updateVirtualEntity(entity: EntityData, char: string, colorHex: number) {
+        let mesh = this.getOrCreateMesh(entity.id, char, colorHex);
         if (mesh) {
             mesh.position.copy(entity.pos);
         }
     }
 
-    private getOrCreateMesh(id: string, char: string): any {
+    private getOrCreateMesh(id: string, char: string, colorHex: number): any {
         const cp = char.codePointAt(0);
         const hex = cp!.toString(16).toUpperCase();
         let mesh = this.virtualMeshes.get(id);
-        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const mat = this.getLidarBaseMaterial(colorHex);
 
         if (!mesh) {
             // Setup default placeholder box until JSON loads
@@ -383,9 +401,7 @@ export class LidarView implements IView {
             100,
             100
         );
-        const mat = new THREE.MeshBasicMaterial({
-            wireframe: false
-        });
+        const mat = this.getLidarBaseMaterial(0x333333);
         const plane = new THREE.Mesh(geo, mat);
         plane.rotation.x = -Math.PI / 2;
         this.virtualScene.add(plane);
@@ -430,23 +446,22 @@ export class LidarView implements IView {
         const mw = this.camera.matrixWorld;
         uniforms.viewInverse.value.copy(mw);
 
-        // Depth pass: render virtualScene with linear 
-        // depth material.
-        // Suppress virtualScene.background during this pass
-        // so the explicit white clear (d=1.0 sentinel 
-        // for sky) is not overridden by the scene's 
-        // black background colour.
+        // Depth & Color pass: render virtualScene with 
+        // intrinsic LidarBaseMaterials.
+        // Background clear sets Alpha (depth) to 1.0 
+        // and RGB to 0.0 (black sky).
         const currentRT = renderer.getRenderTarget();
         renderer.setRenderTarget(this.renderTarget);
-        renderer.setClearColor(0xffffff, 1);
+        renderer.setClearColor(0x000000, 1.0);
         renderer.clear();
-        const prevOverride = this.virtualScene.overrideMaterial;
+
+        for (const mat of this.baseMaterials.values()) {
+            mat.uniforms.far.value = this.camera.far;
+        }
+
         const prevBackground = this.virtualScene.background;
-        this.virtualScene.overrideMaterial = this.linearDepthMaterial;
         this.virtualScene.background = null;  // let explicit clear stand
-        this.linearDepthMaterial.uniforms.far.value = this.camera.far;
         renderer.render(this.virtualScene, this.camera);
-        this.virtualScene.overrideMaterial = prevOverride;
         this.virtualScene.background = prevBackground;
         renderer.setRenderTarget(currentRT);
     }
