@@ -78,7 +78,8 @@ export const LidarVertexShader = `
             }
         } else {
             // High-res (vertical) scan mode - fixed vertical stretch
-            gl_PointSize = mix(24.0, 4.0, clamp(vDist / 30.0, 0.0, 1.0));
+            // Capped at 14.0 to prevent severe overdraw/density blowout near camera
+            gl_PointSize = mix(14.0, 4.0, clamp(vDist / 30.0, 0.0, 1.0));
         }
     }
 `;
@@ -151,7 +152,11 @@ export const LidarFragmentShader = `
             // Softly fade top and bottom to blend with adjacent samples
             lineAlpha *= 1.0 - smoothstep(0.3, 0.5, abs(pt.y));
             
-            shapeAlpha = lineAlpha;
+            // Global Line-Lidar Alpha Cap:
+            // Additive Blending sums color. At 440k+ samples overlapping heavily
+            // near the horizon, pixels blow out to white-hot instantly. 
+            // We scale the base alpha to provide additive headroom.
+            shapeAlpha = lineAlpha * 0.7;
             if (shapeAlpha < 0.01) discard;
         }
 
@@ -181,8 +186,13 @@ export const LidarFragmentShader = `
         if (scanMode < 0.5) {
             // Line-Lidar mode: sample intrinsic entity colour from .rgb
             vec3 baseObjColor = texture2D(tDepth, vUv).rgb;
-            // Mix 25% of the object base colour into the orange laser effect
-            color = mix(color, baseObjColor, 0.25);
+            
+            // Overexposure fix: Instead of blindly adding color brightness via linear mix(),
+            // we use a multiplicative approach. Dark entity colors naturally "dim" the 
+            // 3800K laser beam by absorbing light. (mix blends 50% white with the base color
+            // first, so completely black objects still reflect *some* of the orange laser).
+            vec3 blendedTint = mix(vec3(1.0), baseObjColor, 0.5);
+            color *= blendedTint;
         }
 
         gl_FragColor = vec4(color, brightness * shapeAlpha);
