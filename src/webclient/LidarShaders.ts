@@ -153,9 +153,9 @@ export const LidarFragmentShader = `
         float elevationBoost = step(0.1, vWorldPos.y); // 1.0 if elevated, 0.0 if ground
         float brightness = mix(baseBrightness, max(baseBrightness, 0.3), elevationBoost);
 
-        // Colour: bright pure green close, dark grey-green far.
-        vec3 nearColor = vec3(0.0, 1.0, 0.05);   // #00ff0d
-        vec3 farColor  = vec3(0.05, 0.15, 0.05); // #0d260d
+        // Colour: warm white/orange close (3800K), dark deep orange far (1700K).
+        vec3 nearColor = vec3(1.0, 0.77, 0.54);  // ~3800K (#ffc48a)
+        vec3 farColor  = vec3(0.4, 0.1, 0.0);    // ~1700K (#661a00)
         vec3 color = mix(farColor, nearColor, brightness);
 
         gl_FragColor = vec4(color, brightness * shapeAlpha);

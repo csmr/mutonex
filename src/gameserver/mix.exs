@@ -4,7 +4,7 @@ defmodule Mutonex.Game.MixProject do
   def project do
     [
       app: :mutonex_server,
-      version: "0.2.18",
+      version: "0.2.19",
       elixir: "~> 1.14",
       target: :node,
       start_permanent: Mix.env() == :prod,

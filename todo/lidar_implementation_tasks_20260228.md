@@ -14,6 +14,10 @@ However, several architectural shortcomings and unfulfilled requirements remain,
   1. Transitioning the representation geometry from `GL_POINTS` to `GL_LINES` or `GL_LINE_STRIP` with an index buffer tailored to draw vertical connect-the-dots segments.
   2. Employing a shader trick where vertical point sprites are artificially stretched along the Y-axis to visually bridge the physical screen-space gap between adjacent sample rows.
 
+### 1b. Orange Lidar Rendering Style (Completed)
+- **Status:** Implemented.
+- **Description:** Shifted the default LIDAR rendering palette from green to an orange map ranging from 1700K (deep orange background) to 3800K (warm white foreground). This matches the original design document specification.
+
 ### 2. Static Resolution for Both Modes
 - **Defect:** The sample resolution (`samplesH` and `samplesV`) is currently hardcoded and shared across both modes (recently modified to 400x280). The vertical mode is intended to be a high-resolution, dense topological sweep and should inherently operate at double the resolution of the horizontal mode.
 - **Requirement/Solution Path:** `setScanMode` must be refactored to dynamically adjust `samplesH` and `samplesV` depending on the requested mode (e.g., 400x280 for horizontal, 800x560 for vertical). 

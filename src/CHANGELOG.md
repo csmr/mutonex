@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.19 - Orange Lidar Rendering
+- **Game Engine & Systems:**
+    - Shifted default Lidar rendering mode to use an orange Point-Cloud-Lidar palette (1700K - 3800K), matching original design document.
 ## v0.2.18 - The Consolidation Release
 - **Backend Consolidation:**
     - Replaced Deno webserver with Phoenix static asset serving, simplifying architecture.

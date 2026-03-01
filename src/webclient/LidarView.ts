@@ -57,8 +57,8 @@ export class LidarView implements IView {
     constructor(domElement: HTMLCanvasElement) {
         // 1. Setup Main Scene
         this.scene = new THREE.Scene();
-        // Deep Lidar Black/Green
-        const color = new THREE.Color(0x000500);
+        // Deep Lidar Black/Orange
+        const color = new THREE.Color(0x050100);
         this.scene.background = color;
 
         const w = window.innerWidth;
