@@ -191,8 +191,12 @@ export const LidarFragmentShader = `
             // we use a multiplicative approach. Dark entity colors naturally "dim" the 
             // 3800K laser beam by absorbing light. (mix blends 50% white with the base color
             // first, so completely black objects still reflect *some* of the orange laser).
-            vec3 blendedTint = mix(vec3(1.0), baseObjColor, 0.5);
+            vec3 blendedTint = mix(vec3(1.0), baseObjColor, 0.375);
             color *= blendedTint;
+
+            // Global brightness dampening to prevent white-hot blowout on dense geometry:
+            // Maps 1.0 -> 0.9, 0.5 -> 0.45
+            color *= 0.9;
         }
 
         gl_FragColor = vec4(color, brightness * shapeAlpha);
