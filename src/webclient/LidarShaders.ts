@@ -7,6 +7,7 @@ export const LidarVertexShader = `
     uniform float scanMode;
     uniform float dotRadiusMin;
     uniform float dotRadiusMax;
+    uniform float dotType;
 
     varying float vRawDepth;
     varying float vDist;
@@ -65,10 +66,15 @@ export const LidarVertexShader = `
         vDist = d * cameraFar;
 
         if (scanMode >= 0.5) {
-            // Horizontal (default) scan mode - interpolate dot size based on distance
-            float distT = clamp(vDist / 30.0, 0.0, 1.0); 
-            float currentRadius = mix(dotRadiusMax, dotRadiusMin, distT);
-            gl_PointSize = max(1.0, currentRadius * 2.0);
+            if (dotType > 0.5) {
+                // Horizontal (default) scan mode - interpolate dot size based on distance
+                float distT = clamp(vDist / 30.0, 0.0, 1.0); 
+                float currentRadius = mix(dotRadiusMax, dotRadiusMin, distT);
+                gl_PointSize = max(1.0, currentRadius * 2.0);
+            } else {
+                // Legacy retro pixel block fixed size
+                gl_PointSize = dotRadiusMax;
+            }
         } else {
             // High-res (vertical) scan mode - fixed pixel size
             gl_PointSize = 2.0;
@@ -124,12 +130,11 @@ export const LidarFragmentShader = `
                 vec2 pt = gl_PointCoord - vec2(0.5);
                 float distFromCenter = length(pt);
 
-                // Anti-Aliasing: instead of a harsh discard, we smooth the edge 
-                // between 0.4 and 0.5 to eliminate the blocky 4x4 pixelation.
-                // It fades alpha to 0.0 exactly at the radius boundary.
-                shapeAlpha = 1.0 - smoothstep(0.4, 0.5, distFromCenter);
+                // Anti-Aliasing & Additive Blending: we smooth the edge 
+                // gradually to create a soft, glowing point sprite.
+                shapeAlpha = 1.0 - smoothstep(0.1, 0.5, distFromCenter);
 
-                if (shapeAlpha < 0.05) discard;
+                if (shapeAlpha < 0.01) discard;
                 
             } else {
                 // --- LEGACY SQUARE/PIXEL MODE ---

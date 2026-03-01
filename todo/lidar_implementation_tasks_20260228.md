@@ -18,18 +18,15 @@ However, several architectural shortcomings and unfulfilled requirements remain,
 - **Status:** Implemented.
 - **Description:** Shifted the default LIDAR rendering palette from green to an orange map ranging from 1700K (deep orange background) to 3800K (warm white foreground). This matches the original design document specification.
 
-### 2. Static Resolution for Both Modes
-- **Defect:** The sample resolution (`samplesH` and `samplesV`) is currently hardcoded and shared across both modes (recently modified to 400x280). The vertical mode is intended to be a high-resolution, dense topological sweep and should inherently operate at double the resolution of the horizontal mode.
-- **Requirement/Solution Path:** `setScanMode` must be refactored to dynamically adjust `samplesH` and `samplesV` depending on the requested mode (e.g., 400x280 for horizontal, 800x560 for vertical). 
+### 2. Static Resolution for Both Modes (Completed)
+- **Status:** Implemented dynamic config `LidarStyles` replacing hardcoded properties.
 
 ### 3. Cost of Dynamic Geometry Rebuilding
 - **Defect:** Currently, the WebGL render targets and vertex buffers are built once optimally. If `samplesH` and `samplesV` become dynamic based on the active mode (Requirement #2), the Lidar pipeline cannot simply toggle a uniform.
 - **Requirement/Solution Path:** Implement an efficient cleanup and regeneration lifecycle inside `setScanMode()` to reconstruct the `WebGLRenderTarget` (for depth passes), the depth read-back buffer, and the entire `THREE.BufferGeometry` arrays (positions and UVs) holding the point cloud without stalling the main thread during gameplay. 
 
-### 4. Legacy "Pixel Block" Mode Inconsistency 
-- **Defect:** By migrating to Vertex Shader dynamic sizing (`gl_PointSize`), the legacy "square block" mode (`dotType = 0`) now draws squares that scale based on distance, rather than the original constant 1x1/2x2 hardware pixels. 
-- **Requirement/Solution Path:** If the strict legacy aesthetic needs identical preservation, the vertex shader sizing needs to conditionally branch on `dotType`, reverting to a fixed 1.0 or 2.0 `gl_PointSize` when circles are disabled.
+### 4. Legacy "Pixel Block" Mode Inconsistency (Completed)
+- **Status:** Fixed `gl_PointSize` scaling logic in vertex shader.
 
-### 5. Point Sprite Z-Depth Sorting (Alpha blending)
-- **Defect:** The smooth circular dots rely on an alpha multiplier and `discard` instead of true transparent depth blending because point sprites in `THREE.Points` are rendered in a fixed buffer memory order, not physically sorted back-to-front. If we ever want true translucent overlapping rings rather than binary cutouts, they will suffer from draw-order depth occlusion artifacts at the edges.
-- **Requirement/Solution Path:** Rely on `discard` for gameplay frame performance. If soft translucency is required for close inspection, explore GPU radial sorting or simpler additive blending `THREE.AdditiveBlending` to bypass Z-sorting depth issues, though it could blow out brightness when dots overlap.
+### 5. Point Sprite Z-Depth Sorting (Alpha blending) (Completed)
+- **Status:** Switched to AdditiveBlending and soft threshold discards.

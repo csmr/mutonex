@@ -7,21 +7,58 @@ import {
 } from "./types.ts";
 import { LidarVertexShader, LidarFragmentShader } from "./LidarShaders.ts";
 
-// --- Configuration ---
-// Point size is now dynamically controlled by LidarView instances.
+export interface LidarStyleConfig {
+    name: string;
+    scanMode: number;
+    dotType: number;
+    samplesH: number;
+    samplesV: number;
+    dotRadiusMin: number;
+    dotRadiusMax: number;
+}
+
+export const LidarStyles: Record<string, LidarStyleConfig> = {
+    pointCloud: {
+        name: 'pointCloud',
+        scanMode: 1.0,
+        dotType: 1.0,
+        samplesH: 480,
+        samplesV: 300,
+        dotRadiusMin: 1.0,
+        dotRadiusMax: 4.0,
+    },
+    lineLidar: {
+        name: 'lineLidar',
+        scanMode: 0.0,
+        dotType: 1.0,
+        samplesH: 800,
+        samplesV: 560, // Task 3: dynamic high resolution vertical mode
+        dotRadiusMin: 1.0,
+        dotRadiusMax: 4.0,
+    },
+    legacy: {
+        name: 'legacy',
+        scanMode: 1.0,
+        dotType: 0.0,
+        samplesH: 400,
+        samplesV: 280,
+        dotRadiusMin: 1.0,
+        dotRadiusMax: 4.0,
+    }
+};
 
 export class LidarView implements IView {
     public scene: any; // THREE.Scene
     public camera: any; // THREE.PerspectiveCamera
 
     // Dot Rendering Parameters
+    public currentStyleName: string = 'pointCloud';
     public dotRadiusMin = 1.0; // Radius for objects far away (vDist >= 30.0)
     public dotRadiusMax = 4.0; // Radius for objects very close (vDist == 0.0)
     public dotType = 1.0;   // 0.0 = square, 1.0 = circular
 
-    private samplesH = 400;
-    private samplesV = 280; // Dense sampling required for full depth texture coverage
-    public currentMode: 'vertical' | 'horizontal' = 'horizontal'; // Default to horizontal/cheapo
+    private samplesH = 480;
+    private samplesV = 300;
     public entropy: number = 0.1; // Parametric signal loss (0=no noise, 1=max)
 
     // The "Virtual" scene contains the actual geometry
@@ -157,23 +194,23 @@ export class LidarView implements IView {
         this.virtualScene.add(debugMesh);
     }
 
-    public setScanMode(
-        mode: 'vertical' | 'horizontal'
-    ) {
-        this.currentMode = mode;
-        // Both modes use the same dense 480×270
-        // sample grid.  The horizontal scan-line
-        // visual is produced entirely in the
-        // fragment shader (gl_FragCoord.y mod band)
-        // — NOT by reducing sample density.
-        this.samplesH = 480;
-        this.samplesV = 300;
+    public setLidarStyle(styleName: string) {
+        const config = LidarStyles[styleName] || LidarStyles.pointCloud;
+        this.currentStyleName = styleName;
+
+        // Task 3: Dynamic Resolution
+        this.samplesH = config.samplesH;
+        this.samplesV = config.samplesV;
+
+        this.dotType = config.dotType;
+        this.dotRadiusMin = config.dotRadiusMin;
+        this.dotRadiusMax = config.dotRadiusMax;
 
         if (this.lidarMaterial) {
-            this.lidarMaterial.uniforms
-                .scanMode.value =
-                mode === 'vertical'
-                    ? 0.0 : 1.0;
+            this.lidarMaterial.uniforms.scanMode.value = config.scanMode;
+            this.lidarMaterial.uniforms.dotType.value = this.dotType;
+            this.lidarMaterial.uniforms.dotRadiusMin.value = this.dotRadiusMin;
+            this.lidarMaterial.uniforms.dotRadiusMax.value = this.dotRadiusMax;
         }
         this.rebuildLidarPoints();
     }
@@ -225,7 +262,7 @@ export class LidarView implements IView {
             },
             resolution: { value: resolution },
             time: { value: 0 },
-            scanMode: { value: this.currentMode === 'vertical' ? 0.0 : 1.0 },
+            scanMode: { value: LidarStyles[this.currentStyleName]?.scanMode ?? 1.0 },
             entropy: { value: this.entropy },
             // diagMode: 0.0 = normal rendering, 1.0 = diagnostic (red=elevated, blue=ground).
             // Toggle from browser console: lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
@@ -240,6 +277,7 @@ export class LidarView implements IView {
             vertexShader: LidarVertexShader,
             fragmentShader: LidarFragmentShader,
             transparent: true,
+            depthWrite: false, // Task 6: Disable depthWrite to fix occlusion sorting with AdditiveBlending
             blending: THREE.AdditiveBlending
         });
     }

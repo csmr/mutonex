@@ -212,10 +212,14 @@ function main() {
       }
 
       if (e.key.toLowerCase() === "l") {
-        const isVert = lidarMode === "vertical";
-        lidarMode = isVert ? "horizontal" : "vertical";
-        lidarView.setScanMode(lidarMode);
-        console.log("Lidar Mode:", lidarMode);
+        const current = lidarView.currentStyleName;
+        let next = 'pointCloud';
+        if (current === 'pointCloud') next = 'lineLidar';
+        else if (current === 'lineLidar') next = 'legacy';
+        else next = 'pointCloud';
+
+        lidarView.setLidarStyle(next);
+        console.log("Lidar Style:", next);
       }
 
       if (e.key === "[") {
