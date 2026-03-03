@@ -257,16 +257,18 @@ export const ProceduralMeshFragmentShader = `
             // Depth natively handled by GPU rasterizer occlusion!
             float depth = clamp(vViewZ, 1.0, far);
             
-            // Calculate polar fragment angle traversing outward from the camera lens
+            // In Three.js view space, the camera looks down the negative Z axis.
+            // To get standing vertical stripes that sweep horizontally, we calculate
+            // the horizontal angle (yaw) of the fragment from the camera lens.
             vec3 viewDirection = normalize(vViewPosition);
-            float angle = atan(viewDirection.y, viewDirection.x);
+            float angle = atan(viewDirection.x, -viewDirection.z);
             
             // Sweep interval via Time uniform
-            float yawAngle = time * 3.5;
-            float stripeSpacing = 0.15; // Gap between stripes
-            float stripeWidth = 0.015;  // Thickness of illumination hit
+            float sweepProgress = time * 0.35; // Slower, visible sweep
+            float stripeSpacing = 0.04;        // Tighter gap between stripes
+            float stripeWidth = 0.005;         // Tighter, sharper laser line
             
-            float slice = mod(angle + yawAngle, stripeSpacing);
+            float slice = mod(angle + sweepProgress, stripeSpacing);
             float isStripe = step(slice, stripeWidth);
             
             // Falloff limits the range of the Lidar scatter
