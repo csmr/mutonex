@@ -66,7 +66,12 @@ export const LidarVertexShader = `
         // Linear distance = d * far (already have it).
         vDist = d * cameraFar;
 
-        if (scanMode >= 0.5) {
+        if (scanMode < 0.5) {
+            // Emulated contour rays are distributed evenly in screen-space.
+            // Therefore, the screen-space distance between them is CONSTANT regardless of depth!
+            // We just provide enough gl_PointSize headroom to draw the elongated dash.
+            gl_PointSize = dotRadiusMax * 1.5; 
+        } else { // scanMode >= 0.5
             if (dotType > 0.5) {
                 // Horizontal (default) scan mode - interpolate dot size based on distance
                 float distT = clamp(vDist / 30.0, 0.0, 1.0); 
@@ -76,10 +81,6 @@ export const LidarVertexShader = `
                 // Legacy retro pixel block fixed size
                 gl_PointSize = dotRadiusMax;
             }
-        } else {
-            // High-res (vertical) scan mode - fixed vertical stretch
-            // Capped at 14.0 to prevent severe overdraw/density blowout near camera
-            gl_PointSize = mix(14.0, 4.0, clamp(vDist / 30.0, 0.0, 1.0));
         }
     }
 `;
@@ -91,6 +92,7 @@ export const LidarFragmentShader = `
     uniform float time;
     uniform float diagMode;
     uniform float dotType;
+    uniform vec2 resolution;
 
     varying float vRawDepth;
     varying float vDist;
@@ -144,12 +146,44 @@ export const LidarFragmentShader = `
                 if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
             }
         } else {
-            // --- LINE LIDAR MODE (THREE.LineSegments) ---
-            // WebGL natively draws 1-pixel wide continuous lines between our
-            // generated topographical vertex pairs. We no longer use gl_PointCoord
-            // (since we are not rendering Point Sprites).
-            // We apply a flat alpha scalar so AdditiveBlending has headroom to stack.
-            shapeAlpha = 0.5;
+            // --- EMULATED SCANNING LIDAR (Contours) ---
+            vec2 pt = gl_PointCoord - vec2(0.5);
+            
+            // 1. Calculate screen-space depth gradient
+            vec2 texel = 1.0 / resolution;
+            
+            // Sample neighboring geometry to determine surface slope
+            float dX = texture2D(tDepth, vUv + vec2(texel.x * 2.0, 0.0)).a - texture2D(tDepth, vUv - vec2(texel.x * 2.0, 0.0)).a;
+            float dY = texture2D(tDepth, vUv + vec2(0.0, texel.y * 2.0)).a - texture2D(tDepth, vUv - vec2(0.0, texel.y * 2.0)).a;
+            
+            vec2 grad = vec2(dX, dY);
+            float gradLen = length(grad);
+            
+            // 2. Determine contour flow direction
+            vec2 dir = vec2(0.0, 1.0); // default vertical line if flat
+            if (gradLen > 0.00001) {
+                vec2 gNorm = grad / gradLen;
+                // Vector perpendicular to gradient acts as our surface contour line
+                dir = vec2(-gNorm.y, gNorm.x);
+            }
+            
+            // 3. 2D Rotation Matrix
+            mat2 rot = mat2(
+                dir.x, -dir.y,
+                dir.y,  dir.x
+            );
+            
+            // 4. Transform point coordinates
+            vec2 rotatedPt = rot * pt;
+            
+            // 5. Elongate into a dash
+            // Stretching along X so the dash lies along the contour direction
+            rotatedPt.x /= 5.0; 
+            
+            float dist = length(rotatedPt);
+            shapeAlpha = 1.0 - smoothstep(0.05, 0.5, dist);
+            
+            if (shapeAlpha < 0.01) discard;
         }
 
         // Entropy-based signal loss: randomly drop a fraction of pixels.
@@ -176,19 +210,17 @@ export const LidarFragmentShader = `
         vec3 color = mix(farColor, nearColor, brightness);
 
         if (scanMode < 0.5) {
-            // Line-Lidar mode: sample intrinsic entity colour from .rgb
+            // Line-Lidar mode (Emulated Contours): sample intrinsic entity colour from .rgb
             vec3 baseObjColor = texture2D(tDepth, vUv).rgb;
             
-            // Overexposure fix: Instead of blindly adding color brightness via linear mix(),
-            // we use a multiplicative approach. Dark entity colors naturally "dim" the 
-            // 3800K laser beam by absorbing light. (mix blends 50% white with the base color
-            // first, so completely black objects still reflect *some* of the orange laser).
             vec3 blendedTint = mix(vec3(1.0), baseObjColor, 0.375);
             color *= blendedTint;
 
-            // Global brightness dampening to prevent white-hot blowout on dense geometry:
-            // Maps 1.0 -> 0.9, 0.5 -> 0.45
-            color *= 0.9;
+            // Global brightness dampening to prevent white-hot blowout on dense geometry
+            // Since we scaled horizontal resolution to 800 and overlap elongated dashes
+            // additive blending stacks extremely fast.
+            color *= 0.35; // reduced from 0.9
+            shapeAlpha *= 0.8; // reduce alpha headroom
         }
 
         gl_FragColor = vec4(color, brightness * shapeAlpha);

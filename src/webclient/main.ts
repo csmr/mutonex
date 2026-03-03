@@ -4,6 +4,7 @@ import "./global_types.ts";
 import { GameStateProvider } from "./GameStateProvider.ts";
 import { ViewManager } from "./ViewManager.ts";
 import { LidarView } from "./LidarView.ts";
+import { LidarStyles } from "./LidarStyles.ts";
 import { SphereView } from "./SphereView.ts";
 import { LobbyView, Sector } from "./LobbyView.ts";
 import { EntityData, Terrain } from "./types.ts";
@@ -13,6 +14,7 @@ import type {
 
 // Main application logic
 function main() {
+
   const canvas = document.getElementById(
     "main-canvas"
   ) as HTMLCanvasElement;
@@ -34,6 +36,16 @@ function main() {
   // Usage: window.__mutonex.lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
   // Usage: window.__mutonex.renderer for readRenderTargetPixels probing
   window.__mutonex = { lidarView, viewManager, renderer: (viewManager as any).renderer };
+
+  (window.__mutonex.lidarView as any).setStyle = (styleName: string) => {
+    if (LidarStyles[styleName]) {
+      lidarView.setLidarStyle(LidarStyles[styleName]);
+      console.log("Lidar style applied:", styleName);
+    } else {
+      console.error("Unknown style:", styleName, "Available:", Object.keys(LidarStyles));
+    }
+  };
+  console.log("To change lidar mode directly, use: window.__mutonex.lidarView.setStyle('styleName')");
 
   // Start the render loop
   viewManager.animate();
@@ -212,13 +224,12 @@ function main() {
       }
 
       if (e.key.toLowerCase() === "l") {
-        const current = lidarView.currentStyleName;
-        let next = 'pointCloud';
-        if (current === 'pointCloud') next = 'lineLidar';
-        else if (current === 'lineLidar') next = 'legacy';
-        else next = 'pointCloud';
+        const styles = Object.keys(LidarStyles);
+        const currentIndex = styles.indexOf(lidarView.currentStyleName);
+        const nextIndex = (currentIndex + 1) % styles.length;
+        const next = styles[nextIndex];
 
-        lidarView.setLidarStyle(next);
+        lidarView.setLidarStyle(LidarStyles[next]);
         console.log("Lidar Style:", next);
       }
 
