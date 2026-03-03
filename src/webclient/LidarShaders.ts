@@ -231,12 +231,22 @@ export const ProceduralMeshVertexShader = `
     varying float vViewZ;
     varying vec3 vViewPosition;
     varying vec3 vNormal;
+    varying vec2 vLidarTexCoord;
 
     void main() {
         vec4 vPos = modelViewMatrix * vec4(position, 1.0);
         vViewZ = -vPos.z; 
         vViewPosition = vPos.xyz;
         vNormal = normalize(normalMatrix * normal);
+
+        // Calculate texture coordinates based on the LIDAR scan geometry and the object's surface.
+        // This generates parametric UVs relative to the camera origin that conform
+        // to the physical shape of the object during perspective interpolation.
+        vLidarTexCoord = vec2(
+            atan(vViewPosition.x, -vViewPosition.z),
+            vViewPosition.z
+        );
+
         gl_Position = projectionMatrix * vPos;
     }
 `;
@@ -250,6 +260,7 @@ export const ProceduralMeshFragmentShader = `
     varying float vViewZ;
     varying vec3 vViewPosition;
     varying vec3 vNormal;
+    varying vec2 vLidarTexCoord;
 
     void main() {
         if (uProceduralMode < 0.5) {
@@ -257,24 +268,22 @@ export const ProceduralMeshFragmentShader = `
             gl_FragColor = vec4(uColor, vViewZ / far);
         } else {
             // Mode 1: Camera-Space Procedural Projection (Native Mesh Texturing)
-            // Depth natively handled by GPU rasterizer occlusion!
             float depth = clamp(vViewZ, 1.0, far);
             
-            // In Three.js view space, the camera looks down the negative Z axis.
-            vec3 viewDirection = normalize(vViewPosition);
-
-            // 1. Calculate the horizontal angle (yaw) for stationary vertical standing stripes
-            float angle = atan(viewDirection.x, -viewDirection.z);
+            // Use the texture coordinates evaluated on the 3D vertex surfaces
+            // This ensures the stripes deform and map to the physical structural geometry.
+            float yawAngle = vLidarTexCoord.x;
             
             float stripeSpacing = 0.04;        // Gap between vertical stripes
             float stripeWidth = 0.005;         // Sharp laser line width
             
-            float slice = mod(angle, stripeSpacing);
+            // Evaluates strictly to vertical stripes mapped to object contours!
+            float slice = mod(yawAngle, stripeSpacing);
             float isStripe = step(slice, stripeWidth);
 
-            // 2. Map the texture to Object Normals (Lambertian Reflectance)
+            // Map the texture explicitly to Object Normals (Lambertian Reflectance)
             // The Lidar beam originates from the camera lens (view-space origin).
-            // The incident ray is therefore the viewDirection.
+            vec3 viewDirection = normalize(vViewPosition);
             vec3 nNormal = normalize(vNormal);
             float lambert = max(0.0, dot(nNormal, -viewDirection));
             
