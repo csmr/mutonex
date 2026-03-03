@@ -109,7 +109,8 @@ export class LidarView implements IView {
           far: { value: this.camera.far },
           uColor: { value: new THREE.Color(colorHex) },
           uProceduralMode: { value: 0.0 },
-          time: { value: 0.0 }
+          time: { value: 0.0 },
+          entropy: { value: 0.0 }
         },
         vertexShader: ProceduralMeshVertexShader,
         fragmentShader: ProceduralMeshFragmentShader,
@@ -427,6 +428,9 @@ export class LidarView implements IView {
     }
     for (const mat of this.baseMaterials.values()) {
       mat.uniforms.time.value += deltaTime;
+      if (mat.uniforms.entropy) {
+        mat.uniforms.entropy.value = this.entropy;
+      }
     }
     this.virtualScene.updateMatrixWorld(true);
   }
