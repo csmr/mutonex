@@ -11,6 +11,7 @@ Mutonex is implemented with a functional style where possible, using Elixir and 
 3. Expressions formatted one thing per line.
 4. One thing functions, limit blocks to >11 lines.
 5. Lines as short as possible (60 chars).
+6. Use data-driven configuration (dictionaries/maps) instead of imperative code (e.g., long `if/else` checks) for state cycling and definitions.
 
 
 ## Getting Started
@@ -21,9 +22,15 @@ Working with this project has two avenues:
 
 First read `src/devenv.sh` script, to see how `src/.env` and `src/data/.env.postgres` files are generated.
 
-Read the game design document `./docs/mutonex-design-document.html` Table of Contents, and use that as an index for finding implementation design related details.
+Second, the basics of developing the modules in this project and repository are described in src/README.md file, read it next.
 
 Read the game design document `./docs/mutonex-design-document.html` Table of Contents, and use that as an index for finding implementation design related details.
+
+## Directories
+
+- Use `docs/` for reference.
+- Use `todo/` for your and others current TODOs.
+
 
 ## Install dependencies
 
@@ -49,7 +56,7 @@ This covers:
 - Network layer (Router, Channels, Controllers).
 - Database connectivity and repository logic.
 
-### Webclient verification
+### Webclient verification via bundle
 
 To verify the webclient, ensure it can be successfully bundled:
 
@@ -62,7 +69,10 @@ cd src && bash scripts/bundle-webclient.sh
 
 Never add or commit `.env` files into repository. Never remove `.env` files from `.gitignore` file. 
 
-Name git branches with prefix: feat-|bugfix-|mainteinance- and use date postfix: -YYYYMMDDHHMM (instead of random number).
+## Git branch naming convention
+
+- Name git branches with a prefix: feat-|bugfix-|mainteinance-
+- name branch with a date-time postfix: -YYYYMMDDHHMM
 
 
 ## Merge strategy for Google Jules

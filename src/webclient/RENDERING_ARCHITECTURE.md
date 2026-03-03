@@ -53,7 +53,7 @@ Implements the "High-Tech / Low-Fi" visual style.
         bands) both use 480×270 sample grids;
         the visual difference is shader-only.
 
-### 3. SphereView (Standard 3D)
+### 3. SphereView (Standard 3D, may be deprecated) 
 Standard object-based rendering.
 *   **Entities**: Instantiates
     `THREE.SphereGeometry` meshes.

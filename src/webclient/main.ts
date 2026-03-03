@@ -39,7 +39,7 @@ function main() {
 
   (window.__mutonex.lidarView as any).setStyle = (styleName: string) => {
     if (LidarStyles[styleName]) {
-      lidarView.setLidarStyle(LidarStyles[styleName]);
+      lidarView.setLidarStyle(styleName);
       console.log("Lidar style applied:", styleName);
     } else {
       console.error("Unknown style:", styleName, "Available:", Object.keys(LidarStyles));
@@ -229,7 +229,7 @@ function main() {
         const nextIndex = (currentIndex + 1) % styles.length;
         const next = styles[nextIndex];
 
-        lidarView.setLidarStyle(LidarStyles[next]);
+        lidarView.setLidarStyle(next);
         console.log("Lidar Style:", next);
       }
 

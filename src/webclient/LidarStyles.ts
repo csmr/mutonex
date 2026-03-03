@@ -40,8 +40,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
         dotRadiusMin: 1.0,
         dotRadiusMax: 4.0,
     },
-    truePhysicalLidarVertical: {
-        name: 'truePhysicalLidarVertical',
+    densePointGridVertical: {
+        name: 'densePointGridVertical',
         geometryMode: 'Points',
         scanMode: 0.0,
         dotType: 1.0,
@@ -50,8 +50,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
         dotRadiusMin: 1.0,
         dotRadiusMax: 6.0,
     },
-    truePhysicalLidarHorizontal: {
-        name: 'truePhysicalLidarHorizontal',
+    densePointGridHorizontal: {
+        name: 'densePointGridHorizontal',
         geometryMode: 'Points',
         scanMode: 1.0,
         dotType: 1.0,
