@@ -226,3 +226,58 @@ export const LidarFragmentShader = `
         gl_FragColor = vec4(color, brightness * shapeAlpha);
     }
 `;
+
+export const ProceduralMeshVertexShader = `
+    varying float vViewZ;
+    varying vec3 vViewPosition;
+
+    void main() {
+        vec4 vPos = modelViewMatrix * vec4(position, 1.0);
+        vViewZ = -vPos.z; 
+        vViewPosition = vPos.xyz;
+        gl_Position = projectionMatrix * vPos;
+    }
+`;
+
+export const ProceduralMeshFragmentShader = `
+    uniform float far;
+    uniform vec3 uColor;
+    uniform float uProceduralMode; // 0.0 = offscreen pack, 1.0 = camera-space projection
+    uniform float time;
+    
+    varying float vViewZ;
+    varying vec3 vViewPosition;
+
+    void main() {
+        if (uProceduralMode < 0.5) {
+            // Mode 0: Default Depth+Color render pass for PointCloud Sprites
+            gl_FragColor = vec4(uColor, vViewZ / far);
+        } else {
+            // Mode 1: Camera-Space Procedural Projection (Native Mesh Texturing)
+            // Depth natively handled by GPU rasterizer occlusion!
+            float depth = clamp(vViewZ, 1.0, far);
+            
+            // Calculate polar fragment angle traversing outward from the camera lens
+            vec3 viewDirection = normalize(vViewPosition);
+            float angle = atan(viewDirection.y, viewDirection.x);
+            
+            // Sweep interval via Time uniform
+            float yawAngle = time * 3.5;
+            float stripeSpacing = 0.15; // Gap between stripes
+            float stripeWidth = 0.015;  // Thickness of illumination hit
+            
+            float slice = mod(angle + yawAngle, stripeSpacing);
+            float isStripe = step(slice, stripeWidth);
+            
+            // Falloff limits the range of the Lidar scatter
+            float distanceFade = 1.0 - clamp(depth / 80.0, 0.0, 1.0);
+            distanceFade = pow(distanceFade, 3.0); 
+
+            // Composite: Base visibility + Blown-out high-energy stripe
+            vec3 baseLit = uColor * 0.15; // Ambient baseline so nothing is solid black
+            vec3 stripeHit = mix(uColor, vec3(1.0), 0.5) * isStripe * 3.0 * distanceFade;
+            
+            gl_FragColor = vec4(baseLit + stripeHit, 1.0);
+        }
+    }
+`;

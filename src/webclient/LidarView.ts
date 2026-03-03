@@ -1,7 +1,12 @@
 import "./global_types.ts";
 import { IView } from "./ViewManager.ts";
 import { EntityData, EntityType, Terrain } from "./types.ts";
-import { LidarFragmentShader, LidarVertexShader } from "./LidarShaders.ts";
+import {
+  LidarFragmentShader,
+  LidarVertexShader,
+  ProceduralMeshVertexShader,
+  ProceduralMeshFragmentShader
+} from "./LidarShaders.ts";
 
 import { LidarStyleConfig, LidarStyles } from "./LidarStyles.ts";
 
@@ -103,23 +108,11 @@ export class LidarView implements IView {
         uniforms: {
           far: { value: this.camera.far },
           uColor: { value: new THREE.Color(colorHex) },
+          uProceduralMode: { value: 0.0 },
+          time: { value: 0.0 }
         },
-        vertexShader: `
-                    varying float vViewZ;
-                    void main() {
-                        vec4 vPos = modelViewMatrix * vec4(position, 1.0);
-                        vViewZ = -vPos.z; 
-                        gl_Position = projectionMatrix * vPos;
-                    }
-                `,
-        fragmentShader: `
-                    uniform float far;
-                    uniform vec3 uColor;
-                    varying float vViewZ;
-                    void main() {
-                        gl_FragColor = vec4(uColor, vViewZ / far);
-                    }
-                `,
+        vertexShader: ProceduralMeshVertexShader,
+        fragmentShader: ProceduralMeshFragmentShader,
       });
       this.baseMaterials.set(colorHex, mat);
     }
@@ -143,6 +136,22 @@ export class LidarView implements IView {
       this.lidarMaterial.uniforms.dotType.value = this.dotType;
       this.lidarMaterial.uniforms.dotRadiusMin.value = this.dotRadiusMin;
       this.lidarMaterial.uniforms.dotRadiusMax.value = this.dotRadiusMax;
+    }
+
+    const isProcedural = styleName === 'proceduralLidar';
+
+    // Toggle active rendering tree
+    if (isProcedural) {
+      this.scene.add(this.virtualScene);
+      if (this.lidarPoints) this.lidarPoints.visible = false;
+    } else {
+      this.scene.remove(this.virtualScene);
+      if (this.lidarPoints) this.lidarPoints.visible = true;
+    }
+
+    // Toggle base material execution mode
+    for (const mat of this.baseMaterials.values()) {
+      mat.uniforms.uProceduralMode.value = isProcedural ? 1.0 : 0.0;
     }
 
     if (this.isRebuildingBuffer) {
@@ -329,7 +338,7 @@ export class LidarView implements IView {
       if (!cached) {
         const url = `assets/geometry/${hex}.json`;
         // Add an empty promise to prevent spamming fetch for the same hex
-        this.geometryCache.set(hex, new Promise(() => {}));
+        this.geometryCache.set(hex, new Promise(() => { }));
 
         fetch(url)
           .then((res) => {
@@ -416,11 +425,23 @@ export class LidarView implements IView {
       if (u.dotRadiusMin) u.dotRadiusMin.value = this.dotRadiusMin;
       if (u.dotRadiusMax) u.dotRadiusMax.value = this.dotRadiusMax;
     }
+    for (const mat of this.baseMaterials.values()) {
+      mat.uniforms.time.value += deltaTime;
+    }
     this.virtualScene.updateMatrixWorld(true);
   }
 
   public preRender(renderer: any): void {
     this.renderer = renderer;
+
+    // Fast-path bypass for Procedural Lidar (Native occulusion rendering)
+    if (this.currentStyleName === 'proceduralLidar') {
+      for (const mat of this.baseMaterials.values()) {
+        mat.uniforms.far.value = this.camera.far;
+      }
+      return;
+    }
+
     const uniforms = this.lidarMaterial.uniforms;
 
     // Bind the colour texture (which contains depth-packed data) to tDepth.

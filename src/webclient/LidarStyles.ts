@@ -60,4 +60,14 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotRadiusMin: 1.0,
     dotRadiusMax: 4.0,
   },
+  proceduralLidar: {
+    name: "proceduralLidar",
+    geometryMode: "Points",
+    scanMode: 0.0,
+    dotType: 0.0,
+    samplesH: 10,
+    samplesV: 10,
+    dotRadiusMin: 0.0,
+    dotRadiusMax: 0.0,
+  },
 };
