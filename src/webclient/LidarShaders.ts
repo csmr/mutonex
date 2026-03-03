@@ -244,15 +244,9 @@ export const ProceduralMeshFragmentShader = `
     uniform vec3 uColor;
     uniform float uProceduralMode; // 0.0 = offscreen pack, 1.0 = camera-space projection
     uniform float time;
-    uniform float entropy;
     
     varying float vViewZ;
     varying vec3 vViewPosition;
-
-    // Pseudo-random noise function
-    float rand(vec2 co){
-        return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-    }
 
     void main() {
         if (uProceduralMode < 0.5) {
@@ -264,29 +258,16 @@ export const ProceduralMeshFragmentShader = `
             float depth = clamp(vViewZ, 1.0, far);
             
             // In Three.js view space, the camera looks down the negative Z axis.
+            // To get standing vertical stripes that sweep horizontally, we calculate
+            // the horizontal angle (yaw) of the fragment from the camera lens.
             vec3 viewDirection = normalize(vViewPosition);
-
-            // Calculate the horizontal angle (Yaw) of the fragment from the camera lens.
-            float yawAngle = atan(viewDirection.x, -viewDirection.z);
+            float angle = atan(viewDirection.x, -viewDirection.z);
             
-            // Calculate the vertical angle (Pitch) of the fragment from the camera lens.
-            float pitchAngle = asin(viewDirection.y);
-            
-            float stripeSpacing = 0.04;        // Tighter gap between rays
+            float stripeSpacing = 0.04;        // Tighter gap between stripes
             float stripeWidth = 0.005;         // Tighter, sharper laser line
             
-            // Modulo both axes to generate a grid of dots natively on the face
-            float yawSlice = mod(yawAngle, stripeSpacing);
-            float pitchSlice = mod(pitchAngle, stripeSpacing);
-            
-            // We multiply the steps together so a ray hit only happens where both vertical and horizontal stripes cross
-            float isStripe = step(yawSlice, stripeWidth) * step(pitchSlice, stripeWidth);
-
-            // Entropy noise filter: drop some hits randomly based on the uniform parameter
-            float noiseVal = rand(vViewPosition.xy * time);
-            if (noiseVal < entropy * 0.5) {
-               isStripe = 0.0;
-            }
+            float slice = mod(angle, stripeSpacing);
+            float isStripe = step(slice, stripeWidth);
             
             // Falloff limits the range of the Lidar scatter
             float distanceFade = 1.0 - clamp(depth / 80.0, 0.0, 1.0);
