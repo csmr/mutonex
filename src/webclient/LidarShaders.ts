@@ -230,11 +230,13 @@ export const LidarFragmentShader = `
 export const ProceduralMeshVertexShader = `
     varying float vViewZ;
     varying vec3 vViewPosition;
+    varying vec3 vNormal;
 
     void main() {
         vec4 vPos = modelViewMatrix * vec4(position, 1.0);
         vViewZ = -vPos.z; 
         vViewPosition = vPos.xyz;
+        vNormal = normalize(normalMatrix * normal);
         gl_Position = projectionMatrix * vPos;
     }
 `;
@@ -247,6 +249,7 @@ export const ProceduralMeshFragmentShader = `
     
     varying float vViewZ;
     varying vec3 vViewPosition;
+    varying vec3 vNormal;
 
     void main() {
         if (uProceduralMode < 0.5) {
@@ -258,24 +261,33 @@ export const ProceduralMeshFragmentShader = `
             float depth = clamp(vViewZ, 1.0, far);
             
             // In Three.js view space, the camera looks down the negative Z axis.
-            // To get standing vertical stripes that sweep horizontally, we calculate
-            // the horizontal angle (yaw) of the fragment from the camera lens.
             vec3 viewDirection = normalize(vViewPosition);
+
+            // 1. Calculate the horizontal angle (yaw) for stationary vertical standing stripes
             float angle = atan(viewDirection.x, -viewDirection.z);
             
-            float stripeSpacing = 0.04;        // Tighter gap between stripes
-            float stripeWidth = 0.005;         // Tighter, sharper laser line
+            float stripeSpacing = 0.04;        // Gap between vertical stripes
+            float stripeWidth = 0.005;         // Sharp laser line width
             
             float slice = mod(angle, stripeSpacing);
             float isStripe = step(slice, stripeWidth);
+
+            // 2. Map the texture to Object Normals (Lambertian Reflectance)
+            // The Lidar beam originates from the camera lens (view-space origin).
+            // The incident ray is therefore the viewDirection.
+            vec3 nNormal = normalize(vNormal);
+            float lambert = max(0.0, dot(nNormal, -viewDirection));
+            
+            // Illumination falloff (10% ambient floor so backfaces aren't pure black)
+            float illumination = lambert * 0.9 + 0.1;
             
             // Falloff limits the range of the Lidar scatter
             float distanceFade = 1.0 - clamp(depth / 80.0, 0.0, 1.0);
             distanceFade = pow(distanceFade, 3.0); 
 
-            // Composite: Base visibility + Blown-out high-energy stripe
-            vec3 baseLit = uColor * 0.15; // Ambient baseline so nothing is solid black
-            vec3 stripeHit = mix(uColor, vec3(1.0), 0.5) * isStripe * 3.0 * distanceFade;
+            // Composite: Base visibility + Lidar stripe, modulated by Normal illumination
+            vec3 baseLit = uColor * 0.15 * illumination; // Ambient baseline shaded by normal
+            vec3 stripeHit = mix(uColor, vec3(1.0), 0.5) * isStripe * illumination * 3.0 * distanceFade;
             
             gl_FragColor = vec4(baseLit + stripeHit, 1.0);
         }
