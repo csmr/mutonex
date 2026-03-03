@@ -5,10 +5,10 @@ import * as YAML from "https://deno.land/std@0.188.0/yaml/mod.ts";
 // outputs hash with territory-keys, factions array value
 // Usage: `$ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
 
-const LOCALE_DIR = '/usr/share/i18n/locales';
-const OUTPUT_FILE = '../res/regions.yaml';
+const LOCALE_DIR = "/usr/share/i18n/locales";
+const OUTPUT_FILE = "../res/regions.yaml";
 
-const language_filters_arr = ['Bokm', 'Literary Chinese'];
+const language_filters_arr = ["Bokm", "Literary Chinese"];
 const language_transforms = {
   "American English": "American",
   "Arabic": "Arab",
@@ -49,15 +49,15 @@ const territory_transforms = {
   "Hong Kong SAR China": ["Chinese", "Hongkonger"],
   Iraq: ["Central Kurdish", "Kurdish"],
   Pakistan: ["Urdu", "Sindhi"],
-  Spain: ["Spanish", "Castilian"]
-}
+  Spain: ["Spanish", "Castilian"],
+};
 
 const faction_additions = {
   Australia: ["Koori", "Murri"],
   Finland: ["Northern Sámi"],
   Russia: ["Skolt Sámi"],
   Sweden: ["Southern Sámi"],
-  Brazil: ["Yanomani"]
+  Brazil: ["Yanomani"],
 };
 // all locale files from the directory
 async function getLocaleFiles(localeDir) {
@@ -75,18 +75,18 @@ async function getLocaleFiles(localeDir) {
 // returns [lang, terr]
 function extractLocaleData(content) {
   return content
-          .split('\n')
-          .filter(line => line.match(/^(territory|language)/))
-          .map(line => line.split('"')[1])
-          .filter(str => str.length > 1)
-          .slice(0, 2);
+    .split("\n")
+    .filter((line) => line.match(/^(territory|language)/))
+    .map((line) => line.split('"')[1])
+    .filter((str) => str.length > 1)
+    .slice(0, 2);
 }
 
 function generateYamlData(localeData) {
   const yamlContent = `# Regions from Debian Linux 12 ${LOCALE_DIR}\n` +
-                      `# hash format: territory-key: faction-arr\n` +
-                      `# In-game these factions are the only ones left\n` +
-                      `${stringify(localeData)}`;
+    `# hash format: territory-key: faction-arr\n` +
+    `# In-game these factions are the only ones left\n` +
+    `${stringify(localeData)}`;
   return yamlContent;
 }
 
@@ -98,9 +98,9 @@ for (const filePath of localeFiles) {
   const ar = extractLocaleData(content); // [lang, terr]
   if (ar && ar.length > 1) {
     let l = ar[0];
-    if ( language_filters_arr.some( f => l.includes(f) ) ) continue;
+    if (language_filters_arr.some((f) => l.includes(f))) continue;
     const t = ar[1];
-    if ( territory_filters[t] === l ) continue;
+    if (territory_filters[t] === l) continue;
     const tx = territory_transforms[t];
     if (tx && tx[0] == l) l = tx[1];
     const lx = language_transforms[l];
@@ -115,17 +115,16 @@ for (const filePath of localeFiles) {
 }
 
 // Additions to locale files languages
-Object.entries(faction_additions).forEach( ([k, v]) => {
-        if (typeof v == 'object') {
-          v = Object.values(v); // array 
-        }
-        regions[k] = regions[k].concat( v );
-      });
+Object.entries(faction_additions).forEach(([k, v]) => {
+  if (typeof v == "object") {
+    v = Object.values(v); // array
+  }
+  regions[k] = regions[k].concat(v);
+});
 
 const yamlContent = generateYamlData(regions);
 //await Deno.writeTextFile(OUTPUT_FILE, yamlContent);
 console.log(`YAML output generated at ${OUTPUT_FILE}`);
-
 
 // test drive unit faction gen
 let elements;
@@ -136,7 +135,6 @@ async function loadData() {
   territories = YAML.parse(await Deno.readTextFile(OUTPUT_FILE));
 }
 
-
 const pickRandom = (array) => array[Math.floor(Math.random() * array.length)];
 
 async function unitFactionRandomizedStrArr() {
@@ -145,9 +143,8 @@ async function unitFactionRandomizedStrArr() {
   const faction = pickRandom(territories[territory]);
   const elementKey = pickRandom(Object.keys(elements));
   const element = elements[elementKey];
-  return [ `unit faction: ${faction} ${element}s`,
-           `unit origin: ${territory}` ];
+  return [`unit faction: ${faction} ${element}s`, `unit origin: ${territory}`];
 }
 
-const factionString = await unitFactionRandomizedStrArr(); 
-console.log('Random unit faction:\n', factionString.join("\n"));
+const factionString = await unitFactionRandomizedStrArr();
+console.log("Random unit faction:\n", factionString.join("\n"));

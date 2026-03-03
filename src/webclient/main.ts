@@ -8,15 +8,12 @@ import { LidarStyles } from "./LidarStyles.ts";
 import { SphereView } from "./SphereView.ts";
 import { LobbyView, Sector } from "./LobbyView.ts";
 import { EntityData, Terrain } from "./types.ts";
-import type {
-  PlayerTuple
-} from "./MockGameStateProvider.ts";
+import type { PlayerTuple } from "./MockGameStateProvider.ts";
 
 // Main application logic
 function main() {
-
   const canvas = document.getElementById(
-    "main-canvas"
+    "main-canvas",
   ) as HTMLCanvasElement;
   if (!canvas) {
     console.error("Main canvas not found");
@@ -35,17 +32,28 @@ function main() {
   // Debug handle — deterministic console access with no guessing.
   // Usage: window.__mutonex.lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
   // Usage: window.__mutonex.renderer for readRenderTargetPixels probing
-  window.__mutonex = { lidarView, viewManager, renderer: (viewManager as any).renderer };
+  window.__mutonex = {
+    lidarView,
+    viewManager,
+    renderer: (viewManager as any).renderer,
+  };
 
   (window.__mutonex.lidarView as any).setStyle = (styleName: string) => {
     if (LidarStyles[styleName]) {
       lidarView.setLidarStyle(styleName);
       console.log("Lidar style applied:", styleName);
     } else {
-      console.error("Unknown style:", styleName, "Available:", Object.keys(LidarStyles));
+      console.error(
+        "Unknown style:",
+        styleName,
+        "Available:",
+        Object.keys(LidarStyles),
+      );
     }
   };
-  console.log("To change lidar mode directly, use: window.__mutonex.lidarView.setStyle('styleName')");
+  console.log(
+    "To change lidar mode directly, use: window.__mutonex.lidarView.setStyle('styleName')",
+  );
 
   // Start the render loop
   viewManager.animate();
@@ -58,8 +66,8 @@ function main() {
     { id: "game:lobby_beta", name: "Sector Beta (Test)" },
     {
       id: "game:lobby_gamma",
-      name: "Sector Gamma (High Pop)"
-    }
+      name: "Sector Gamma (High Pop)",
+    },
   ];
   lobbyView.renderSectorList(mockSectors);
 
@@ -76,7 +84,7 @@ function main() {
   let lidarMode: "vertical" | "horizontal" = "vertical";
 
   const updateEntitiesList = (
-    interpolatedPositions?: Map<string, any>
+    interpolatedPositions?: Map<string, any>,
   ) => {
     entities.length = 0;
 
@@ -85,7 +93,7 @@ function main() {
         id,
         type: "player",
         pos: pos.clone(),
-        char: ""
+        char: "",
       });
     }
 
@@ -96,7 +104,7 @@ function main() {
         id,
         type: "fauna",
         pos: pos.clone(),
-        char: ""
+        char: "",
       });
     }
 
@@ -167,7 +175,7 @@ function main() {
       gameStateProvider = new GameStateProvider(
         sector.id,
         onInitialState,
-        onStateUpdate
+        onStateUpdate,
       );
       gameStateProvider.start();
 
@@ -183,16 +191,25 @@ function main() {
   // --- Auto-join for developers ---
   lobbyView.show();
   const params = new URLSearchParams(
-    window.location.search
+    window.location.search,
   );
   if (params.get("join") !== "false") {
     console.log("Auto-joining first sector in 2 seconds...");
     setTimeout(() => {
       joinSector(mockSectors[0]);
 
-      console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
-      console.log("%cMUTONEX WEBCLIENT DEBUG CONTROLS:", "color: #00ff00; font-weight: bold;");
-      console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
+      console.log(
+        "%c=======================================",
+        "color: #00ff00; font-weight: bold;",
+      );
+      console.log(
+        "%cMUTONEX WEBCLIENT DEBUG CONTROLS:",
+        "color: #00ff00; font-weight: bold;",
+      );
+      console.log(
+        "%c=======================================",
+        "color: #00ff00; font-weight: bold;",
+      );
       console.log("W,A,S,D   : Move Avatar");
       console.log("Tab       : Toggle View (Lidar/Sphere)");
       console.log("L         : Toggle Lidar Mode (Horiz/Vert)");
@@ -214,8 +231,7 @@ function main() {
       if (e.key === "Tab") {
         e.preventDefault();
         const current = viewManager.getActiveView();
-        const next =
-          current === lidarView ? sphereView : lidarView;
+        const next = current === lidarView ? sphereView : lidarView;
         viewManager.setActiveView(next);
         if (currentTerrain) {
           next.updateTerrain(currentTerrain);
@@ -308,7 +324,7 @@ function main() {
       ) {
         moveDir.normalize();
         const moveVec = moveDir.multiplyScalar(
-          AVATAR_SPEED * delta
+          AVATAR_SPEED * delta,
         );
 
         const activeView = viewManager.getActiveView();
@@ -323,13 +339,13 @@ function main() {
         localPlayerPos.add(moveVec);
 
         const dist = localPlayerPos.distanceTo(
-          lastSentPosition
+          lastSentPosition,
         );
         if (dist > 1.0) {
           gameStateProvider.sendAvatarPosition([
             localPlayerPos.x,
             localPlayerPos.z,
-            0
+            0,
           ]);
           lastSentPosition.copy(localPlayerPos);
         }

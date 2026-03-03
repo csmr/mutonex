@@ -1,6 +1,12 @@
 import "./global_types.ts";
 
-export type EntityType = 'player' | 'fauna' | 'unit' | 'building' | 'society' | 'mineral';
+export type EntityType =
+  | "player"
+  | "fauna"
+  | "unit"
+  | "building"
+  | "society"
+  | "mineral";
 
 export interface EntityData {
   id: string;

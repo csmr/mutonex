@@ -1,11 +1,16 @@
 // Declare THREE as a global variable to access it from the <script> tag
 declare const THREE: any;
 
-import type { Terrain } from './types.ts';
+import type { Terrain } from "./types.ts";
 
 export function createTerrainMesh(terrain: Terrain) {
   const { width, height } = terrain.size;
-  const geometry = new THREE.PlaneGeometry(width, height, width - 1, height - 1);
+  const geometry = new THREE.PlaneGeometry(
+    width,
+    height,
+    width - 1,
+    height - 1,
+  );
 
   const vertices = geometry.attributes.position.array as number[];
 
@@ -28,7 +33,10 @@ export function createTerrainMesh(terrain: Terrain) {
   geometry.attributes.position.needsUpdate = true;
   geometry.computeVertexNormals(); // Recalculate normals for correct lighting
 
-  const material = new THREE.MeshLambertMaterial({ color: 0x88aa88, wireframe: false });
+  const material = new THREE.MeshLambertMaterial({
+    color: 0x88aa88,
+    wireframe: false,
+  });
   const mesh = new THREE.Mesh(geometry, material);
 
   return mesh;

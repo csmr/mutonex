@@ -7,7 +7,10 @@ export type { Terrain };
 // Represents a player as a tuple:
 // [id, x, y, z]
 export type PlayerTuple = [
-  string, number, number, number
+  string,
+  number,
+  number,
+  number,
 ];
 
 export interface GameState {

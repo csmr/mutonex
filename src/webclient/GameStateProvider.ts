@@ -1,11 +1,8 @@
-import type {
-  GameState,
-  PlayerTuple
-} from "./MockGameStateProvider.ts";
+import type { GameState, PlayerTuple } from "./MockGameStateProvider.ts";
 
 type InitialStateCallback = (gameState: GameState) => void;
 type StateUpdateCallback = (
-  update: { players?: PlayerTuple[]; fauna?: PlayerTuple[] }
+  update: { players?: PlayerTuple[]; fauna?: PlayerTuple[] },
 ) => void;
 
 export class GameStateProvider {
@@ -19,7 +16,7 @@ export class GameStateProvider {
   constructor(
     sectorId: string,
     onInitialState: InitialStateCallback,
-    onStateUpdate: StateUpdateCallback
+    onStateUpdate: StateUpdateCallback,
   ) {
     this.sectorId = sectorId;
     this.onInitialState = onInitialState;
@@ -74,7 +71,7 @@ export class GameStateProvider {
   }
 
   public sendAvatarPosition(
-    position: [number, number, number]
+    position: [number, number, number],
   ): void {
     this.channel.push("avatar_update", position);
   }

@@ -1,6 +1,4 @@
-import type {
-  PlayerTuple
-} from "./MockGameStateProvider.ts";
+import type { PlayerTuple } from "./MockGameStateProvider.ts";
 
 export interface Sector {
   id: string;
@@ -17,36 +15,35 @@ export class LobbyView {
 
   private sectors: Sector[] = [];
   private selectedIndex: number = 0;
-  private onSelectCallback:
-    ((sector: Sector) => void) | null = null;
+  private onSelectCallback: ((sector: Sector) => void) | null = null;
   private boundInput: (e: KeyboardEvent) => void;
   private isConnected: boolean = false;
 
   constructor() {
     this.container = document.getElementById(
-      "lobby-view"
+      "lobby-view",
     )!;
     this.sectorContainer = document.getElementById(
-      "sector-selection"
+      "sector-selection",
     )!;
     this.sectorListContainer = document.getElementById(
-      "sector-list-container"
+      "sector-list-container",
     )!;
     this.queueContainer = document.getElementById(
-      "lobby-queue"
+      "lobby-queue",
     )!;
     this.playerListContainer = document.getElementById(
-      "player-list-container"
+      "player-list-container",
     )!;
 
     if (!this.container) {
       throw new Error("Lobby view container not found");
     }
 
-    this.boundInput =
-      this.handleInput.bind(this);
+    this.boundInput = this.handleInput.bind(this);
     window.addEventListener(
-      "keydown", this.boundInput
+      "keydown",
+      this.boundInput,
     );
   }
 
@@ -66,8 +63,7 @@ export class LobbyView {
       const div = document.createElement("div");
       const isSelected = index === this.selectedIndex;
       const baseClass = "list-item";
-      div.className = isSelected ?
-        `${baseClass} selected` : baseClass;
+      div.className = isSelected ? `${baseClass} selected` : baseClass;
 
       let text = sector.name;
       if (sector.players_count !== undefined) {
@@ -101,7 +97,7 @@ export class LobbyView {
   }
 
   public onSectorSelect(
-    callback: (sector: Sector) => void
+    callback: (sector: Sector) => void,
   ): void {
     this.onSelectCallback = callback;
   }
@@ -121,7 +117,7 @@ export class LobbyView {
 
   private handleInput(e: KeyboardEvent): void {
     const isHidden = this.container.classList.contains(
-      "hidden"
+      "hidden",
     );
     if (isHidden) return;
     // Disable sector selection when in queue
