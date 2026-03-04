@@ -181,7 +181,7 @@ async function main() {
         ?.toString(16);
       console.warn(
         `No valid glyph for ` +
-          `${char} (U+${hex})`,
+        `${char} (U+${hex})`,
       );
       continue;
     }
@@ -193,7 +193,7 @@ async function main() {
         ?.toString(16);
       console.warn(
         `No shapes for ` +
-          `${char} (U+${hex})`,
+        `${char} (U+${hex})`,
       );
       continue;
     }
@@ -215,7 +215,12 @@ async function main() {
     const raw = geometry.toNonIndexed();
     raw.computeVertexNormals();
 
-    const json = raw.toJSON();
+    const pure = new THREE.BufferGeometry();
+    for (const key in raw.attributes) {
+      pure.setAttribute(key, raw.attributes[key]);
+    }
+
+    const json = pure.toJSON();
     const hex = char.codePointAt(0)!
       .toString(16).toUpperCase();
     await Deno.writeTextFile(

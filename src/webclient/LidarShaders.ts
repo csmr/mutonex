@@ -301,8 +301,9 @@ export const ProceduralMeshFragmentShader = `
             // So we mix based on normalizedDepth directly (0.0 at camera, 1.0 far away).
             vec3 paletteColor = mix(nearColor, farColor, normalizedDepth);
             
-            // Mix 10% of the underlying object color into the procedural Lidar palette
-            vec3 stripeColor = mix(paletteColor, uColor, 0.1);
+            // Mix 25% of the underlying object color into the procedural Lidar palette
+            // to ensure units still retain their team color tint during scans.
+            vec3 stripeColor = mix(paletteColor, uColor, 0.25);
             
             // Illumination falloff
             float illumination = lambert * 0.9 + 0.1;
@@ -314,7 +315,7 @@ export const ProceduralMeshFragmentShader = `
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
             } else {
                 // Modulate the stripe color by the physical surface lighting and distance fade
-                vec3 finalHit = mix(stripeColor, vec3(1.0), 0.5) * illumination * 3.0 * distanceFade;
+                vec3 finalHit = stripeColor * illumination * 3.0 * distanceFade;
                 gl_FragColor = vec4(finalHit, 1.0);
             }
         }
