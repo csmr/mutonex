@@ -37,7 +37,7 @@ Implements the "High-Tech / Low-Fi" visual style.
      positions.
 - **Optimization**:
   - **Geometry Caching**: `Map<hex, BufferGeometry>` reuses pre-generated
-    geometry JSONs.
+    model JSONs.
   - **Scan Modes**: Vertical (dense points) and Horizontal (fragment-shader
     scanline bands) both use 480×270 sample grids; the visual difference is
     shader-only.

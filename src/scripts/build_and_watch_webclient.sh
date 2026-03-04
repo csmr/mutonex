@@ -16,12 +16,12 @@ deno run --allow-read --allow-write ./scripts/generate-api-key.js
 log "Generating Credits..."
 deno run --allow-read --allow-write ./scripts/make-credits.js
 
-# Ensure geometry cache is populated (lazy generation)
-if [ ! -d "res/geometry" ] || [ -z "$(ls -A res/geometry)" ]; then
-    log "Geometry assets missing. Auto-generating..."
-    deno run -A scripts/generate_geometry.ts
+# Ensure model cache is populated (lazy generation)
+if [ ! -d "res/models" ] || [ -z "$(ls -A res/models)" ]; then
+    log "Model assets missing. Auto-generating..."
+    deno run -A scripts/build_entity_models.ts
 else
-    log "Geometry assets found. Skipping auto-generation."
+    log "Model assets found. Skipping auto-generation."
 fi
 
 log "Bundling Webclient..."

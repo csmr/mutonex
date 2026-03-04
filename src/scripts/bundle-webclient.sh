@@ -11,9 +11,10 @@ if [ -f $tf ]; then
   log "$(ls -l $tf)" 
   mkdir -p "$RUNTIME_DIR/assets"
   cp -a webclient/assets/. "$RUNTIME_DIR/assets/"
-  # Merge generated geometry assets if they exist
-  if [ -d "res/geometry" ]; then
-    cp -a res/geometry/. "$RUNTIME_DIR/assets/"
+  # Merge generated model assets if they exist
+  if [ -d "res/models" ]; then
+    mkdir -p "$RUNTIME_DIR/assets/models"
+    cp -a res/models/. "$RUNTIME_DIR/assets/models/"
   fi
   cp res/img/favicon.ico "$RUNTIME_DIR/"
   # Copy entry point

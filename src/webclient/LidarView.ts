@@ -39,7 +39,7 @@ export class LidarView implements IView {
   private lidarMaterial: any;
   private lidarPoints: any;
 
-  private geometryCache: Map<string, any> = new Map();
+  private modelCache: Map<string, any> = new Map();
   private isRebuildingBuffer = false;
   private pendingStyleConfig: string | null = null;
 
@@ -334,11 +334,11 @@ export class LidarView implements IView {
       this.virtualScene.add(mesh);
       this.virtualMeshes.set(id, mesh);
 
-      const cached = this.geometryCache.get(hex);
+      const cached = this.modelCache.get(hex);
       if (!cached) {
-        const url = `assets/geometry/${hex}.json`;
+        const url = `assets/models/${hex}.json`;
         // Add an empty promise to prevent spamming fetch for the same hex
-        this.geometryCache.set(hex, new Promise(() => { }));
+        this.modelCache.set(hex, new Promise(() => { }));
 
         fetch(url)
           .then((res) => {
@@ -348,21 +348,21 @@ export class LidarView implements IView {
           .then((json) => {
             try {
               const loadedGeo = this.loader.parse(json);
-              this.geometryCache.set(hex, loadedGeo);
+              this.modelCache.set(hex, loadedGeo);
               this.replaceMeshGeometry(id, loadedGeo);
             } catch (e) {
-              console.error("Failed to parse geometry for", hex, e);
+              console.error("Failed to parse model for", hex, e);
             }
           })
-          .catch((e) => console.error("Failed to fetch geometry for", hex, e));
+          .catch((e) => console.error("Failed to fetch model for", hex, e));
       } else if (!(cached instanceof Promise)) {
         this.replaceMeshGeometry(id, cached);
       }
       return mesh;
     }
 
-    // Existing mesh, check if we need to swap geometry from cache.
-    const cached = this.geometryCache.get(hex);
+    // Existing mesh, check if we need to swap model from cache.
+    const cached = this.modelCache.get(hex);
     if (
       cached && !(cached instanceof Promise) && mesh.geometry !== cached &&
       mesh.geometry.type === "BoxGeometry"
