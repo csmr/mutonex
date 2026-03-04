@@ -302,18 +302,21 @@ export const ProceduralMeshFragmentShader = `
             vec3 paletteColor = mix(nearColor, farColor, normalizedDepth);
             
             // Mix 10% of the underlying object color into the procedural Lidar palette
-            vec3 baseColor = mix(paletteColor, uColor, 0.1);
+            vec3 stripeColor = mix(paletteColor, uColor, 0.1);
             
             // Illumination falloff
             float illumination = lambert * 0.9 + 0.1;
             float distanceFade = 1.0 - normalizedDepth;
             distanceFade = pow(distanceFade, 3.0); 
 
-            // Composite: Base visibility + Lidar stripe, modulated by Normal illumination
-            vec3 baseLit = baseColor * 0.15 * illumination; // Ambient baseline shaded by normal
-            vec3 stripeHit = mix(baseColor, vec3(1.0), 0.5) * isStripe * illumination * 3.0 * distanceFade;
-            
-            gl_FragColor = vec4(baseLit + stripeHit, 1.0);
+            // If it's not a Lidar stripe, render nothing (pure black void with no shading).
+            if (isStripe < 0.5) {
+                gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            } else {
+                // Modulate the stripe color by the physical surface lighting and distance fade
+                vec3 finalHit = mix(stripeColor, vec3(1.0), 0.5) * illumination * 3.0 * distanceFade;
+                gl_FragColor = vec4(finalHit, 1.0);
+            }
         }
     }
 `;
