@@ -12,13 +12,20 @@ log "Deno version: $(deno --version)"
 log "Generating API Key..."
 deno run --allow-read --allow-write ./scripts/generate-api-key.js
 
-# Add contributor credits to client
+// Add contributor credits to client
 log "Generating Credits..."
 deno run --allow-read --allow-write ./scripts/make-credits.js
 
 # Ensure model cache is populated (lazy generation)
 if [ ! -d "res/models" ] || [ -z "$(ls -A res/models)" ]; then
     log "Model assets missing. Auto-generating..."
+    
+    # Check if the unifont font is installed in the container
+    if ! dpkg -l | grep -q fonts-unifont; then
+        log "Installing required fonts-unifont dependency..."
+        apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y fonts-unifont
+    fi
+
     deno run -A scripts/build_entity_models.ts
 else
     log "Model assets found. Skipping auto-generation."
