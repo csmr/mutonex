@@ -299,7 +299,10 @@ export const ProceduralMeshFragmentShader = `
             
             // Reversing the interpolation: distanceFade is 1.0 at camera, 0.0 far away.
             // So we mix based on normalizedDepth directly (0.0 at camera, 1.0 far away).
-            vec3 baseColor = mix(nearColor, farColor, normalizedDepth);
+            vec3 paletteColor = mix(nearColor, farColor, normalizedDepth);
+            
+            // Mix 10% of the underlying object color into the procedural Lidar palette
+            vec3 baseColor = mix(paletteColor, uColor, 0.1);
             
             // Illumination falloff
             float illumination = lambert * 0.9 + 0.1;
