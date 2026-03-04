@@ -13,6 +13,8 @@ export interface EntityData {
   type: EntityType;
   pos: any; // THREE.Vector3
   char: string; // The emoticon/character (optional for SphereView but kept for consistency)
+  isStationary?: boolean;
+  facing?: "front" | "side" | "top";
 }
 
 export interface Terrain {

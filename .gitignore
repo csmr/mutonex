@@ -12,3 +12,4 @@ src/webclient/api-key-hash.ts
 src/gameserver/deps
 src/gameserver/_build
 *.log
+/res/

@@ -197,18 +197,20 @@ async function main() {
       );
       continue;
     }
-
     const geometry = new THREE.ExtrudeGeometry(shapes, {
-      depth: 1,
+      depth: 0.25,
       bevelEnabled: false,
     });
 
+    // Invert upright (SVG Y-coordinates go down, Three.js Y goes up)
+    geometry.rotateX(Math.PI);
+
+    // Center on X and Z, and place base securely at Y=0 (feet on the ground)
     geometry.computeBoundingBox();
     const bb = geometry.boundingBox!;
-    const cx = -0.5 * (
-      bb.max.x + bb.min.x
-    );
-    geometry.translate(cx, -bb.min.y, 0);
+    const cx = -0.5 * (bb.max.x + bb.min.x);
+    const cz = -0.5 * (bb.max.z + bb.min.z);
+    geometry.translate(cx, -bb.min.y, cz);
 
     // Serialize as raw BufferGeometry
     // (float arrays, not shape params).

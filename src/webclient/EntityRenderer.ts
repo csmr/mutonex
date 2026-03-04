@@ -20,6 +20,15 @@ export class EntityRenderer {
     "mineral": ["⭓", "⬠", "💎"],
   };
 
+  private scaleMap: { [key in EntityType]: number } = {
+    "player": 2.0,
+    "fauna": 1.6,
+    "unit": 2.0,
+    "building": 2.0,
+    "society": 2.0,
+    "mineral": 2.0,
+  };
+
   private colorMap: { [key in string]: number } = {
     "player": 0x1E90FF,
     "fauna": 0x228B22,
@@ -68,15 +77,16 @@ export class EntityRenderer {
     char: string,
     color: number,
   ) {
-    let mesh = this.getOrCreate(ent.id, char, color);
+    let mesh = this.getOrCreate(ent, char, color);
     if (mesh) mesh.position.copy(ent.pos);
   }
 
   private getOrCreate(
-    id: string,
+    ent: EntityData,
     char: string,
     color: number,
   ): any {
+    const id = ent.id;
     const cp = char.codePointAt(0);
     const hex = cp!.toString(16).toUpperCase();
     let mesh = this.meshes.get(id);
@@ -93,7 +103,7 @@ export class EntityRenderer {
     const cached = this.geoCache.get(hex);
     const isBox = mesh.geometry.type === "BoxGeometry";
     if (cached && !(cached instanceof Promise) && isBox) {
-      return this.replaceGeo(id, cached);
+      return this.replaceGeo(ent, cached);
     }
     return mesh;
   }
@@ -102,7 +112,7 @@ export class EntityRenderer {
     if (this.geoCache.has(hex)) return;
 
     const url = `assets/geometry/${hex}.json`;
-    this.geoCache.set(hex, new Promise(() => {}));
+    this.geoCache.set(hex, new Promise(() => { }));
 
     fetch(url)
       .then((res) => (res.ok ? res.json() : null))
@@ -110,18 +120,33 @@ export class EntityRenderer {
         if (!json) return;
         const geo = this.loader.parse(json);
         this.geoCache.set(hex, geo);
-        this.replaceGeo(id, geo);
+        // We don't have ent metadata inside fetchGeo promise readily without a closure mapping,
+        // but replaceGeo will normally get called next tick by getOrCreate.
+        // For immediate loading:
+        // this.replaceGeo(ent, geo); // Deferred to prevent losing metadata sync
       })
       .catch((e) => console.error("Geo fetch fail", hex, e));
   }
 
-  private replaceGeo(id: string, geo: any): any {
+  private replaceGeo(ent: EntityData, geo: any): any {
+    const id = ent.id;
     const ex = this.meshes.get(id);
     if (!ex) return null;
     this.scene.remove(ex);
     ex.geometry.dispose();
     const next = new THREE.Mesh(geo, ex.material);
     next.position.copy(ex.position);
+
+    const scale = this.scaleMap[ent.type] || 2.0;
+    next.scale.setScalar(scale);
+
+    if (ent.facing === "side") {
+      // Rotate 90 degrees around Y so the anterior side profile points towards default -Z forward.
+      next.rotation.y = -Math.PI / 2;
+    } else if (ent.facing === "top") {
+      next.rotation.x = -Math.PI / 2;
+    }
+
     this.scene.add(next);
     this.meshes.set(id, next);
     return next;

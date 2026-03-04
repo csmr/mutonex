@@ -77,14 +77,14 @@ function main() {
 
     for (const [id, pos] of playerAnchors) {
       entities.push({
-        id, type: "player", pos: pos.clone(), char: "",
+        id, type: "player", pos: pos.clone(), char: "", isStationary: false, facing: "front"
       });
     }
 
     for (const [id, anchorPos] of faunaAnchors) {
       const pos = interpolatedPositions?.get(id) || anchorPos;
       entities.push({
-        id, type: "fauna", pos: pos.clone(), char: "",
+        id, type: "fauna", pos: pos.clone(), char: "", isStationary: false, facing: "side"
       });
     }
 
