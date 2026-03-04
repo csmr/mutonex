@@ -11,6 +11,7 @@ export interface IView {
   updateTerrain(terrain: Terrain): void;
   onActivate(): void;
   onDeactivate(): void;
+  dispose?(): void;
   preRender?(renderer: any): void; // THREE.WebGLRenderer
 }
 

@@ -7,6 +7,7 @@ import { LidarView } from "./LidarView.ts";
 import { LidarStyles } from "./LidarStyles.ts";
 import { SphereView } from "./SphereView.ts";
 import { LobbyView, Sector } from "./LobbyView.ts";
+import { AvatarController } from "./AvatarController.ts";
 import { EntityData, Terrain } from "./types.ts";
 import type { PlayerTuple } from "./MockGameStateProvider.ts";
 
@@ -29,9 +30,7 @@ function main() {
 
   viewManager.setActiveView(lidarView);
 
-  // Debug handle — deterministic console access with no guessing.
-  // Usage: window.__mutonex.lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
-  // Usage: window.__mutonex.renderer for readRenderTargetPixels probing
+  // Debug handle
   window.__mutonex = {
     lidarView,
     viewManager,
@@ -41,19 +40,8 @@ function main() {
   (window.__mutonex.lidarView as any).setStyle = (styleName: string) => {
     if (LidarStyles[styleName]) {
       lidarView.setLidarStyle(styleName);
-      console.log("Lidar style applied:", styleName);
-    } else {
-      console.error(
-        "Unknown style:",
-        styleName,
-        "Available:",
-        Object.keys(LidarStyles),
-      );
     }
   };
-  console.log(
-    "To change lidar mode directly, use: window.__mutonex.lidarView.setStyle('styleName')",
-  );
 
   // Start the render loop
   viewManager.animate();
@@ -64,10 +52,7 @@ function main() {
   const mockSectors: Sector[] = [
     { id: "game:lobby", name: "Sector Alpha (Dev)" },
     { id: "game:lobby_beta", name: "Sector Beta (Test)" },
-    {
-      id: "game:lobby_gamma",
-      name: "Sector Gamma (High Pop)",
-    },
+    { id: "game:lobby_gamma", name: "Sector Gamma (High Pop)" },
   ];
   lobbyView.renderSectorList(mockSectors);
 
@@ -78,10 +63,12 @@ function main() {
   const faunaAnchors: Map<string, any> = new Map();
   const faunaTargets: Map<string, any> = new Map();
 
-  const localPlayerPos = new THREE.Vector3(10, 0, 10);
-  let lastSentPosition = localPlayerPos.clone();
+  const avatar = new AvatarController(
+    viewManager,
+    () => gameStateProvider,
+  );
+
   let currentTerrain: Terrain | null = null;
-  let lidarMode: "vertical" | "horizontal" = "vertical";
 
   const updateEntitiesList = (
     interpolatedPositions?: Map<string, any>,
@@ -90,152 +77,85 @@ function main() {
 
     for (const [id, pos] of playerAnchors) {
       entities.push({
-        id,
-        type: "player",
-        pos: pos.clone(),
-        char: "",
+        id, type: "player", pos: pos.clone(), char: "",
       });
     }
 
     for (const [id, anchorPos] of faunaAnchors) {
-      const pos = interpolatedPositions?.get(id) ||
-        anchorPos;
+      const pos = interpolatedPositions?.get(id) || anchorPos;
       entities.push({
-        id,
-        type: "fauna",
-        pos: pos.clone(),
-        char: "",
+        id, type: "fauna", pos: pos.clone(), char: "",
       });
     }
 
     const activeView = viewManager.getActiveView();
-    if (activeView) {
-      activeView.updateEntities(entities);
-    }
+    if (activeView) activeView.updateEntities(entities);
   };
 
   const onInitialState = (gameState: any) => {
     if (gameState.terrain) {
       currentTerrain = gameState.terrain;
-      if (currentTerrain) {
-        lidarView.updateTerrain(currentTerrain);
-        sphereView.updateTerrain(currentTerrain);
-      }
+      lidarView.updateTerrain(currentTerrain!);
+      sphereView.updateTerrain(currentTerrain!);
     }
 
-    if (
-      gameStateProvider &&
-      gameStateProvider.phase === "lobby"
-    ) {
+    if (gameStateProvider?.phase === "lobby") {
       lobbyView.show();
       if (gameState.players) {
         lobbyView.updatePlayerQueue(gameState.players);
       }
     } else {
       lobbyView.hide();
-      if (gameState.players) {
-        updatePlayerAnchors(gameState.players);
-      }
+      if (gameState.players) updatePlayerAnchors(gameState.players);
     }
 
-    if (gameState.fauna) {
-      updateFaunaAnchors(gameState.fauna);
-    }
+    if (gameState.fauna) updateFaunaAnchors(gameState.fauna);
     updateEntitiesList();
   };
 
-  const onStateUpdate = (update: {
-    players?: PlayerTuple[];
-    fauna?: PlayerTuple[];
-  }) => {
-    if (
-      gameStateProvider &&
-      gameStateProvider.phase === "lobby"
-    ) {
+  const onStateUpdate = (update: any) => {
+    if (gameStateProvider?.phase === "lobby") {
       lobbyView.show();
-      if (update.players) {
-        lobbyView.updatePlayerQueue(update.players);
-      }
+      if (update.players) lobbyView.updatePlayerQueue(update.players);
     } else {
       lobbyView.hide();
-      if (update.players) {
-        updatePlayerAnchors(update.players);
-      }
+      if (update.players) updatePlayerAnchors(update.players);
     }
-
     if (update.fauna) updateFaunaAnchors(update.fauna);
   };
 
   const joinSector = (sector: Sector) => {
-    console.log(`Connecting: ${sector.name}`);
-    console.log(`Sector ID: ${sector.id}`);
-    try {
-      if (gameStateProvider) return;
+    if (gameStateProvider) return;
 
-      gameStateProvider = new GameStateProvider(
-        sector.id,
-        onInitialState,
-        onStateUpdate,
-      );
-      gameStateProvider.start();
-
-      startUpdateLoop();
-    } catch (error) {
-      console.error("Could not connect:", error);
-    }
+    gameStateProvider = new GameStateProvider(
+      sector.id,
+      onInitialState,
+      onStateUpdate,
+    );
+    gameStateProvider.start();
+    startUpdateLoop();
   };
 
-  // --- Sector Selection Handler ---
   lobbyView.onSectorSelect(joinSector);
-
-  // --- Auto-join for developers ---
   lobbyView.show();
-  const params = new URLSearchParams(
-    window.location.search,
-  );
-  if (params.get("join") !== "false") {
-    console.log("Auto-joining first sector in 2 seconds...");
-    setTimeout(() => {
-      joinSector(mockSectors[0]);
 
-      console.log(
-        "%c=======================================",
-        "color: #00ff00; font-weight: bold;",
-      );
-      console.log(
-        "%cMUTONEX WEBCLIENT DEBUG CONTROLS:",
-        "color: #00ff00; font-weight: bold;",
-      );
-      console.log(
-        "%c=======================================",
-        "color: #00ff00; font-weight: bold;",
-      );
-      console.log("W,A,S,D   : Move Avatar");
-      console.log("Tab       : Toggle View (Lidar/Sphere)");
-      console.log("L         : Toggle Lidar Mode (Horiz/Vert)");
-      console.log("[ and ]   : Adjust Lidar Entropy (Noise)");
-      console.log("=======================================");
-    }, 2000);
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("join") !== "false") {
+    setTimeout(() => joinSector(mockSectors[0]), 2000);
   }
 
-  // --- Avatar Controls & Loop ---
+  // --- Loop ---
   function startUpdateLoop() {
-    const keysPressed: { [key: string]: boolean } = {};
-    const AVATAR_SPEED = 20.0;
     const FAUNA_SPEED = 0.5;
     let lastTime = performance.now();
 
     window.addEventListener("keydown", (e) => {
-      keysPressed[e.key.toLowerCase()] = true;
-
       if (e.key === "Tab") {
         e.preventDefault();
         const current = viewManager.getActiveView();
         const next = current === lidarView ? sphereView : lidarView;
         viewManager.setActiveView(next);
-        if (currentTerrain) {
-          next.updateTerrain(currentTerrain);
-        }
+        if (currentTerrain) next.updateTerrain(currentTerrain);
         updateEntitiesList();
       }
 
@@ -243,35 +163,16 @@ function main() {
         const styles = Object.keys(LidarStyles);
         const currentIndex = styles.indexOf(lidarView.currentStyleName);
         const nextIndex = (currentIndex + 1) % styles.length;
-        const next = styles[nextIndex];
-
-        lidarView.setLidarStyle(next);
-        console.log("Lidar Style:", next);
+        lidarView.setLidarStyle(styles[nextIndex]);
       }
 
-      if (e.key === "[") {
-        lidarView.entropy = Math.max(0.0, lidarView.entropy - 0.1);
-        console.log("Lidar Entropy:", lidarView.entropy);
-      }
-      if (e.key === "]") {
-        lidarView.entropy = Math.min(1.0, lidarView.entropy + 0.1);
-        console.log("Lidar Entropy:", lidarView.entropy);
-      }
-    });
-
-    window.addEventListener("keyup", (e) => {
-      keysPressed[e.key.toLowerCase()] = false;
+      if (e.key === "[") lidarView.entropy = Math.max(0, lidarView.entropy - 0.1);
+      if (e.key === "]") lidarView.entropy = Math.min(1, lidarView.entropy + 0.1);
     });
 
     function updateLoop() {
       requestAnimationFrame(updateLoop);
-
-      if (
-        gameStateProvider &&
-        gameStateProvider.phase === "lobby"
-      ) {
-        return;
-      }
+      if (gameStateProvider?.phase === "lobby") return;
 
       const now = performance.now();
       const delta = (now - lastTime) / 1000;
@@ -290,67 +191,15 @@ function main() {
           const dir = new THREE.Vector3()
             .subVectors(anchor, target)
             .normalize();
-          const step = FAUNA_SPEED * delta;
-          target.add(dir.multiplyScalar(step));
+          target.add(dir.multiplyScalar(FAUNA_SPEED * delta));
         } else {
-          const rx = (Math.random() - 0.5) *
-            FAUNA_SPEED * delta * 2;
-          const rz = (Math.random() - 0.5) *
-            FAUNA_SPEED * delta * 2;
-          target.x += rx;
-          target.z += rz;
+          target.x += (Math.random() - 0.5) * FAUNA_SPEED * delta * 2;
+          target.z += (Math.random() - 0.5) * FAUNA_SPEED * delta * 2;
         }
         currentInterp.set(id, target);
       }
 
-      const moveDir = new THREE.Vector3(0, 0, 0);
-      if (keysPressed["w"] || keysPressed["arrowup"]) {
-        moveDir.z -= 1;
-      }
-      if (keysPressed["s"] || keysPressed["arrowdown"]) {
-        moveDir.z += 1;
-      }
-      if (keysPressed["a"] || keysPressed["arrowleft"]) {
-        moveDir.x -= 1;
-      }
-      if (keysPressed["d"] || keysPressed["arrowright"]) {
-        moveDir.x += 1;
-      }
-
-      if (
-        gameStateProvider &&
-        gameStateProvider.phase === "gamein" &&
-        moveDir.lengthSq() > 0
-      ) {
-        moveDir.normalize();
-        const moveVec = moveDir.multiplyScalar(
-          AVATAR_SPEED * delta,
-        );
-
-        const activeView = viewManager.getActiveView();
-        if (activeView) {
-          activeView.camera.position.add(moveVec);
-          const controls = activeView.controls;
-          if (controls && controls.target) {
-            controls.target.add(moveVec);
-          }
-        }
-
-        localPlayerPos.add(moveVec);
-
-        const dist = localPlayerPos.distanceTo(
-          lastSentPosition,
-        );
-        if (dist > 1.0) {
-          gameStateProvider.sendAvatarPosition([
-            localPlayerPos.x,
-            localPlayerPos.z,
-            0,
-          ]);
-          lastSentPosition.copy(localPlayerPos);
-        }
-      }
-
+      avatar.update(delta);
       updateEntitiesList(currentInterp);
     }
     updateLoop();

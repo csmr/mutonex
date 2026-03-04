@@ -1,6 +1,13 @@
 import "./global_types.ts";
 import { IView } from "./ViewManager.ts";
-import { EntityData, EntityType, Terrain } from "./types.ts";
+import {
+  FirstPersonControls
+} from "./FirstPersonControls.ts";
+import { EntityRenderer } from "./EntityRenderer.ts";
+import {
+  EntityData,
+  Terrain
+} from "./types.ts";
 import {
   LidarFragmentShader,
   LidarVertexShader,
@@ -26,7 +33,7 @@ export class LidarView implements IView {
 
   // The "Virtual" scene contains the actual geometry
   private virtualScene: any; // THREE.Scene
-  private virtualMeshes: Map<string, any> = new Map();
+  private entityRenderer: EntityRenderer;
 
   private renderTarget: any;
   private baseMaterials: Map<number, any> = new Map();
@@ -48,6 +55,11 @@ export class LidarView implements IView {
     this.initVirtualScene();
     this.initRenderTarget();
 
+    this.entityRenderer = new EntityRenderer(
+      this.virtualScene,
+      (color: number) => this.getLidarBaseMaterial(color),
+    );
+
     this.lidarMaterial = this.createLidarShader();
     this.createGroundGrid();
     this.startBufferRebuild(LidarStyles.pointCloud);
@@ -62,16 +74,20 @@ export class LidarView implements IView {
 
     const w = window.innerWidth;
     const h = window.innerHeight;
-    this.camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(
+      75,
+      w / h,
+      0.1,
+      1000,
+    );
 
-    // Camera at (0,8,20), looks ~22° below horizontal.
-    // Ground fills lower screen without interaction.
-    this.camera.position.set(0, 8, 20);
+    // FPV start pos
+    this.camera.position.set(10, 1.7, 10);
 
-    const THREE_ANY = (window as any).THREE;
-    this.controls = new THREE_ANY.OrbitControls(this.camera, domElement);
-    this.controls.enableDamping = true;
-    this.controls.autoRotate = false; // Deterministic default view.
+    this.controls = new FirstPersonControls(
+      this.camera,
+      domElement,
+    );
   }
 
   private initVirtualScene() {
@@ -270,122 +286,7 @@ export class LidarView implements IView {
   }
 
   public updateEntities(entities: EntityData[]) {
-    const charMap: { [key in EntityType]: string[] } = {
-      "player": ["🧙", "𐇑", "𐇒"],
-      "fauna": ["🦗", "🌱", "🌲"],
-      "unit": ["👷", "🤖", "🧕"],
-      "building": ["🏛"],
-      "society": ["🎪", "🏘", "🏙"],
-      "mineral": ["⭓", "⬠", "💎"],
-    };
-
-    const colorMap: { [key in string]: number } = {
-      "player": 0x1E90FF,
-      "fauna": 0x228B22,
-      "unit": 0xFFA500,
-      "building": 0x8B4513,
-      "society": 0x00CED1,
-      "mineral": 0x800080,
-    };
-
-    const activeIds = new Set<string>();
-
-    for (const entity of entities) {
-      activeIds.add(entity.id);
-
-      const chars = charMap[entity.type] || ["?"];
-      const idLen = entity.id.length;
-      const charIdx = entity.id.charCodeAt(idLen - 1);
-      const char = chars[charIdx % chars.length];
-      const colorHex = colorMap[entity.type] || 0xffffff;
-
-      this.updateVirtualEntity(entity, char, colorHex);
-    }
-
-    for (const [id, mesh] of this.virtualMeshes) {
-      if (!activeIds.has(id)) {
-        this.virtualScene.remove(mesh);
-        this.virtualMeshes.delete(id);
-      }
-    }
-  }
-
-  private updateVirtualEntity(
-    entity: EntityData,
-    char: string,
-    colorHex: number,
-  ) {
-    let mesh = this.getOrCreateMesh(entity.id, char, colorHex);
-    if (mesh) {
-      mesh.position.copy(entity.pos);
-    }
-  }
-
-  private getOrCreateMesh(id: string, char: string, colorHex: number): any {
-    const cp = char.codePointAt(0);
-    const hex = cp!.toString(16).toUpperCase();
-    let mesh = this.virtualMeshes.get(id);
-    const mat = this.getLidarBaseMaterial(colorHex);
-
-    if (!mesh) {
-      // Setup default placeholder box until JSON loads
-      const box = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-      mesh = new THREE.Mesh(box, mat);
-      this.virtualScene.add(mesh);
-      this.virtualMeshes.set(id, mesh);
-
-      const cached = this.modelCache.get(hex);
-      if (!cached) {
-        const url = `assets/models/${hex}.json`;
-        // Add an empty promise to prevent spamming fetch for the same hex
-        this.modelCache.set(hex, new Promise(() => { }));
-
-        fetch(url)
-          .then((res) => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-          })
-          .then((json) => {
-            try {
-              const loadedGeo = this.loader.parse(json);
-              this.modelCache.set(hex, loadedGeo);
-              this.replaceMeshGeometry(id, loadedGeo);
-            } catch (e) {
-              console.error("Failed to parse model for", hex, e);
-            }
-          })
-          .catch((e) => console.error("Failed to fetch model for", hex, e));
-      } else if (!(cached instanceof Promise)) {
-        this.replaceMeshGeometry(id, cached);
-      }
-      return mesh;
-    }
-
-    // Existing mesh, check if we need to swap model from cache.
-    const cached = this.modelCache.get(hex);
-    if (
-      cached && !(cached instanceof Promise) && mesh.geometry !== cached &&
-      mesh.geometry.type === "BoxGeometry"
-    ) {
-      return this.replaceMeshGeometry(id, cached);
-    }
-
-    return mesh;
-  }
-
-  private replaceMeshGeometry(id: string, newGeo: any): any {
-    const ex = this.virtualMeshes.get(id);
-    if (!ex) return null;
-
-    this.virtualScene.remove(ex);
-    ex.geometry.dispose();
-
-    const newMesh = new THREE.Mesh(newGeo, ex.material);
-    newMesh.position.copy(ex.position);
-
-    this.virtualScene.add(newMesh);
-    this.virtualMeshes.set(id, newMesh);
-    return newMesh;
+    this.entityRenderer.update(entities);
   }
 
   private createGroundGrid() {
@@ -406,6 +307,9 @@ export class LidarView implements IView {
       "resize",
       this.boundResize,
     );
+    if (this.controls) {
+      this.controls.enabled = true;
+    }
   }
 
   public onDeactivate(): void {
@@ -413,6 +317,15 @@ export class LidarView implements IView {
       "resize",
       this.boundResize,
     );
+    if (this.controls) {
+      this.controls.enabled = false;
+    }
+  }
+
+  public dispose(): void {
+    if (this.controls) {
+      this.controls.dispose();
+    }
   }
 
   public update(deltaTime: number): void {
