@@ -11,6 +11,9 @@ if [ -f $tf ]; then
   log "$(ls -l $tf)" 
   mkdir -p "$RUNTIME_DIR/assets"
   cp -a webclient/assets/. "$RUNTIME_DIR/assets/"
+  
+  # Clean up stale .json models from previous un-merged builds that dumped them in the root
+  rm -f "$RUNTIME_DIR/assets/"*.json
   # Merge generated model assets if they exist
   if [ -d "res/models" ]; then
     mkdir -p "$RUNTIME_DIR/assets/models"
