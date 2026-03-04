@@ -274,8 +274,11 @@ export const ProceduralMeshFragmentShader = `
             // This ensures the stripes deform and map to the physical structural geometry.
             float yawAngle = vLidarTexCoord.x;
             
-            float stripeSpacing = 0.04;        // Gap between vertical stripes
-            float stripeWidth = 0.005;         // Sharp laser line width
+            // Calculate 77 vertical scanlines across the Camera's Field of View.
+            // Using a standard 75-degree FOV (~1.309 radians).
+            // 1.309 / 77 stripes = ~0.017 radians per stripe
+            float stripeSpacing = 0.017;       // Spacing for 77 vertical stripes
+            float stripeWidth = 0.002;         // Very sharp laser line width
             
             // Evaluates strictly to vertical stripes mapped to object contours!
             float slice = mod(yawAngle, stripeSpacing);
@@ -287,16 +290,25 @@ export const ProceduralMeshFragmentShader = `
             vec3 nNormal = normalize(vNormal);
             float lambert = max(0.0, dot(nNormal, -viewDirection));
             
-            // Illumination falloff (10% ambient floor so backfaces aren't pure black)
-            float illumination = lambert * 0.9 + 0.1;
+            // 3. Apply the Orange Palette (1700K - 3800K) based on Depth
+            // Normalizing depth to a 0.0 - 1.0 range based on 'far' clip plane
+            float normalizedDepth = clamp(depth / 80.0, 0.0, 1.0);
             
-            // Falloff limits the range of the Lidar scatter
-            float distanceFade = 1.0 - clamp(depth / 80.0, 0.0, 1.0);
+            vec3 nearColor = vec3(1.0, 0.77, 0.54);  // ~3800K (#ffc48a)
+            vec3 farColor  = vec3(0.4, 0.1, 0.0);    // ~1700K (#661a00)
+            
+            // Reversing the interpolation: distanceFade is 1.0 at camera, 0.0 far away.
+            // So we mix based on normalizedDepth directly (0.0 at camera, 1.0 far away).
+            vec3 baseColor = mix(nearColor, farColor, normalizedDepth);
+            
+            // Illumination falloff
+            float illumination = lambert * 0.9 + 0.1;
+            float distanceFade = 1.0 - normalizedDepth;
             distanceFade = pow(distanceFade, 3.0); 
 
             // Composite: Base visibility + Lidar stripe, modulated by Normal illumination
-            vec3 baseLit = uColor * 0.15 * illumination; // Ambient baseline shaded by normal
-            vec3 stripeHit = mix(uColor, vec3(1.0), 0.5) * isStripe * illumination * 3.0 * distanceFade;
+            vec3 baseLit = baseColor * 0.15 * illumination; // Ambient baseline shaded by normal
+            vec3 stripeHit = mix(baseColor, vec3(1.0), 0.5) * isStripe * illumination * 3.0 * distanceFade;
             
             gl_FragColor = vec4(baseLit + stripeHit, 1.0);
         }
