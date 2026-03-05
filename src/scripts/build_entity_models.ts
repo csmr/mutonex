@@ -4,7 +4,7 @@
 // via opentype.js, and produces pre-baked
 // BufferGeometry JSON files for the webclient.
 //
-// Usage:  deno run -A build_entity_models.ts
+// Usage: deno run --allow-read --allow-write --allow-net scripts/build_entity_models.ts
 // Output: src/res/models/<CODEPOINT_HEX>.json
 
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
@@ -18,6 +18,35 @@ const FONT_PATHS = [
   "/usr/share/fonts/opentype/unifont/unifont_csur.otf",
 ];
 const OUTPUT_DIR = "res/models";
+
+export interface GlyphProfile {
+  name?: string;
+  isStationary?: boolean;
+  scale?: number;
+  elevateY?: number;
+  facing?: "front" | "side" | "top";
+}
+
+let GLYPH_REGISTRY: Record<string, Partial<GlyphProfile>> = {};
+
+// Load glyph mapping logic
+async function loadGlyphRegistry() {
+  const file = await Deno.readTextFile("res/glyph_profiles.json");
+  const data = JSON.parse(file);
+
+  const registry: Record<string, Partial<GlyphProfile>> = {};
+
+  for (const [hex, entry] of Object.entries(data.glyphs)) {
+    const templateName = (entry as any).template;
+    const template = templateName ? data.templates[templateName] : {};
+    const char = String.fromCodePoint(parseInt(hex, 16));
+
+    // Merge template base properties with glyph-specific overrides
+    registry[char] = { ...template, ...(entry as any) };
+  }
+
+  return registry;
+}
 
 // --- Exported for unit testing ---
 
@@ -57,7 +86,7 @@ export function convertOpentypePathToThreeShapes(
     }
   }
 
-  const shapes = shapePath.toShapes(true);
+  const shapes = shapePath.toShapes(false);
 
   return shapes.filter((shape: THREE.Shape) => {
     const points = shape.getPoints();
@@ -90,6 +119,9 @@ export function convertOpentypePathToThreeShapes(
 }
 
 async function main() {
+  console.log("Parsing Glyph Registry JSON...");
+  GLYPH_REGISTRY = await loadGlyphRegistry();
+
   console.log("Reading Design Doc...");
   const html = await Deno.readTextFile(
     DESIGN_DOC_PATH,
@@ -114,6 +146,11 @@ async function main() {
         icons.add(char);
       }
     }
+  }
+
+  // Inject explicitly configured Registry items so they get generated even if omitted from docs.
+  for (const char of Object.keys(GLYPH_REGISTRY)) {
+    icons.add(char);
   }
   console.log(
     `Found ${icons.size} unique icons:`,
@@ -164,6 +201,7 @@ async function main() {
       const glyphIndex = font.charToGlyphIndex(char);
       if (glyphIndex === 0) continue;
 
+      console.log(`Extracting path for ${char}...`);
       const tp = font.getPath(
         char,
         0,
@@ -198,7 +236,7 @@ async function main() {
       continue;
     }
     const geometry = new THREE.ExtrudeGeometry(shapes, {
-      depth: 0.25,
+      depth: 0.20,
       bevelEnabled: false,
     });
 
@@ -223,6 +261,40 @@ async function main() {
     }
 
     const json = pure.toJSON();
+
+    const profile = GLYPH_REGISTRY[char] || {
+      name: "Unknown",
+      isStationary: true,
+      scale: 2.0,
+      elevateY: 0.0,
+      facing: "front",
+    };
+
+    const matrix = new THREE.Matrix4();
+    const scale = profile.scale ?? 2.0;
+    const elevateY = profile.elevateY ?? 0.0;
+    const facing = profile.facing ?? "front";
+
+    // Build the transform: translate, rotate, then scale
+    matrix.makeTranslation(0, elevateY, 0);
+
+    if (facing === "side") {
+      const rot = new THREE.Matrix4().makeRotationY(-Math.PI / 2);
+      matrix.multiply(rot);
+    } else if (facing === "top") {
+      const rot = new THREE.Matrix4().makeRotationX(-Math.PI / 2);
+      matrix.multiply(rot);
+    }
+
+    matrix.scale(new THREE.Vector3(scale, scale, scale));
+
+    json.mutonex_entity_metadata = {
+      name: profile.name ?? "Unknown",
+      isStationary: profile.isStationary ?? true,
+      transform: {
+        matrix: matrix.toArray()
+      }
+    };
     const hex = char.codePointAt(0)!
       .toString(16).toUpperCase();
     await Deno.writeTextFile(

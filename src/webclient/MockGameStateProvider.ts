@@ -4,7 +4,6 @@
 import { Terrain } from "./types.ts";
 export type { Terrain };
 
-// Represents a player as a tuple:
 // [id, x, y, z]
 export type PlayerTuple = [
   string,
@@ -16,5 +15,7 @@ export type PlayerTuple = [
 export interface GameState {
   game_time: number;
   players: PlayerTuple[];
+  fauna: PlayerTuple[];
+  minerals: any[];
   terrain: Terrain;
 }

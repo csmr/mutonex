@@ -43,6 +43,23 @@ function main() {
     }
   };
 
+  console.log(
+    "%cMutonex Webclient%c\n\n" +
+    "Controls:\n" +
+    "  Left Click + Drag  : Rotate camera\n" +
+    "  Right Click + Drag : Pan camera\n" +
+    "  Scroll Wheel       : Zoom in/out\n\n" +
+    "Lidar Rendering:\n" +
+    "  To change Lidar scanning modes, use the console command:\n" +
+    "  %cwindow.__mutonex.lidarView.setStyle('styleName')%c\n\n" +
+    "Available Styles:\n" +
+    Object.keys(LidarStyles).map(s => `  - ${s}`).join('\n'),
+    "font-size: 16px; font-weight: bold; color: #1E90FF;",
+    "",
+    "background: #222; color: #0f0; padding: 2px 4px; border-radius: 2px;",
+    ""
+  );
+
   // Start the render loop
   viewManager.animate();
 
@@ -62,6 +79,7 @@ function main() {
   const playerAnchors: Map<string, any> = new Map();
   const faunaAnchors: Map<string, any> = new Map();
   const faunaTargets: Map<string, any> = new Map();
+  const mineralAnchors: Map<string, any> = new Map();
 
   const avatar = new AvatarController(
     viewManager,
@@ -77,14 +95,20 @@ function main() {
 
     for (const [id, pos] of playerAnchors) {
       entities.push({
-        id, type: "player", pos: pos.clone(), char: "", isStationary: false, facing: "front"
+        id, type: "player", pos: pos.clone(), char: ""
       });
     }
 
     for (const [id, anchorPos] of faunaAnchors) {
       const pos = interpolatedPositions?.get(id) || anchorPos;
       entities.push({
-        id, type: "fauna", pos: pos.clone(), char: "", isStationary: false, facing: "side"
+        id, type: "fauna", pos: pos.clone(), char: ""
+      });
+    }
+
+    for (const [id, anchorPos] of mineralAnchors) {
+      entities.push({
+        id, type: "mineral", pos: anchorPos.clone(), char: ""
       });
     }
 
@@ -110,6 +134,7 @@ function main() {
     }
 
     if (gameState.fauna) updateFaunaAnchors(gameState.fauna);
+    if (gameState.minerals) updateMineralAnchors(gameState.minerals);
     updateEntitiesList();
   };
 
@@ -214,6 +239,13 @@ function main() {
   function updateFaunaAnchors(fauna: PlayerTuple[]) {
     for (const [id, x, y, z] of fauna) {
       faunaAnchors.set(id, new THREE.Vector3(x, 1, z));
+    }
+  }
+
+  function updateMineralAnchors(minerals: any[]) {
+    for (const min of minerals) {
+      // Minerals are sent as full structs, e.g. { id, position: { x, y, z } }
+      mineralAnchors.set(min.id, new THREE.Vector3(min.position.x, 1, min.position.z));
     }
   }
 }

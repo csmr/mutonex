@@ -12,21 +12,12 @@ export class EntityRenderer {
   private matFactory: (color: number) => any;
 
   private charMap: { [key in EntityType]: string[] } = {
-    "player": ["🧙", "𐇑", "𐇒"],
-    "fauna": ["🦗", "🌱", "🌲"],
-    "unit": ["👷", "🤖", "🧕"],
+    "player": ["🧙", "𐇑", "𐇒", "👷", "🧕"],
+    "fauna": ["🐀", "🐂", "🐆", "🐈", "🐊", "🐦", "🐜", "🐝", "🦗", "🐢", "🐕", "🕊", "🦔"],
+    "unit": ["🤖", "✈"],
     "building": ["🏛"],
-    "society": ["🎪", "🏘", "🏙"],
-    "mineral": ["⭓", "⬠", "💎"],
-  };
-
-  private scaleMap: { [key in EntityType]: number } = {
-    "player": 2.0,
-    "fauna": 1.6,
-    "unit": 2.0,
-    "building": 2.0,
-    "society": 2.0,
-    "mineral": 2.0,
+    "society": ["🎪", "🏘", "🏙", "🏰", "🗿", "💩"],
+    "mineral": ["⭓", "⬠", "💎", "🌱", "🌲", "🌳", "🌴", "🌵", "🌾", "🍄", "🌺", "🌻"],
   };
 
   private colorMap: { [key in string]: number } = {
@@ -78,7 +69,19 @@ export class EntityRenderer {
     color: number,
   ) {
     let mesh = this.getOrCreate(ent, char, color);
-    if (mesh) mesh.position.copy(ent.pos);
+    if (mesh) {
+      // Avoid wobbling logic overriding the anchor if it's stationary in the metadata
+      const isStationary = mesh.geometry?.userData?.metadata?.isStationary;
+
+      // We only apply the continuous interpolated 'ent.pos' updates if it mathematically moves.
+      if (isStationary) {
+        if (mesh.position.distanceTo(ent.pos) > 1.0) {
+          mesh.position.copy(ent.pos);
+        }
+      } else {
+        mesh.position.copy(ent.pos);
+      }
+    }
   }
 
   private getOrCreate(
@@ -87,8 +90,11 @@ export class EntityRenderer {
     color: number,
   ): any {
     const id = ent.id;
+
+    // Use deterministic derivation from the character pseudo-hash.
     const cp = char.codePointAt(0);
     const hex = cp!.toString(16).toUpperCase();
+
     let mesh = this.meshes.get(id);
 
     if (!mesh) {
@@ -117,8 +123,18 @@ export class EntityRenderer {
     fetch(url)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
-        if (!json) return;
+        if (!json) {
+          console.warn("Failed to fetch model:", hex);
+          return;
+        }
         const geo = this.loader.parse(json);
+        // Apply pre-compiled JSON physical orientations and caching metadata
+        if (json.mutonex_entity_metadata) {
+          geo.userData.metadata = json.mutonex_entity_metadata;
+          const matrix = new THREE.Matrix4().fromArray(json.mutonex_entity_metadata.transform.matrix);
+          geo.applyMatrix4(matrix);
+        }
+
         this.geoCache.set(hex, geo);
         // We don't have ent metadata inside fetchGeo promise readily without a closure mapping,
         // but replaceGeo will normally get called next tick by getOrCreate.
@@ -133,19 +149,10 @@ export class EntityRenderer {
     const ex = this.meshes.get(id);
     if (!ex) return null;
     this.scene.remove(ex);
-    ex.geometry.dispose();
+
+    // Create new mesh with baked transformed geometry
     const next = new THREE.Mesh(geo, ex.material);
     next.position.copy(ex.position);
-
-    const scale = this.scaleMap[ent.type] || 2.0;
-    next.scale.setScalar(scale);
-
-    if (ent.facing === "side") {
-      // Rotate 90 degrees around Y so the anterior side profile points towards default -Z forward.
-      next.rotation.y = -Math.PI / 2;
-    } else if (ent.facing === "top") {
-      next.rotation.x = -Math.PI / 2;
-    }
 
     this.scene.add(next);
     this.meshes.set(id, next);

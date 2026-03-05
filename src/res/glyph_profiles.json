@@ -23,7 +23,7 @@
             "isStationary": false,
             "scale": 0.15,
             "elevateY": 0.0,
-            "facing": "top"
+            "facing": "side"
         },
         "fauna_flying": {
             "isStationary": false,
@@ -68,14 +68,46 @@
             "template": "stationary_default",
             "scale": 1.5
         },
+        "1F404": {
+            "name": "Cow",
+            "template": "fauna_standard",
+            "scale": 1.5
+        },
+        "1F986": {
+            "name": "Duck",
+            "template": "fauna_standard",
+            "scale": 1.5
+        },
+        "1F416": {
+            "name": "Pig",
+            "template": "fauna_standard",
+            "scale": 1.0
+        },
+        "1F98E": {
+            "name": "Lizard",
+            "template": "fauna_standard",
+            "scale": 0.5,
+            "facing": "top"
+        },
+        "1F40D": {
+            "name": "Snake",
+            "template": "fauna_standard",
+            "scale": 0.6
+        },
+        "1F427": {
+            "name": "Penguin",
+            "template": "stationary_default",
+            "scale": 0.8
+        },
         "1F48E": {
             "name": "Gem",
             "template": "stationary_default",
-            "scale": 1.5
+            "scale": 1.0
         },
         "1F41C": {
             "name": "Ant",
-            "template": "fauna_tiny"
+            "template": "fauna_tiny",
+            "facing": "top"
         },
         "1F41D": {
             "name": "Honeybee",
@@ -89,11 +121,13 @@
         },
         "1F400": {
             "name": "Rat",
-            "template": "fauna_standard"
+            "template": "fauna_tiny",
+            "scale": 0.3
         },
         "1F402": {
             "name": "Ox",
-            "template": "fauna_standard"
+            "template": "fauna_standard",
+            "scale": 2.0
         },
         "1F406": {
             "name": "Leopard",
@@ -101,7 +135,8 @@
         },
         "1F408": {
             "name": "Cat",
-            "template": "fauna_standard"
+            "template": "fauna_standard",
+            "scale": 0.5
         },
         "1F40A": {
             "name": "Crocodile",
@@ -115,6 +150,35 @@
             "name": "Moyai",
             "template": "stationary_default",
             "scale": 3.0
+        },
+        "1F987": {
+            "name": "Bat",
+            "template": "fauna_flying",
+            "scale": 0.3,
+            "facing": "top"
+        },
+        "1F422": {
+            "name": "Turtle",
+            "template": "fauna_tiny",
+            "scale": 0.3
+        },
+        "1F415": {
+            "name": "Dog",
+            "template": "fauna_standard"
+        },
+        "1F4A9": {
+            "name": "Poo",
+            "template": "stationary_default",
+            "scale": 0.5
+        },
+        "1F54A": {
+            "name": "Dove",
+            "template": "fauna_flying"
+        },
+        "1F994": {
+            "name": "Hedgehog",
+            "template": "fauna_tiny",
+            "scale": 0.4
         },
         "1F9D9": {
             "name": "Mage",
@@ -145,6 +209,41 @@
             "template": "unit_default",
             "elevateY": 18.0,
             "scale": 7.0
+        },
+        "1F333": {
+            "name": "Deciduous Tree",
+            "template": "stationary_default",
+            "scale": 4.0
+        },
+        "1F334": {
+            "name": "Palm Tree",
+            "template": "stationary_default",
+            "scale": 4.0
+        },
+        "1F335": {
+            "name": "Cactus",
+            "template": "stationary_default",
+            "scale": 1.75
+        },
+        "1F33E": {
+            "name": "Ear of Rice",
+            "template": "stationary_default",
+            "scale": 0.25
+        },
+        "1F344": {
+            "name": "Mushroom",
+            "template": "stationary_default",
+            "scale": 0.15
+        },
+        "1F33A": {
+            "name": "Hibiscus",
+            "template": "stationary_default",
+            "scale": 0.25
+        },
+        "1F33B": {
+            "name": "Sunflower",
+            "template": "stationary_default",
+            "scale": 0.5
         }
     }
 }

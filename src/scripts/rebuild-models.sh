@@ -15,5 +15,5 @@ if ! dpkg -l | grep -q fonts-unifont; then
 fi
 
 log "Running Entity Model Builder..."
-deno run -A scripts/build_entity_models.ts
+deno run --allow-read --allow-write --allow-net="deno.land" scripts/build_entity_models.ts
 log "Rebuild complete."

@@ -1,17 +1,18 @@
 defmodule Mutonex.Engine.SparseOctree do
   import Bitwise
-  defstruct node: nil, bounds: nil, entities: [], children: nil, capacity: 4
+  defstruct node: nil, bounds: nil, entities: [], children: nil, capacity: 4, depth: 0
 
   @default_capacity 4 # Maximum number of entities per node before subdividing
+  @max_depth 8 # Prevent infinite subdivisions
 
-  def new(bounds, capacity \\ @default_capacity) do
-    %__MODULE__{bounds: bounds, entities: [], capacity: capacity}
+  def new(bounds, capacity \\ @default_capacity, depth \\ 0) do
+    %__MODULE__{bounds: bounds, entities: [], capacity: capacity, depth: depth}
   end
 
   def insert(%__MODULE__{} = node, entity) do
     if is_nil(node.children) do
-      if length(node.entities) < node.capacity do
-        # If we are a leaf and have space, just add it
+      if length(node.entities) < node.capacity or node.depth >= @max_depth do
+        # If we are a leaf and have space (or hit max depth), just add it
         %__MODULE__{node | entities: [entity | node.entities]}
       else
         # If we are full, subdivide and push ALL existing entities + new one to children
@@ -53,7 +54,7 @@ defmodule Mutonex.Engine.SparseOctree do
 
     children = Enum.map(0..7, fn i ->
       child_bounds = get_child_bounds({min_x, min_y, min_z, max_x, max_y, max_z}, half, i)
-      new(child_bounds, node.capacity)
+      new(child_bounds, node.capacity, node.depth + 1)
     end)
 
     %__MODULE__{node | children: children}

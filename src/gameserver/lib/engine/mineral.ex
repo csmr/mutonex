@@ -25,6 +25,14 @@ defmodule Mutonex.Engine.Mineral do
     Enum.map(1..count, fn i ->
       uid = System.unique_integer([:positive])
 
+      # We inject trees and plants into the random mineral pool
+      type =
+        if :rand.uniform() > 0.5 do
+          Enum.random(["🌱", "🌲", "🌳", "🌴", "🌵", "🌾", "🍄", "🌺", "🌻"])
+        else
+          get_random_type()
+        end
+
       %Mineral{
         id: "mineral_#{i}_#{uid}",
         # Cluster within Lidar view frustum: [-5, 5] on X, [5, 15] on Z
@@ -34,7 +42,7 @@ defmodule Mutonex.Engine.Mineral do
           y: 0,
           z: (:rand.uniform() * 10 + 5)
         },
-        type: get_random_type(),
+        type: type,
         amount: :rand.uniform(5000) + 500,
         size: 2.0
       }

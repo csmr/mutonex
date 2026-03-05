@@ -21,9 +21,8 @@ defmodule Mutonex.Engine.FaunaBehavior do
   def spawn(sector_id, count) do
     Enum.reduce(1..count, %{}, fn i, acc ->
       id = "fauna_#{sector_id}_#{i}"
-      # Cluster within Lidar view frustum: [-5, 5] on X, [5, 15] on Z
-      # Camera spawns at (0, 10, 20) looking towards origin (0, 0, 0)
-      pos = %{x: (:rand.uniform() * 10 - 5), y: 0, z: (:rand.uniform() * 10 + 5)}
+      # Scatter widely across the ground plane in the sector vicinity (-20 to 20 on X and Z)
+      pos = %{x: (:rand.uniform() * 40 - 24), y: 0, z: (:rand.uniform() * 40 - 24)}
       # Charm range: -5 to 20
       charm = :rand.uniform(26) - 6
 
@@ -41,6 +40,7 @@ defmodule Mutonex.Engine.FaunaBehavior do
 
   @doc """
   Calculates the new position for a fauna entity based on random movement rules.
+  Stationary visuals mapped on frontend will ignore this jitter natively.
   Returns the updated `Fauna` struct.
   """
   def move(%Fauna{position: pos} = fauna) do

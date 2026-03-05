@@ -148,10 +148,10 @@ defmodule Mutonex.Engine.GameSession do
 
   defp start_game_session(state) do
     terrain = TerrainGenerator.generate_heightmap(20, 20)
-    octree = SparseOctree.new({0, 0, 0, 20, 20, 20})
+    octree = SparseOctree.new({-50, -50, -50, 50, 50, 50})
 
     {fauna, octree} =
-      FaunaSystem.initialize(state.sector_id, 4, octree)
+      FaunaSystem.initialize(state.sector_id, 22, octree)
 
     minerals =
       MineralLogic.spawn_minerals(5, %{x: 20, z: 20})
