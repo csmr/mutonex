@@ -1,0 +1,150 @@
+{
+    "description": "Defines the default geometry transformations and Domain Entities property templates.",
+    "templates": {
+        "stationary_default": {
+            "isStationary": true,
+            "scale": 2.0,
+            "elevateY": 0.0,
+            "facing": "front"
+        },
+        "unit_default": {
+            "isStationary": false,
+            "scale": 2.0,
+            "elevateY": 0.0,
+            "facing": "front"
+        },
+        "fauna_standard": {
+            "isStationary": false,
+            "scale": 1.6,
+            "elevateY": 0.0,
+            "facing": "side"
+        },
+        "fauna_tiny": {
+            "isStationary": false,
+            "scale": 0.15,
+            "elevateY": 0.0,
+            "facing": "top"
+        },
+        "fauna_flying": {
+            "isStationary": false,
+            "scale": 1.6,
+            "elevateY": 8.0,
+            "facing": "side"
+        }
+    },
+    "glyphs": {
+        "1F331": {
+            "name": "Sprout",
+            "template": "stationary_default",
+            "scale": 0.5
+        },
+        "1F332": {
+            "name": "Evergreen Tree",
+            "template": "stationary_default",
+            "scale": 2.5
+        },
+        "1F3AA": {
+            "name": "Circus Tent",
+            "template": "stationary_default",
+            "scale": 2.5
+        },
+        "1F3D8": {
+            "name": "Houses",
+            "template": "stationary_default",
+            "scale": 2.5
+        },
+        "1F3D9": {
+            "name": "Cityscape",
+            "template": "stationary_default",
+            "scale": 2.5
+        },
+        "2B53": {
+            "name": "Mineral A",
+            "template": "stationary_default",
+            "scale": 1.5
+        },
+        "2B20": {
+            "name": "Mineral B",
+            "template": "stationary_default",
+            "scale": 1.5
+        },
+        "1F48E": {
+            "name": "Gem",
+            "template": "stationary_default",
+            "scale": 1.5
+        },
+        "1F41C": {
+            "name": "Ant",
+            "template": "fauna_tiny"
+        },
+        "1F41D": {
+            "name": "Honeybee",
+            "template": "fauna_tiny",
+            "elevateY": 2.0
+        },
+        "1F997": {
+            "name": "Cricket",
+            "template": "fauna_tiny",
+            "facing": "side"
+        },
+        "1F400": {
+            "name": "Rat",
+            "template": "fauna_standard"
+        },
+        "1F402": {
+            "name": "Ox",
+            "template": "fauna_standard"
+        },
+        "1F406": {
+            "name": "Leopard",
+            "template": "fauna_standard"
+        },
+        "1F408": {
+            "name": "Cat",
+            "template": "fauna_standard"
+        },
+        "1F40A": {
+            "name": "Crocodile",
+            "template": "fauna_standard"
+        },
+        "1F426": {
+            "name": "Bird",
+            "template": "fauna_flying"
+        },
+        "1F5FF": {
+            "name": "Moyai",
+            "template": "stationary_default",
+            "scale": 3.0
+        },
+        "1F9D9": {
+            "name": "Mage",
+            "template": "unit_default"
+        },
+        "101D1": {
+            "name": "Phaistos Disc 1",
+            "template": "unit_default"
+        },
+        "101D2": {
+            "name": "Phaistos Disc 2",
+            "template": "unit_default"
+        },
+        "1F477": {
+            "name": "Construction Worker",
+            "template": "unit_default"
+        },
+        "1F9D5": {
+            "name": "Woman with Headscarf",
+            "template": "unit_default"
+        },
+        "1F916": {
+            "name": "Robot",
+            "template": "unit_default"
+        },
+        "2708": {
+            "name": "Airplane",
+            "template": "unit_default",
+            "elevateY": 18.0,
+            "scale": 7.0
+        }
+    }
+}
