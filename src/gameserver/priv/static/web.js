@@ -1267,22 +1267,17 @@
       this.container.innerHTML = "";
     }
     render() {
-      this.container.innerHTML = "";
-      const card = document.createElement("div");
-      card.className = "feature-card";
-      const title = document.createElement("div");
-      title.className = "card-title";
-      title.innerText = "CHARM";
-      const value = document.createElement("div");
-      value.className = "card-value";
-      value.innerText = "0";
-      this.charmValueEl = value;
-      card.appendChild(title);
-      card.appendChild(value);
-      card.addEventListener("click", () => {
+      this.container.innerHTML = `
+            <div class="feature-card" id="hud-charm-card">
+                <div class="card-title">CHARM</div>
+                <div class="card-value">0</div>
+            </div>
+        `;
+      this.charmValueEl = this.container.querySelector(".card-value");
+      const card = this.container.querySelector("#hud-charm-card");
+      card?.addEventListener("click", () => {
         if (this.onCharmClick) this.onCharmClick();
       });
-      this.container.appendChild(card);
     }
   };
 

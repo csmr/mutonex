@@ -176,8 +176,18 @@ defmodule Mutonex.Engine.GameSession do
     octree = SparseOctree.new({-50, -50, -50, 50, 50, 50})
     {fauna, octree2} = FaunaSystem.initialize(state.sector_id, 22, octree)
     minerals = MineralLogic.spawn_minerals(5, %{x: 20, z: 20})
+    players = add_default_dummy_units(state.players)
     %{state | phase: :gamein, terrain: terrain, octree: octree2,
-              fauna: fauna, minerals: minerals, pending_start: false}
+              fauna: fauna, minerals: minerals, players: players, pending_start: false}
+  end
+
+  defp add_default_dummy_units(players) do
+    ts = System.os_time(:millisecond)
+    dp = %Unit{id: "dummy_player_alpha", type: :head, position: %{x: 5.0, y: 1.0, z: -5.0}, attributes: %{charm: 10, tribe: :potassium, flavor: :red}}
+    npc = %Unit{id: "npc_charmable_beta", type: :follower, position: %{x: -5.0, y: 1.0, z: 5.0}, is_charmable: true, attributes: %{charm: 5, tribe: :helium, flavor: :cyan}}
+    players
+    |> Map.put(dp.id, %{player: dp, last_update: ts})
+    |> Map.put(npc.id, %{player: npc, last_update: ts})
   end
 
   defp build_game_state_payload(state) do
