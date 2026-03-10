@@ -10,6 +10,7 @@ import { LobbyView, Sector } from "./LobbyView.ts";
 import { AvatarController } from "./AvatarController.ts";
 import { EntityData, Terrain } from "./types.ts";
 import type { PlayerTuple } from "./MockGameStateProvider.ts";
+import { FeatureCardHUD } from "./FeatureCardHUD.ts";
 
 // Main application logic
 function main() {
@@ -75,6 +76,7 @@ function main() {
 
   // --- Game State Variables ---
   let gameStateProvider: GameStateProvider | null = null;
+  const featureHUD = new FeatureCardHUD();
   const entities: EntityData[] = [];
   const playerAnchors: Map<string, any> = new Map();
   const playerCharm: Map<string, number> = new Map();
@@ -131,6 +133,7 @@ function main() {
       }
     } else {
       lobbyView.hide();
+      featureHUD.show();
       if (gameState.players) updatePlayerAnchors(gameState.players);
     }
 
@@ -145,6 +148,7 @@ function main() {
       if (update.players) lobbyView.updatePlayerQueue(update.players);
     } else {
       lobbyView.hide();
+      featureHUD.show();
       if (update.players) updatePlayerAnchors(update.players);
     }
     if (update.fauna) updateFaunaAnchors(update.fauna);
@@ -234,7 +238,12 @@ function main() {
   function updatePlayerAnchors(players: PlayerTuple[]) {
     for (const [id, x, y, z, charm] of players as any[]) {
       playerAnchors.set(id, new THREE.Vector3(x, 1, z));
-      if (charm !== undefined) playerCharm.set(id, charm);
+      if (charm !== undefined) {
+        playerCharm.set(id, charm);
+        if (gameStateProvider && id === gameStateProvider.playerId) {
+          featureHUD.setCharmLevel(charm);
+        }
+      }
     }
   }
 

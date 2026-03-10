@@ -102,6 +102,60 @@
         color: #888;
         text-transform: uppercase;
       }
+
+      /* HUD Overlay */
+      #hud-overlay {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 100;
+        pointer-events: none; /* Let clicks pass through where there are no cards */
+      }
+
+      .feature-card {
+        width: 48pt;
+        height: 48pt;
+        background-color: rgba(20, 20, 20, 0.85); /* Semi-transparent dark */
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        border-radius: 4px;
+        /* Fancy gradient border using background-clip */
+        border: 3px solid transparent;
+        background-image: linear-gradient(rgba(20, 20, 20, 0.85), rgba(20, 20, 20, 0.85)), linear-gradient(135deg, #00ffcc 0%, #ff00cc 100%);
+        background-origin: border-box;
+        background-clip: padding-box, border-box;
+        pointer-events: auto; /* Clickable */
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+
+      .feature-card:hover {
+        transform: scale(1.1);
+      }
+
+      .feature-card .card-title {
+        font-size: 8pt;
+        color: #aaa;
+        margin-bottom: 2px;
+        text-align: center;
+        width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      
+      .feature-card .card-value {
+        font-size: 16pt;
+        color: #fff;
+      }
     </style>
   </head>
 
@@ -125,6 +179,11 @@
           Waiting for game start...
         </div>
       </div>
+    </div>
+
+    <!-- Gameplay HUD -->
+    <div id="hud-overlay">
+      <!-- Feature cards injected vertically here via TypeScript -->
     </div>
 
     <canvas id="main-canvas"></canvas>
