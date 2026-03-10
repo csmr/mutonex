@@ -17,7 +17,7 @@ log "Generating Credits..."
 deno run --allow-read --allow-write ./scripts/make-credits.js
 
 # Ensure model cache is populated (lazy generation)
-if [ ! -d "res/models" ] || [ -z "$(ls -A res/models)" ]; then
+if [ ! -d "res/entity_geometry" ] || [ -z "$(ls -A res/entity_geometry)" ]; then
     log "Model assets missing. Auto-generating..."
     
     # Check if the unifont font is installed in the container

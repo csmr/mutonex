@@ -117,7 +117,7 @@ export class EntityRenderer {
   private fetchGeo(id: string, hex: string) {
     if (this.geoCache.has(hex)) return;
 
-    const url = `assets/geometry/${hex}.json`;
+    const url = `assets/entity_geometry/${hex}.json`;
     this.geoCache.set(hex, new Promise(() => { }));
 
     fetch(url)

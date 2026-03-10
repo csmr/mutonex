@@ -17,7 +17,7 @@ const FONT_PATHS = [
   "/usr/share/fonts/opentype/unifont/unifont_upper.otf",
   "/usr/share/fonts/opentype/unifont/unifont_csur.otf",
 ];
-const OUTPUT_DIR = "res/models";
+const OUTPUT_DIR = "res/entity_geometry";
 
 export interface GlyphProfile {
   name?: string;
