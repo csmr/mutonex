@@ -165,40 +165,37 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp start_game_session(state) do
+    new_state = build_environment_entities(state)
+    payload = build_game_state_payload(new_state)
+    broadcast_start(state.sector_id, payload)
+    {:noreply, new_state}
+  end
+
+  defp build_environment_entities(state) do
     terrain = TerrainGenerator.generate_heightmap(20, 20)
     octree = SparseOctree.new({-50, -50, -50, 50, 50, 50})
+    {fauna, octree2} = FaunaSystem.initialize(state.sector_id, 22, octree)
+    minerals = MineralLogic.spawn_minerals(5, %{x: 20, z: 20})
+    %{state | phase: :gamein, terrain: terrain, octree: octree2,
+              fauna: fauna, minerals: minerals, pending_start: false}
+  end
 
-    {fauna, octree} =
-      FaunaSystem.initialize(state.sector_id, 22, octree)
-
-    minerals =
-      MineralLogic.spawn_minerals(5, %{x: 20, z: 20})
-
-    new_state = %{
-      state
-      | phase: :gamein,
-        terrain: terrain,
-        octree: octree,
-        fauna: fauna,
-        minerals: minerals,
-        pending_start: false
-    }
-
-    game_state = %GameState{
+  defp build_game_state_payload(state) do
+    %GameState{
       game_time: state.game_time,
       players: players_to_list(state.players),
-      terrain: terrain,
-      fauna: fauna_to_list(fauna),
-      minerals: minerals,
+      terrain: state.terrain,
+      fauna: fauna_to_list(state.fauna),
+      minerals: state.minerals,
       conveyors: state.conveyors,
       buildings: state.buildings
     }
+  end
 
-    topic = "game:#{state.sector_id}"
-    msg = %{phase: "gamein"}
-    Endpoint.broadcast(topic, "game_phase", msg)
+  defp broadcast_start(sector_id, game_state) do
+    topic = "game:#{sector_id}"
+    Endpoint.broadcast(topic, "game_phase", %{phase: "gamein"})
     Endpoint.broadcast(topic, "game_state", game_state)
-    {:noreply, new_state}
   end
 
   defp handle_player_update(nil, uid, pos, time, state) do
@@ -218,28 +215,18 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp handle_player_update(p_state, _, pos, time, state) do
-    %{player: player, last_update: last_time} = p_state
-
-    if is_move_valid?(
-         player.position,
-         pos,
-         time - last_time
-       ) do
-      updated_player = %{player | position: pos}
-      new_p_state = %{
-        player: updated_player,
-        last_update: time
-      }
-      updated = Map.put(
-        state.players,
-        player.id,
-        new_p_state
-      )
-      broadcast_state_update(state.sector_id, updated)
-      {:noreply, %{state | players: updated}}
-    else
-      {:noreply, state}
+    case is_move_valid?(p_state.player.position, pos, time - p_state.last_update) do
+      true -> process_valid_move(p_state, pos, time, state)
+      false -> {:noreply, state}
     end
+  end
+
+  defp process_valid_move(p_state, pos, time, state) do
+    updated_player = %{p_state.player | position: pos}
+    new_p_state = %{player: updated_player, last_update: time}
+    updated = Map.put(state.players, updated_player.id, new_p_state)
+    broadcast_state_update(state.sector_id, updated)
+    {:noreply, %{state | players: updated}}
   end
 
   defp is_move_valid?(p1, p2, dt_ms) do
