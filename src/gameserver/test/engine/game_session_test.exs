@@ -54,6 +54,21 @@ defmodule Mutonex.Engine.GameSessionTest do
 
     state = :sys.get_state(pid)
     assert state.terrain != nil
+
+    # Player sends first avatar update which registers them in the world
+    GenServer.cast(pid, {:avatar_update, "user1", [10, 0, 10]})
+    
+    # Needs a small sleep to ensure the cast is processed
+    Process.sleep(50)
+
+    state = :sys.get_state(pid)
+    # Verify unified Unit struct handling
+    player_state = Map.get(state.players, "user1")
+    assert player_state != nil
+    unit = player_state.player
+    assert unit.__struct__ == Mutonex.Engine.Entities.Unit
+    assert unit.type == :head
+    assert unit.attributes.charm == 0
   end
 
   test "queues start during boot", %{sector_id: sid} do
