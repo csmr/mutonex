@@ -77,6 +77,7 @@ function main() {
   let gameStateProvider: GameStateProvider | null = null;
   const entities: EntityData[] = [];
   const playerAnchors: Map<string, any> = new Map();
+  const playerCharm: Map<string, number> = new Map();
   const faunaAnchors: Map<string, any> = new Map();
   const faunaTargets: Map<string, any> = new Map();
   const mineralAnchors: Map<string, any> = new Map();
@@ -95,7 +96,7 @@ function main() {
 
     for (const [id, pos] of playerAnchors) {
       entities.push({
-        id, type: "player", pos: pos.clone(), char: ""
+        id, type: "player", pos: pos.clone(), char: "", charm: playerCharm.get(id) || 0
       });
     }
 
@@ -231,8 +232,9 @@ function main() {
   }
 
   function updatePlayerAnchors(players: PlayerTuple[]) {
-    for (const [id, x, y, z] of players) {
+    for (const [id, x, y, z, charm] of players as any[]) {
       playerAnchors.set(id, new THREE.Vector3(x, 1, z));
+      if (charm !== undefined) playerCharm.set(id, charm);
     }
   }
 

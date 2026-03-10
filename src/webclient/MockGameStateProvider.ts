@@ -4,12 +4,13 @@
 import { Terrain } from "./types.ts";
 export type { Terrain };
 
-// [id, x, y, z]
+// [id, x, y, z, charm]
 export type PlayerTuple = [
   string,
   number,
   number,
   number,
+  number?,
 ];
 
 export interface GameState {

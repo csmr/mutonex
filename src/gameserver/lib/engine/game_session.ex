@@ -1,7 +1,7 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
   require Logger
-  alias Mutonex.Engine.Entities.{Player, GameState}
+  alias Mutonex.Engine.Entities.{Player, Unit, GameState}
   alias Mutonex.Engine.TerrainGenerator
   alias Mutonex.Engine.SparseOctree
   alias Mutonex.Engine.Mineral, as: MineralLogic
@@ -184,7 +184,7 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp handle_player_update(nil, uid, pos, time, state) do
-    player = %Player{id: uid, position: pos}
+    player = %Unit{id: uid, type: :head, position: pos}
     p_state = %{player: player, last_update: time}
     updated = Map.put(state.players, uid, p_state)
     broadcast_state_update(state.sector_id, updated)
@@ -234,7 +234,7 @@ defmodule Mutonex.Engine.GameSession do
 
   defp players_to_list(players_map) do
     Enum.map(players_map, fn {_, %{player: p}} ->
-      [p.id, p.position.x, p.position.y, p.position.z]
+      [p.id, p.position.x, p.position.y, p.position.z, p.attributes.charm]
     end)
   end
 

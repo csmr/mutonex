@@ -15,6 +15,7 @@ export interface EntityData {
   char: string; // The emoticon/character (optional for SphereView but kept for consistency)
   isStationary?: boolean;
   facing?: "front" | "side" | "top";
+  charm?: number;
 }
 
 export interface Terrain {
