@@ -55,14 +55,7 @@ defmodule Mutonex.Engine.GameSessionTest do
     state = :sys.get_state(pid)
     assert state.terrain != nil
 
-    # Player sends first avatar update which registers them in the world
-    GenServer.cast(pid, {:avatar_update, "user1", [10, 0, 10]})
-    
-    # Needs a small sleep to ensure the cast is processed
-    Process.sleep(50)
-
-    state = :sys.get_state(pid)
-    # Verify unified Unit struct handling
+    # Verify unified Unit struct is handled immediately on join
     player_state = Map.get(state.players, "user1")
     assert player_state != nil
     unit = player_state.player

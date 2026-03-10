@@ -1,7 +1,7 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
   require Logger
-  alias Mutonex.Engine.Entities.{Player, Unit, GameState}
+  alias Mutonex.Engine.Entities.{Unit, GameState}
   alias Mutonex.Engine.TerrainGenerator
   alias Mutonex.Engine.SparseOctree
   alias Mutonex.Engine.Mineral, as: MineralLogic
@@ -115,7 +115,9 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  def handle_cast({:player_joined, _}, state) do
+  def handle_cast({:player_joined, uid}, state) do
+    state = add_player_if_missing(state, uid)
+
     case state.phase do
       :lobby ->
         Logger.info("Player joined. Initializing...")
@@ -124,6 +126,11 @@ defmodule Mutonex.Engine.GameSession do
       :booting ->
         Logger.info("Player joined during boot. Queuing...")
         {:noreply, %{state | pending_start: true}}
+
+      :gamein ->
+        Logger.info("Player joined existing game.")
+        broadcast_state_update(state.sector_id, state.players)
+        {:noreply, state}
 
       _ ->
         {:noreply, state}
@@ -145,6 +152,17 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   # --- Private Helpers ---
+
+  defp add_player_if_missing(state, uid) do
+    if Map.has_key?(state.players, uid) do
+      state
+    else
+      pos = %{x: 0.0, y: 1.0, z: 0.0}
+      player = %Unit{id: uid, type: :head, position: pos}
+      p_state = %{player: player, last_update: nil}
+      %{state | players: Map.put(state.players, uid, p_state)}
+    end
+  end
 
   defp start_game_session(state) do
     terrain = TerrainGenerator.generate_heightmap(20, 20)
@@ -187,6 +205,14 @@ defmodule Mutonex.Engine.GameSession do
     player = %Unit{id: uid, type: :head, position: pos}
     p_state = %{player: player, last_update: time}
     updated = Map.put(state.players, uid, p_state)
+    broadcast_state_update(state.sector_id, updated)
+    {:noreply, %{state | players: updated}}
+  end
+
+  defp handle_player_update(%{last_update: nil} = p_state, uid, pos, time, state) do
+    updated_player = %{p_state.player | position: pos}
+    new_p_state = %{player: updated_player, last_update: time}
+    updated = Map.put(state.players, uid, new_p_state)
     broadcast_state_update(state.sector_id, updated)
     {:noreply, %{state | players: updated}}
   end
