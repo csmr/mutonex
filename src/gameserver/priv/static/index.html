@@ -1,108 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>M U T O N E X</title>
-  <!-- Phoenix -->
-  <script src="https://cdn.jsdelivr.net/npm/phoenix@1.7.11/priv/static/phoenix.min.js"></script>
-  <!-- Three.js -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/controls/OrbitControls.js"></script>
-  <style>
-    body { margin: 0; overflow: hidden; font-family: 'Arial Black', 'Helvetica Neue', sans-serif; }
-    #main-canvas { display: block; width: 100vw; height: 100vh; }
-    .view-controls { position: absolute; top: 10px; left: 10px; z-index: 100; }
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M U T O N E X</title>
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <!-- Phoenix -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/phoenix@1.7.11/priv/static/phoenix.min.js"
+    ></script>
+    <!-- Three.js -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/three@0.136.0/examples/js/controls/OrbitControls.js"
+    ></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: "Arial Black", "Helvetica Neue", sans-serif;
+      }
 
-    #lobby-view {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: #1a1a1a;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-    }
+      #main-canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
 
-    #lobby-view.hidden {
-      display: none;
-    }
+      .view-controls {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 100;
+      }
 
-    .lobby-header {
-      font-size: 3rem;
-      font-weight: 900;
-      margin-bottom: 2rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1rem;
-    }
+      #lobby-view {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 200;
+      }
 
-    .sector-list, .player-queue {
-      width: 90%;
-      max-width: 1200px;
-      margin-bottom: 2rem;
-    }
+      #lobby-view.hidden {
+        display: none;
+      }
 
-    .list-item {
-      background-color: #333;
-      padding: 2rem;
-      margin-bottom: 0.5rem;
-      font-size: 3.5rem;
-      font-weight: 900;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s ease;
-    }
+      .lobby-header {
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1rem;
+      }
 
-    .list-item.selected {
-      background-color: #ffffff;
-      color: #000000;
-      border-color: #00ff00;
-      transform: scale(1.02);
-    }
+      .sector-list,
+      .player-queue {
+        width: 90%;
+        max-width: 1200px;
+        margin-bottom: 2rem;
+      }
 
-    .list-item:hover {
-        background-color: #555;
-    }
+      .list-item {
+        background-color: #333;
+        padding: 2rem;
+        margin-bottom: 0.5rem;
+        font-size: 3.5rem;
+        font-weight: 900;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+      }
 
-    .list-item.selected:hover {
+      .list-item.selected {
         background-color: #ffffff;
-    }
+        color: #000000;
+        border-color: #00ff00;
+        transform: scale(1.02);
+      }
 
-    .queue-title {
+      .list-item:hover {
+        background-color: #555;
+      }
+
+      .list-item.selected:hover {
+        background-color: #ffffff;
+      }
+
+      .queue-title {
         font-size: 1.2rem;
         margin-bottom: 1rem;
         color: #888;
         text-transform: uppercase;
-    }
-  </style>
-</head>
-<body>
-  <div id="lobby-view">
-    <div class="lobby-header">Mutonex Lobby</div>
+      }
 
-    <div id="sector-selection">
+      /* HUD Overlay */
+      #hud-overlay {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        z-index: 100;
+        pointer-events: none; /* Let clicks pass through where there are no cards */
+      }
+
+      .feature-card {
+        width: 48pt;
+        height: 48pt;
+        background-color: rgba(20, 20, 20, 0.85); /* Semi-transparent dark */
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        border-radius: 4px;
+        /* Fancy gradient border using background-clip */
+        border: 3px solid transparent;
+        background-image: linear-gradient(rgba(20, 20, 20, 0.85), rgba(20, 20, 20, 0.85)), linear-gradient(135deg, #00ffcc 0%, #ff00cc 100%);
+        background-origin: border-box;
+        background-clip: padding-box, border-box;
+        pointer-events: auto; /* Clickable */
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+
+      .feature-card:hover {
+        transform: scale(1.1);
+      }
+
+      .feature-card .card-title {
+        font-size: 8pt;
+        color: #aaa;
+        margin-bottom: 2px;
+        text-align: center;
+        width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      
+      .feature-card .card-value {
+        font-size: 16pt;
+        color: #fff;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="lobby-view">
+      <div class="lobby-header">Mutonex Lobby</div>
+
+      <div id="sector-selection">
         <div class="queue-title">Select Sector</div>
         <div id="sector-list-container" class="sector-list">
-            <!-- Sectors injected here -->
+          <!-- Sectors injected here -->
         </div>
-    </div>
+      </div>
 
-    <div id="lobby-queue" style="display: none;">
+      <div id="lobby-queue" style="display: none">
         <div class="queue-title">Player Queue</div>
         <div id="player-list-container" class="player-queue">
-            <!-- Players injected here -->
+          <!-- Players injected here -->
         </div>
-        <div style="margin-top: 1rem; color: #888; font-size: 1rem;">Waiting for game start...</div>
+        <div style="margin-top: 1rem; color: #888; font-size: 1rem">
+          Waiting for game start...
+        </div>
+      </div>
     </div>
-  </div>
 
-  <canvas id="main-canvas"></canvas>
-  <script type="module" src="./web.js"></script>
-  <footer><contribs/></footer>
-</body>
+    <!-- Gameplay HUD -->
+    <div id="hud-overlay">
+      <!-- Feature cards injected vertically here via TypeScript -->
+    </div>
+
+    <canvas id="main-canvas"></canvas>
+    <script type="module" src="./web.js"></script>
+    <footer>
+      <contribs />
+    </footer>
+  </body>
 </html>

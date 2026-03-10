@@ -24,7 +24,7 @@ defmodule Mutonex.Net.GameChannel do
 
   @doc "Handles the async push of initial state after join."
   def handle_info({:after_join, data}, socket) do
-    push(socket, "game_phase", %{phase: data.phase})
+    push(socket, "game_phase", %{phase: data.phase, user_id: socket.assigns.user_id})
     push(socket, "game_state", data.game_state)
     {:noreply, socket}
   end
