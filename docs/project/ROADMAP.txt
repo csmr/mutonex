@@ -1,24 +1,43 @@
-NOTE: This document is a high-level wishlist and does not reflect the current state of the project. Some features listed here may already be implemented, while others are long-term goals.
+Mutonex Project Strategic Roadmap
+=================================
 
----
+VISION: A "Casual Cyber-Noir" multiplayer strategy
+game set on a simulated Earth. Accessible, turn-based,
+and chess-like in execution.
 
-ROADMAP
+PHASE I: ARCHITECTURAL FOUNDATION (COMPLETED)
+--------------------------------------------
+Focus: Establishing the world and technical stack.
+- Simulated Earth logic (Simtellus).
+- Unified Elixir Gameserver & WebSocket infra.
+- Hardware-accelerated Lidar visualization.
+- Containerized development environment.
+- Content 3D model generators for Unit geometry
+  and Terrain geometry from GeoTIFF.
 
-Simple game rule calculator.
-Planet simulation simtellus.
-Game ruleset engine - TFG game is turn-based computation of game rules.
+PHASE II: TACTICAL ENGINE (CURRENT)
+----------------------------------
+Focus: Implementing the "Casual" core gameplay loop.
+- Transitioning to Turn-Based gating (1 Turn = 17 Days).
+- Develop turn based gameplay dynamics.
+- Core Action System: Charming, Building, Harvest.
+- Power Projection: Domain-based sight and influence.
+- Source-driven, accessible game documentation.
+- Terrain streaming and interactions logic.
 
+PHASE III: SOCIAL DYNAMICS & PERSISTENCE
+---------------------------------------
+Focus: Multiplayer interactions and world history.
+- Lobby & Voting: Player-driven ruleset selection.
+- Video-phone: Remote charm and alliance forging.
+- Relic System: Persistence of buildings and history.
+- Multi-sector session orchestration.
 
-Roadmap Wishlist:
-* Sector model for the planet globe.
-* Players client. Browser client the lowest hanging fruit?
-* Generative equidistantial fractal terrain for game instances
-* Turn Based gameplay. Turn Based turns are realtime, 20 s, 12 h and 24h.
-* Community: where can the audience be engaged?
-* Game Engine Server
-* Project participants bounty system
-* Online Multiplayer Game
-* Multiplayer Auth Server
-* Multiplayer Game Server swarm
-* Hosting for auth and game server
-____
+PHASE IV: ATMOSPHERE & AUTHENTICATION
+-------------------------------
+Focus: Narrative events and strategic complexity.
+- Orbital Debris Cataclysm: Mid-game entropy events.
+- Advanced Units: Airpower, Activists, Fauna AI.
+- Environmental feedback: Nuclear winter effects.
+- User accounts and authentication.
+- Production-grade hosting and swarms.

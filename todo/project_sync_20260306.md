@@ -49,3 +49,29 @@ Update `ROADMAP.txt` to show "Sector model" and
     Structure "Power Projection".
 4.  **Action System:** Flesh out `Actions` module
     for `charm`, `attack`, and `build`.
+
+## Appendix: GDD Analysis & Pragmatic Path
+
+### GDD Omissions & Errors
+*   **Temporal Scaling Error:** GDD 4.9.3 suggests
+    1 turn = 20 days, while 4.3.4 says 1 sector = 1 day.
+    At 20 days/turn, units move 30+ sectors per turn,
+    breaking the "chess-like" tactical pacing.
+*   **Omission:** Victory scoring logic is vague.
+    It needs a formula: `Score = f(Followers,
+    Buildings, Minerals, Alliances)`.
+*   **Omission:** The "Video-phone" meeting mechanic
+    lacks technical turn-interaction rules.
+
+### Pragmatic Implementation Path
+1.  **Scale Fix:** Standardize 1 Turn = 17 Days
+    (Authoritative). A 12-minute game represents
+    ~714 in-world days (~2 years).
+2.  **Iterative Rules:** Implement "Charming" first
+    as it's the core differentiator.
+3.  **Data-Driven:** Keep all speeds/times in a
+    centralized Rules module to allow easy balancing
+    via the Rule Calculator.
+4.  **UI Feedback:** Ensure Lidar resolution and
+    "Signal Lost" (Entropy) are visually distinct
+    to communicate mechanics without text.
