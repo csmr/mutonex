@@ -4,7 +4,7 @@
 // via opentype.js, and produces pre-baked
 // BufferGeometry JSON files for the webclient.
 //
-// Usage: deno run --allow-read --allow-write --allow-net scripts/build_entity_models.ts
+// Usage: deno run --allow-read --allow-write --allow-net res/scripts/build_entity_models.ts
 // Output: src/res/models/<CODEPOINT_HEX>.json
 
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
