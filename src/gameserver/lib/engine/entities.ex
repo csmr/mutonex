@@ -45,7 +45,9 @@ defmodule Mutonex.Engine.Entities do
                 tribe: nil, # :potassium, :helium, etc.
                 flavor: nil # :red, :cyan, etc.
               },
-              history: %{}
+              history: %{},
+              invalid_token_count: 0,
+              expired_token_count: 0
   end
 
   defmodule Building do

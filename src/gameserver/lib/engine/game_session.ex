@@ -24,12 +24,17 @@ defmodule Mutonex.Engine.GameSession do
     GenServer.call(pid, :get_initial_state)
   end
 
+  def validate_token(pid, uid, token) do
+    GenServer.call(pid, {:validate_token, uid, token})
+  end
+
   # --- GenServer Callbacks ---
 
   def init(sector_id) do
     state = %{
       sector_id: sector_id,
       players: %{},
+      tokens: %{}, # %{uid => %{current: "...", previous: "..."}}
       terrain: nil,
       game_time: 720,
       phase: :booting, # Wait for Simtellus
@@ -42,7 +47,25 @@ defmodule Mutonex.Engine.GameSession do
     }
 
     send(self(), :check_simtellus)
+    schedule_token_rotation()
     {:ok, state}
+  end
+
+  def handle_call({:validate_token, uid, token}, _from, state) do
+    tokens = Map.get(state.tokens, uid, %{})
+
+    cond do
+      token == tokens[:current] ->
+        {:reply, :ok, state}
+
+      token == tokens[:previous] ->
+        new_state = increment_token_count(state, uid, :expired)
+        {:reply, :expired, new_state}
+
+      true ->
+        new_state = increment_token_count(state, uid, :invalid)
+        {:reply, :invalid, new_state}
+    end
   end
 
   def handle_call(:get_initial_state, _from, state) do
@@ -72,6 +95,28 @@ defmodule Mutonex.Engine.GameSession do
     }
 
     {:reply, response, state}
+  end
+
+  def handle_info(:rotate_tokens, state) do
+    new_tokens =
+      Enum.into(state.players, %{}, fn {uid, _} ->
+        old_data = Map.get(state.tokens, uid, %{})
+        new_token = generate_token()
+
+        if pid = Map.get(old_data, :pid) do
+          push_token(pid, new_token)
+        end
+
+        {uid,
+         %{
+           current: new_token,
+           previous: Map.get(old_data, :current),
+           pid: Map.get(old_data, :pid)
+         }}
+      end)
+
+    schedule_token_rotation()
+    {:noreply, %{state | tokens: new_tokens}}
   end
 
   def handle_info(:check_simtellus, state) do
@@ -115,8 +160,15 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  def handle_cast({:player_joined, uid}, state) do
+  def handle_cast({:player_joined, uid, pid}, state) do
     state = add_player_if_missing(state, uid)
+    token = generate_token()
+    push_token(pid, token)
+
+    new_tokens =
+      Map.put(state.tokens, uid, %{current: token, previous: nil, pid: pid})
+
+    state = %{state | tokens: new_tokens}
 
     case state.phase do
       :lobby ->
@@ -152,6 +204,53 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   # --- Private Helpers ---
+
+  defp schedule_token_rotation do
+    Process.send_after(self(), :rotate_tokens, 10000)
+  end
+
+  defp generate_token do
+    "000" <>
+      (:crypto.strong_rand_bytes(32)
+       |> Base.url_encode64()
+       |> String.replace(~r/[^a-zA-Z0-9]/, "")
+       |> String.slice(0, 21))
+  end
+
+  defp push_token(pid, token) do
+    send(pid, {:new_token, token})
+  end
+
+  defp increment_token_count(state, uid, type) do
+    case Map.get(state.players, uid) do
+      nil ->
+        state
+
+      p_state ->
+        unit = p_state.player
+
+        updated_unit =
+          case type do
+            :expired ->
+              %{
+                unit
+                | expired_token_count:
+                    unit.expired_token_count + 1
+              }
+
+            :invalid ->
+              %{
+                unit
+                | invalid_token_count:
+                    unit.invalid_token_count + 1
+              }
+          end
+
+        new_p_state = %{p_state | player: updated_unit}
+        new_players = Map.put(state.players, uid, new_p_state)
+        %{state | players: new_players}
+    end
+  end
 
   defp add_player_if_missing(state, uid) do
     if Map.has_key?(state.players, uid) do

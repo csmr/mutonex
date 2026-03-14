@@ -49,7 +49,7 @@ defmodule Mutonex.Engine.GameSessionTest do
     {:ok, pid} = GameSession.start_link(sid)
     wait_for_phase(pid, :lobby)
 
-    GenServer.cast(pid, {:player_joined, "user1"})
+    GenServer.cast(pid, {:player_joined, "user1", self()})
     wait_for_phase(pid, :gamein)
 
     state = :sys.get_state(pid)
@@ -75,7 +75,7 @@ defmodule Mutonex.Engine.GameSessionTest do
     assert state.phase == :booting
 
     # Player joins while booting
-    GenServer.cast(pid, {:player_joined, "user1"})
+    GenServer.cast(pid, {:player_joined, "user1", self()})
 
     state = :sys.get_state(pid)
     assert state.pending_start == true

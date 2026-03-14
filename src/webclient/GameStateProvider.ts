@@ -13,6 +13,7 @@ export class GameStateProvider {
   private sectorId: string;
   public phase: string = "lobby";
   public playerId: string | null = null;
+  private tempToken: string | null = null;
 
   constructor(
     sectorId: string,
@@ -50,7 +51,14 @@ export class GameStateProvider {
     this.channel.on("game_phase", (payload: any) => {
       console.log("Game Phase:", payload.phase);
       this.phase = payload.phase;
-      if (payload.user_id) this.playerId = payload.user_id;
+      if (payload.user_id) {
+        this.playerId = payload.user_id;
+      }
+    });
+
+    this.channel.on("new_token", (payload: { token: string }) => {
+      console.log("Received new session message token");
+      this.tempToken = payload.token;
     });
 
     this.channel.on("game_state", (payload: GameState) => {
@@ -75,6 +83,10 @@ export class GameStateProvider {
   public sendAvatarPosition(
     position: [number, number, number],
   ): void {
-    this.channel.push("avatar_update", position);
+    const message = {
+      mutonex_temp_token: this.tempToken,
+      payload: position,
+    };
+    this.channel.push("avatar_update", message);
   }
 }
