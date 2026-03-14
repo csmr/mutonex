@@ -89,4 +89,8 @@ export class GameStateProvider {
     };
     this.channel.push("avatar_update", message);
   }
+
+  public sendPlayerAction(actionType: string, targetId: string): void {
+    this.channel.push("player_action", { action: actionType, target_id: targetId });
+  }
 }

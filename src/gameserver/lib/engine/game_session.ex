@@ -234,6 +234,13 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
+  def handle_cast({:player_action, source_id, "charm", target_id}, state) do
+    case state.phase do
+      :gamein -> process_charm_action(source_id, target_id, state)
+      _ -> {:noreply, state}
+    end
+  end
+
   defp schedule_token_rotation do
     Process.send_after(self(), :rotate_tokens, 10000)
   end
@@ -362,6 +369,29 @@ defmodule Mutonex.Engine.GameSession do
     updated = Map.put(state.players, updated_player.id, new_p_state)
     broadcast_state_update(state.sector_id, updated)
     {:noreply, %{state | players: updated}}
+  end
+
+  defp process_charm_action(source_id, target_id, state) do
+    source = get_player_unit(state, source_id)
+    target = get_player_unit(state, target_id)
+    
+    # Very basic placeholder logic for charm success
+    if source && target && target.is_charmable && distance(source.position, target.position) <= 20.0 do
+      updated_target = %{target | is_charmable: false, society_id: source_id}
+      new_t_state = %{player: updated_target, last_update: System.os_time(:millisecond)}
+      updated = Map.put(state.players, target_id, new_t_state)
+      broadcast_state_update(state.sector_id, updated)
+      {:noreply, %{state | players: updated}}
+    else
+      {:noreply, state}
+    end
+  end
+  
+  defp get_player_unit(state, id) do
+    case Map.get(state.players, id) do
+      nil -> nil
+      %{player: player} -> player
+    end
   end
 
   defp is_move_valid?(p1, p2, dt_ms) do

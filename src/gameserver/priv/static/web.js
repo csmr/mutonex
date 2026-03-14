@@ -51,6 +51,9 @@
     sendAvatarPosition(position) {
       this.channel.push("avatar_update", position);
     }
+    sendPlayerAction(actionType, targetId) {
+      this.channel.push("player_action", { action: actionType, target_id: targetId });
+    }
   };
 
   // webclient/ViewManager.ts
@@ -1410,6 +1413,25 @@
     if (params.get("join") !== "false") {
       setTimeout(() => joinSector(mockSectors[0]), 2e3);
     }
+    featureHUD.setOnCharmClick(() => {
+      if (!gameStateProvider || gameStateProvider.phase !== "gamein") return;
+      let nearestTargetId = null;
+      let minDistance = 20;
+      for (const ent of entities) {
+        if (ent.id === gameStateProvider.playerId) continue;
+        const dist = avatar.position.distanceTo(ent.pos);
+        if (dist < minDistance) {
+          minDistance = dist;
+          nearestTargetId = ent.id;
+        }
+      }
+      if (nearestTargetId) {
+        console.log(`[Charm] Attempting to charm target: ${nearestTargetId} at dist ${minDistance.toFixed(2)}`);
+        gameStateProvider.sendPlayerAction("charm", nearestTargetId);
+      } else {
+        console.log("[Charm] No valid targets within range.");
+      }
+    });
     function startUpdateLoop() {
       const FAUNA_SPEED = 0.5;
       let lastTime = performance.now();

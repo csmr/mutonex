@@ -88,6 +88,35 @@ defmodule Mutonex.Engine.GameSessionTest do
     wait_for_phase(pid, :gamein)
   end
 
+  test "charm action updates target society and flag", %{sector_id: sid} do
+    Mutonex.Engine.SimtellusClientMock
+    |> stub(:is_available?, fn -> true end)
+
+    {:ok, pid} = GameSession.start_link(sid)
+    wait_for_phase(pid, :lobby)
+
+    # Add the player, which initiates the start phase
+    GenServer.cast(pid, {:player_joined, "charm_caster"})
+    wait_for_phase(pid, :gamein)
+
+    # Force the positions so the distance check passes
+    pos = %{x: 0.0, y: 1.0, z: 0.0}
+    GenServer.cast(pid, {:avatar_update, "charm_caster", [pos.x, pos.y, pos.z]})
+    
+    # Cast the charm payload (targeting the default dummy npc that's spawned close by)
+    GenServer.cast(pid, {:player_action, "charm_caster", "charm", "npc_charmable_beta"})
+    
+    # Process sleep for genserver
+    Process.sleep(50)
+
+    state = :sys.get_state(pid)
+    target_state = Map.get(state.players, "npc_charmable_beta")
+    
+    # Verify the state mutated correctly
+    assert target_state.player.is_charmable == false
+    assert target_state.player.society_id == "charm_caster"
+  end
+
   defp wait_for_phase(pid, expected_phase, retries \\ 10) do
     state = :sys.get_state(pid)
 
