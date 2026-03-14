@@ -29,7 +29,9 @@ Reduced visibility is explained through:
 "The Counter-Strike didn't just break the satellites; it vaporized the Thorium-Plutonium cores of the orbital grid, seeding the upper atmosphere with Yellowcake-phase oxides. The resulting heat-flash triggered a global Nitrogen-Fixation Event, turning the air into a dense, red-orange NO₂ smog. Now, the 'Orbital Rain' of micro-particulates ensures that photons can't travel more than a few meters without scattering—leaving us blind to everything but the pulse of a LIDAR beam."
 
 ## The Narrative Hook
-"The Chief tells us he can protect us from the Orange Fallout. He’s wrong. The old logs at the Depot confirmed the Orbital Counterstrikes didn't just smash the satellite constellations into million pieces:; it created a specific particulate frequency. Standard cameras see the orange soup, but if you pulse a laser at exactly 905nm, the ThO₂ crystals don't scatter the light—they fluoresce."
+"The Chief tells us he can protect us from the Orange Fallout. He’s wrong. The old logs at the Depot confirmed the Orbital Counterstrikes didn't just smash the satellite constellations into million pieces; it created a specific particulate frequency. Standard cameras see the orange soup, but if you pulse a laser at exactly 905nm, the ThO₂ crystals don't scatter the light—they fluoresce."
+
+*So it goes. The smart monkeys threw their biggest rocks at the sky, and the sky turned into a choking, thirty-meter tangerine blanket of pulverized history. Now, the only ghosts that can see through the atmospheric dust of our own hubris are the antique, electro-mechanical LIDAR eyes ripped from the husks of dead autonomous sedans. We traded the sun for a 905-nanometer sweeping laser, clicking away in the dark to prove we haven't vanished into the yellowcake.*
 
 ## Implementation Requirements
 
