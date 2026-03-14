@@ -66,6 +66,17 @@ defmodule Mutonex.Net.GameChannel do
     {:noreply, socket}
   end
 
+  @doc "Handles arbitrary gameplay actions from a client."
+  def handle_in("player_action", %{"action" => action, "target_id" => target_id}, socket) do
+    sector_id = get_sector_id(socket)
+    user_id = Map.get(socket.assigns, :user_id, "guest")
+
+    via = {:via, Registry, {Mutonex.GameRegistry, sector_id}}
+    GenServer.cast(via, {:player_action, user_id, action, target_id})
+
+    {:noreply, socket}
+  end
+
   # --- Private Helpers ---
 
   defp via_session(sector_id) do
