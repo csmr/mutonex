@@ -373,18 +373,36 @@ defmodule Mutonex.Engine.GameSession do
 
   defp process_charm_action(source_id, target_id, state) do
     source = get_player_unit(state, source_id)
-    target = get_player_unit(state, target_id)
+    target = get_player_or_fauna(state, target_id)
     
-    # Very basic placeholder logic for charm success
     if source && target && target.is_charmable && distance(source.position, target.position) <= 20.0 do
-      updated_target = %{target | is_charmable: false, society_id: source_id}
-      new_t_state = %{player: updated_target, last_update: System.os_time(:millisecond)}
-      updated = Map.put(state.players, target_id, new_t_state)
-      broadcast_state_update(state.sector_id, updated)
-      {:noreply, %{state | players: updated}}
+      apply_charm_update(target, source_id, state)
     else
       {:noreply, state}
     end
+  end
+  
+  defp get_player_or_fauna(state, id) do
+    case get_player_unit(state, id) do
+      nil -> Map.get(state.fauna, id)
+      player -> player
+    end
+  end
+
+  defp apply_charm_update(%Mutonex.Engine.Entities.Unit{} = target, source_id, state) do
+    updated_target = %{target | is_charmable: false, society_id: source_id}
+    new_t_state = %{player: updated_target, last_update: System.os_time(:millisecond)}
+    updated = Map.put(state.players, target.id, new_t_state)
+    broadcast_state_update(state.sector_id, updated)
+    {:noreply, %{state | players: updated}}
+  end
+
+  defp apply_charm_update(%Mutonex.Engine.Entities.Fauna{} = target, source_id, state) do
+    updated_target = %{target | is_charmable: false, society: source_id}
+    updated_fauna = Map.put(state.fauna, target.id, updated_target)
+    list = fauna_to_list(updated_fauna)
+    Mutonex.Net.Endpoint.broadcast("game:#{state.sector_id}", "fauna_update", %{fauna: list})
+    {:noreply, %{state | fauna: updated_fauna}}
   end
   
   defp get_player_unit(state, id) do

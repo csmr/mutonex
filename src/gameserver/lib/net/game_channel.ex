@@ -37,8 +37,8 @@ defmodule Mutonex.Net.GameChannel do
 
   @doc "Handles a move event from a client."
   def handle_in("avatar_update", payload, socket) do
-    user_id = socket.assigns.user_id
     sector_id = get_sector_id(socket)
+    user_id = Map.get(socket.assigns, :user_id, "guest")
     via = via_session(sector_id)
 
     {token, inner_payload} =
@@ -51,6 +51,17 @@ defmodule Mutonex.Net.GameChannel do
       via,
       {:avatar_update, user_id, inner_payload, token}
     )
+
+    {:noreply, socket}
+  end
+
+  @doc "Handles arbitrary gameplay actions from a client."
+  def handle_in("player_action", %{"action" => action, "target_id" => target_id}, socket) do
+    sector_id = get_sector_id(socket)
+    user_id = Map.get(socket.assigns, :user_id, "guest")
+
+    via = via_session(sector_id)
+    GenServer.cast(via, {:player_action, user_id, action, target_id})
 
     {:noreply, socket}
   end
