@@ -14,7 +14,7 @@ import {
 
 import {
   convertOpentypePathToThreeShapes,
-} from "../../scripts/build_entity_models.ts";
+} from "../../res/scripts/build_entity_models.ts";
 
 // ── Tests ───────────────────────────────────
 

@@ -16,7 +16,7 @@ build time — no fonts shipped to client.
 
 ## Model Generation Pipeline
 
-The Deno script `src/scripts/build_entity_models.ts` drives
+The Deno script `src/res/scripts/build_entity_models.ts` drives
 the pipeline:
 
 1. Reads entity icons from the Design Document.

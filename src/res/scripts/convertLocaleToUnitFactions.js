@@ -6,7 +6,7 @@ import * as YAML from "https://deno.land/std@0.188.0/yaml/mod.ts";
 // Usage: `$ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
 
 const LOCALE_DIR = "/usr/share/i18n/locales";
-const OUTPUT_FILE = "../res/regions.yaml";
+const OUTPUT_FILE = "res/regions.yaml";
 
 const language_filters_arr = ["Bokm", "Literary Chinese"];
 const language_transforms = {
@@ -131,7 +131,7 @@ let elements;
 let territories;
 
 async function loadData() {
-  elements = YAML.parse(await Deno.readTextFile("../res/elements.yml"));
+  elements = YAML.parse(await Deno.readTextFile("res/elements.yml"));
   territories = YAML.parse(await Deno.readTextFile(OUTPUT_FILE));
 }
 

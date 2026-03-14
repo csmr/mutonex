@@ -26,7 +26,7 @@ if [ ! -d "res/entity_geometry" ] || [ -z "$(ls -A res/entity_geometry)" ]; then
         apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y fonts-unifont
     fi
 
-    deno run -A scripts/build_entity_models.ts
+    deno run -A res/scripts/build_entity_models.ts
 else
     log "Model assets found. Skipping auto-generation."
 fi
