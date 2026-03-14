@@ -84,7 +84,7 @@ export class GameStateProvider {
     position: [number, number, number],
   ): void {
     const message = {
-      mutonex_temp_token: this.tempToken,
+      session_message_token: this.tempToken,
       payload: position,
     };
     this.channel.push("avatar_update", message);

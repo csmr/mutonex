@@ -8,7 +8,7 @@ import Config
 
 config :mutonex_server,
   ecto_repos: [Mutonex.Server.Repo],
-  webclient_token_validation_enabled: false
+  webclient_message_token_enabled: false
 
 # Configures the endpoint
 config :mutonex_server, Mutonex.Net.Endpoint,

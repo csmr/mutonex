@@ -8,6 +8,7 @@ defmodule Mutonex.Engine.GameSession do
   alias Mutonex.Net.Endpoint
   alias Mutonex.Engine.SimtellusClient
   alias Mutonex.Engine.Systems.FaunaSystem
+  alias Mutonex.Utils.MessageToken
 
   # 2.0 units/s (1 unit=1km) is 2 km/s = 7200 km/h.
   @max_speed_kmh 8000
@@ -22,10 +23,6 @@ defmodule Mutonex.Engine.GameSession do
 
   def get_initial_state(pid) do
     GenServer.call(pid, :get_initial_state)
-  end
-
-  def validate_token(pid, uid, token) do
-    GenServer.call(pid, {:validate_token, uid, token})
   end
 
   # --- GenServer Callbacks ---
@@ -49,23 +46,6 @@ defmodule Mutonex.Engine.GameSession do
     send(self(), :check_simtellus)
     schedule_token_rotation()
     {:ok, state}
-  end
-
-  def handle_call({:validate_token, uid, token}, _from, state) do
-    tokens = Map.get(state.tokens, uid, %{})
-
-    cond do
-      token == tokens[:current] ->
-        {:reply, :ok, state}
-
-      token == tokens[:previous] ->
-        new_state = increment_token_count(state, uid, :expired)
-        {:reply, :expired, new_state}
-
-      true ->
-        new_state = increment_token_count(state, uid, :invalid)
-        {:reply, :invalid, new_state}
-    end
   end
 
   def handle_call(:get_initial_state, _from, state) do
@@ -189,7 +169,51 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  def handle_cast({:avatar_update, uid, pos_list}, state) do
+  def handle_cast({:avatar_update, uid, payload, token}, state) do
+    validation = validate_token_internal(state, uid, token)
+
+    case should_process_message?(validation) do
+      true ->
+        do_avatar_update(uid, payload, state, validation)
+
+      false ->
+        {:noreply, update_state_with_validation(state, uid, validation)}
+    end
+  end
+
+  # --- Private Helpers ---
+
+  defp validate_token_internal(state, uid, token) do
+    tokens = Map.get(state.tokens, uid, %{})
+
+    cond do
+      token == tokens[:current] -> :ok
+      token == tokens[:previous] -> :expired
+      true -> :invalid
+    end
+  end
+
+  defp should_process_message?(validation) do
+    validation in [:ok, :expired] or not message_token_enabled?()
+  end
+
+  defp message_token_enabled? do
+    Application.get_env(
+      :mutonex_server,
+      :webclient_message_token_enabled,
+      false
+    )
+  end
+
+  defp update_state_with_validation(state, _uid, :ok), do: state
+
+  defp update_state_with_validation(state, uid, validation) do
+    increment_token_count(state, uid, validation)
+  end
+
+  defp do_avatar_update(uid, pos_list, state, validation) do
+    state = update_state_with_validation(state, uid, validation)
+
     case state.phase do
       :gamein ->
         [x, y, z] = pos_list
@@ -203,18 +227,12 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  # --- Private Helpers ---
-
   defp schedule_token_rotation do
     Process.send_after(self(), :rotate_tokens, 10000)
   end
 
   defp generate_token do
-    "000" <>
-      (:crypto.strong_rand_bytes(32)
-       |> Base.url_encode64()
-       |> String.replace(~r/[^a-zA-Z0-9]/, "")
-       |> String.slice(0, 21))
+    MessageToken.generate()
   end
 
   defp push_token(pid, token) do
@@ -223,33 +241,26 @@ defmodule Mutonex.Engine.GameSession do
 
   defp increment_token_count(state, uid, type) do
     case Map.get(state.players, uid) do
-      nil ->
-        state
-
-      p_state ->
-        unit = p_state.player
-
-        updated_unit =
-          case type do
-            :expired ->
-              %{
-                unit
-                | expired_token_count:
-                    unit.expired_token_count + 1
-              }
-
-            :invalid ->
-              %{
-                unit
-                | invalid_token_count:
-                    unit.invalid_token_count + 1
-              }
-          end
-
-        new_p_state = %{p_state | player: updated_unit}
-        new_players = Map.put(state.players, uid, new_p_state)
-        %{state | players: new_players}
+      nil -> state
+      p_state -> do_increment_token_count(state, uid, p_state, type)
     end
+  end
+
+  defp do_increment_token_count(state, uid, p_state, type) do
+    unit = p_state.player
+
+    updated_unit =
+      case type do
+        :expired ->
+          %{unit | expired_token_count: unit.expired_token_count + 1}
+
+        :invalid ->
+          %{unit | invalid_token_count: unit.invalid_token_count + 1}
+      end
+
+    new_p_state = %{p_state | player: updated_unit}
+    new_players = Map.put(state.players, uid, new_p_state)
+    %{state | players: new_players}
   end
 
   defp add_player_if_missing(state, uid) do

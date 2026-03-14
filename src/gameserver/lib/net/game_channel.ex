@@ -43,30 +43,16 @@ defmodule Mutonex.Net.GameChannel do
 
     {token, inner_payload} =
       case payload do
-        %{"mutonex_temp_token" => t, "payload" => p} -> {t, p}
+        %{"session_message_token" => t, "payload" => p} -> {t, p}
         _ -> {nil, payload}
       end
 
-    validation = GameSession.validate_token(via, user_id, token)
-
-    is_valid = validation in [:ok, :expired]
-
-    if is_valid or not token_validation_enabled?() do
-      GenServer.cast(via, {:avatar_update, user_id, inner_payload})
-    end
+    GenServer.cast(via, {:avatar_update, user_id, inner_payload, token})
 
     {:noreply, socket}
   end
 
   # --- Private Helpers ---
-
-  defp token_validation_enabled? do
-    Application.get_env(
-      :mutonex_server,
-      :webclient_token_validation_enabled,
-      false
-    )
-  end
 
   defp via_session(sector_id) do
     registry = Mutonex.GameRegistry
