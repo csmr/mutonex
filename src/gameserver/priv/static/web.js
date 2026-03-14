@@ -249,59 +249,6 @@
     }
   };
 
-  // webclient/TerrainMesh.ts
-  function createTerrainMesh(terrain, material) {
-    const { width, height } = terrain.size;
-    const geometry = new THREE.PlaneGeometry(
-      width,
-      height,
-      width - 1,
-      height - 1
-    );
-    const vertices = geometry.attributes.position.array;
-    let ptr = 2;
-    for (const row of terrain.data) {
-      for (const z of row) {
-        vertices[ptr] = z;
-        ptr += 3;
-      }
-    }
-    geometry.rotateX(-Math.PI / 2);
-    geometry.attributes.position.needsUpdate = true;
-    geometry.computeVertexNormals();
-    const defaultMaterial = new THREE.MeshLambertMaterial({
-      color: 8956552,
-      wireframe: false
-    });
-    const mesh = new THREE.Mesh(geometry, material || defaultMaterial);
-    mesh.userData.terrainData = terrain.data;
-    mesh.userData.terrainSize = terrain.size;
-    return mesh;
-  }
-  function sampleTerrainHeight(terrainMesh, worldX, worldZ) {
-    if (!terrainMesh || !terrainMesh.userData.terrainData) return 0;
-    const data = terrainMesh.userData.terrainData;
-    const { width, height } = terrainMesh.userData.terrainSize;
-    const halfW = width / 2;
-    const halfH = height / 2;
-    const x = worldX + halfW;
-    const z = worldZ + halfH;
-    const gx = x;
-    const gz = z;
-    const ix = Math.floor(gx);
-    const iz = Math.floor(gz);
-    if (ix < 0 || ix >= width - 1 || iz < 0 || iz >= height - 1) return 0;
-    const fx = gx - ix;
-    const fz = gz - iz;
-    const h00 = data[iz][ix];
-    const h10 = data[iz][ix + 1];
-    const h01 = data[iz + 1][ix];
-    const h11 = data[iz + 1][ix + 1];
-    const h0 = h00 * (1 - fx) + h10 * fx;
-    const h1 = h01 * (1 - fx) + h11 * fx;
-    return h0 * (1 - fz) + h1 * fz;
-  }
-
   // webclient/LidarShaders.ts
   var LidarVertexShader = `
     uniform sampler2D tDepth;
@@ -414,6 +361,8 @@
         }
 
         // DIAGNOSTIC MODE: colour-code world Y to verify reconstruction.
+        // Red  = elevated object (vWorldPos.y > 0.1)
+        // Blue = ground plane   (vWorldPos.y <= 0.1)
         if (diagMode > 1.5) {
             // diagMode = 2.0: raw depth greyscale \u2014 proves depth texture read
             gl_FragColor = vec4(vRawDepth, vRawDepth, vRawDepth, 1.0);
@@ -433,10 +382,12 @@
         if (scanMode >= 0.5) {
             if (dotType > 0.5) {
                 // --- DYNAMIC POINT SPRITE CIRCLES ---
+                // gl_PointCoord gives [0,1] local coordinates for the square sprite.
                 vec2 pt = gl_PointCoord - vec2(0.5);
                 float distFromCenter = length(pt);
 
-                // Anti-Aliasing & Additive Blending
+                // Anti-Aliasing & Additive Blending: we smooth the edge
+                // gradually to create a soft, glowing point sprite.
                 shapeAlpha = 1.0 - smoothstep(0.1, 0.5, distFromCenter);
 
                 if (shapeAlpha < 0.01) discard;
@@ -463,6 +414,7 @@
             vec2 dir = vec2(0.0, 1.0); // default vertical line if flat
             if (gradLen > 0.00001) {
                 vec2 gNorm = grad / gradLen;
+                // Vector perpendicular to gradient acts as our surface contour line
                 dir = vec2(-gNorm.y, gNorm.x);
             }
             
@@ -476,6 +428,7 @@
             vec2 rotatedPt = rot * pt;
             
             // 5. Elongate into a dash
+            // Stretching along X so the dash lies along the contour direction
             rotatedPt.x /= 5.0; 
             
             float dist = length(rotatedPt);
@@ -484,30 +437,41 @@
             if (shapeAlpha < 0.01) discard;
         }
 
-        // Entropy-based signal loss
+        // Entropy-based signal loss: randomly drop a fraction of pixels.
         float noise = rand(vUv * fract(time));
         if (noise < entropy * 0.3) discard;
 
-        // Distance-based brightness
+        // Distance-based brightness.
+        // Tuned for typical viewing range: 1 to 30.
+        // clamp ensures near objects stay fully bright;
+        // far objects floor at 5%.
         float baseBrightness = clamp(1.0 - vDist / 30.0, 0.05, 1.0);
 
-        // Elevation-based contrast boost
-        float elevationBoost = step(0.1, vWorldPos.y);
+        // Elevation-based contrast boost:
+        // Elevated objects (y > 0.1) get a brightness
+        // floor of 0.3 so they never vanish into the
+        // dark ground, even at range.
+        // Ground fades naturally into near-black.
+        float elevationBoost = step(0.1, vWorldPos.y); // 1.0 if elevated, 0.0 if ground
         float brightness = mix(baseBrightness, max(baseBrightness, 0.3), elevationBoost);
 
-        // Colour: warm white/orange close, dark deep orange far.
-        vec3 nearColor = vec3(1.0, 0.77, 0.54);  // ~3800K
-        vec3 farColor  = vec3(0.4, 0.1, 0.0);    // ~1700K
+        // Colour: warm white/orange close (3800K), dark deep orange far (1700K).
+        vec3 nearColor = vec3(1.0, 0.77, 0.54);  // ~3800K (#ffc48a)
+        vec3 farColor  = vec3(0.4, 0.1, 0.0);    // ~1700K (#661a00)
         vec3 color = mix(farColor, nearColor, brightness);
 
-        // Sample intrinsic entity color from .rgb (which now includes terrain elevation coloring)
-        vec3 baseObjColor = texture2D(tDepth, vUv).rgb;
-        vec3 blendedTint = mix(vec3(1.0), baseObjColor, 0.5);
-        color *= blendedTint;
-
         if (scanMode < 0.5) {
-            color *= 0.35;
-            shapeAlpha *= 0.8;
+            // Line-Lidar mode (Emulated Contours): sample intrinsic entity colour from .rgb
+            vec3 baseObjColor = texture2D(tDepth, vUv).rgb;
+
+            vec3 blendedTint = mix(vec3(1.0), baseObjColor, 0.375);
+            color *= blendedTint;
+
+            // Global brightness dampening to prevent white-hot blowout on dense geometry
+            // Since we scaled horizontal resolution to 800 and overlap elongated dashes
+            // additive blending stacks extremely fast.
+            color *= 0.35; // reduced from 0.9
+            shapeAlpha *= 0.8; // reduce alpha headroom
         }
 
         gl_FragColor = vec4(color, brightness * shapeAlpha);
@@ -518,7 +482,6 @@
     varying vec3 vViewPosition;
     varying vec3 vNormal;
     varying vec2 vLidarTexCoord;
-    varying vec3 vWorldPosition;
 
     void main() {
         vec4 vPos = modelViewMatrix * vec4(position, 1.0);
@@ -526,10 +489,9 @@
         vViewPosition = vPos.xyz;
         vNormal = normalize(normalMatrix * normal);
 
-        vec4 worldPos = modelMatrix * vec4(position, 1.0);
-        vWorldPosition = worldPos.xyz;
-
-        // Calculate texture coordinates based on the LIDAR scan geometry
+        // Calculate texture coordinates based on the LIDAR scan geometry and the object's surface.
+        // This generates parametric UVs relative to the camera origin that conform
+        // to the physical shape of the object during perspective interpolation.
         vLidarTexCoord = vec2(
             atan(vViewPosition.x, -vViewPosition.z),
             vViewPosition.z
@@ -541,84 +503,67 @@
   var ProceduralMeshFragmentShader = `
     uniform float far;
     uniform vec3 uColor;
-    uniform float uProceduralMode;
+    uniform float uProceduralMode; // 0.0 = offscreen pack, 1.0 = camera-space projection
     uniform float time;
     
     varying float vViewZ;
     varying vec3 vViewPosition;
     varying vec3 vNormal;
     varying vec2 vLidarTexCoord;
-    varying vec3 vWorldPosition;
-
-    vec3 getElevationColor(float y) {
-        // sea-blue at 0 or below
-        if (y <= 0.0) return vec3(0.0, 0.2, 0.5);
-
-        // 0 to 1.0 (800m): dark brown to green to red
-        if (y < 0.5) {
-            float t = y / 0.5;
-            return mix(vec3(0.2, 0.1, 0.0), vec3(0.0, 0.5, 0.0), t);
-        }
-        if (y < 1.0) {
-            float t = (y - 0.5) / 0.5;
-            return mix(vec3(0.0, 0.5, 0.0), vec3(0.8, 0.0, 0.0), t);
-        }
-
-        // 1.0 to 2.5 (800-2000m): violet to light pale blue
-        if (y < 2.5) {
-            float t = (y - 1.0) / 1.5;
-            return mix(vec3(0.5, 0.0, 0.5), vec3(0.6, 0.8, 1.0), t);
-        }
-
-        // 2.5 to 8.0 (2000-8000m): white-blue to white-yellow
-        if (y < 8.0) {
-            float t = (y - 2.5) / 5.5;
-            return mix(vec3(0.8, 0.9, 1.0), vec3(1.0, 1.0, 0.8), t);
-        }
-
-        return vec3(1.0, 1.0, 0.9);
-    }
 
     void main() {
-        vec3 elevationColor = getElevationColor(vWorldPosition.y);
-        // Mix object color with elevation color
-        vec3 finalBaseColor = mix(uColor, elevationColor, 0.7);
-
         if (uProceduralMode < 0.5) {
             // Mode 0: Default Depth+Color render pass for PointCloud Sprites
-            gl_FragColor = vec4(finalBaseColor, vViewZ / far);
+            gl_FragColor = vec4(uColor, vViewZ / far);
         } else {
-            // Mode 1: Camera-Space Procedural Projection
+            // Mode 1: Camera-Space Procedural Projection (Native Mesh Texturing)
             float depth = clamp(vViewZ, 1.0, far);
+
+            // Use the texture coordinates evaluated on the 3D vertex surfaces
+            // This ensures the stripes deform and map to the physical structural geometry.
             float yawAngle = vLidarTexCoord.x;
             
-            float stripeSpacing = 0.017;
-            float stripeWidth = 0.002;
+            // Calculate 77 vertical scanlines across the Camera's Field of View.
+            // Using a standard 75-degree FOV (~1.309 radians).
+            // 1.309 / 77 stripes = ~0.017 radians per stripe
+            float stripeSpacing = 0.017;       // Spacing for 77 vertical stripes
+            float stripeWidth = 0.002;         // Very sharp laser line width
             
+            // Evaluates strictly to vertical stripes mapped to object contours!
             float slice = mod(yawAngle, stripeSpacing);
             float isStripe = step(slice, stripeWidth);
 
+            // Map the texture explicitly to Object Normals (Lambertian Reflectance)
+            // The Lidar beam originates from the camera lens (view-space origin).
             vec3 viewDirection = normalize(vViewPosition);
             vec3 nNormal = normalize(vNormal);
             float lambert = max(0.0, dot(nNormal, -viewDirection));
             
+            // 3. Apply the Orange Palette (1700K - 3800K) based on Depth
+            // Normalizing depth to a 0.0 - 1.0 range based on 'far' clip plane
             float normalizedDepth = clamp(depth / 80.0, 0.0, 1.0);
             
-            vec3 nearColor = vec3(1.0, 0.77, 0.54);
-            vec3 farColor  = vec3(0.4, 0.1, 0.0);
+            vec3 nearColor = vec3(1.0, 0.77, 0.54);  // ~3800K (#ffc48a)
+            vec3 farColor  = vec3(0.4, 0.1, 0.0);    // ~1700K (#661a00)
             
+            // Reversing the interpolation: distanceFade is 1.0 at camera, 0.0 far away.
+            // So we mix based on normalizedDepth directly (0.0 at camera, 1.0 far away).
             vec3 paletteColor = mix(nearColor, farColor, normalizedDepth);
             
-            // Mix the elevation-aware color into the procedural Lidar palette
-            vec3 stripeColor = mix(paletteColor, finalBaseColor, 0.25);
+            // Mix 25% of the underlying object color into the procedural Lidar palette
+            // to ensure units still retain their team color tint during scans.
+            vec3 stripeColor = mix(paletteColor, uColor, 0.25);
             
+            // Illumination falloff
             float illumination = lambert * 0.9 + 0.1;
             float distanceFade = 1.0 - normalizedDepth;
             distanceFade = pow(distanceFade, 3.0); 
 
+            // If it's not a Lidar stripe, render nothing (pure black void with no shading).
             if (isStripe < 0.5) {
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
             } else {
+                // Modulate the stripe color by the physical surface lighting and distance fade
                 vec3 finalHit = stripeColor * illumination * 3.0 * distanceFade;
                 gl_FragColor = vec4(finalHit, 1.0);
             }
@@ -724,7 +669,6 @@
     modelCache = /* @__PURE__ */ new Map();
     isRebuildingBuffer = false;
     pendingStyleConfig = null;
-    terrainMesh = null;
     constructor(domElement) {
       this.initMainScene(domElement);
       this.initVirtualScene();
@@ -904,15 +848,6 @@
       });
     }
     updateTerrain(terrain) {
-      if (this.terrainMesh) {
-        this.virtualScene.remove(this.terrainMesh);
-        if (this.terrainMesh.geometry) {
-          this.terrainMesh.geometry.dispose();
-        }
-      }
-      const material = this.getLidarBaseMaterial(8956552);
-      this.terrainMesh = createTerrainMesh(terrain, material);
-      this.virtualScene.add(this.terrainMesh);
     }
     updateEntities(entities) {
       this.entityRenderer.update(entities);
@@ -1007,6 +942,34 @@
     }
   };
 
+  // webclient/TerrainMesh.ts
+  function createTerrainMesh(terrain) {
+    const { width, height } = terrain.size;
+    const geometry = new THREE.PlaneGeometry(
+      width,
+      height,
+      width - 1,
+      height - 1
+    );
+    const vertices = geometry.attributes.position.array;
+    let ptr = 2;
+    for (const row of terrain.data) {
+      for (const z of row) {
+        vertices[ptr] = z;
+        ptr += 3;
+      }
+    }
+    geometry.rotateX(-Math.PI / 2);
+    geometry.attributes.position.needsUpdate = true;
+    geometry.computeVertexNormals();
+    const material = new THREE.MeshLambertMaterial({
+      color: 8956552,
+      wireframe: false
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+  }
+
   // webclient/SphereView.ts
   var SphereView = class {
     scene;
@@ -1014,7 +977,6 @@
     controls;
     entityRenderer;
     boundResize;
-    terrainMesh = null;
     constructor(domElement) {
       this.scene = new THREE.Scene();
       this.scene.background = new THREE.Color(15658734);
@@ -1047,14 +1009,8 @@
       this.boundResize = this.onWindowResize.bind(this);
     }
     updateTerrain(terrain) {
-      if (this.terrainMesh) {
-        this.scene.remove(this.terrainMesh);
-        if (this.terrainMesh.geometry) {
-          this.terrainMesh.geometry.dispose();
-        }
-      }
-      this.terrainMesh = createTerrainMesh(terrain);
-      this.scene.add(this.terrainMesh);
+      const mesh = createTerrainMesh(terrain);
+      this.scene.add(mesh);
     }
     updateEntities(entities) {
       this.entityRenderer.update(entities);
@@ -1214,8 +1170,6 @@
     tempV = new THREE.Vector3(0, 0, -1);
     tempR = new THREE.Vector3(1, 0, 0);
     speed = 20;
-    heightOffset = 1.7;
-    // Typical eye level
     constructor(viewManager, stateProvider) {
       this.viewManager = viewManager;
       this.stateProvider = stateProvider;
@@ -1237,23 +1191,9 @@
         this.moveVec.copy(this.moveDir).multiplyScalar(
           this.speed * delta
         );
+        const view = this.viewManager.getActiveView();
+        if (view) view.camera.position.add(this.moveVec);
         this.position.add(this.moveVec);
-      }
-      const view = this.viewManager.getActiveView();
-      if (view) {
-        let terrainY = 0;
-        if (view.terrainMesh) {
-          terrainY = sampleTerrainHeight(
-            view.terrainMesh,
-            this.position.x,
-            this.position.z
-          );
-        }
-        this.position.y = terrainY;
-        view.camera.position.copy(this.position);
-        view.camera.position.y += this.heightOffset;
-      }
-      if (this.moveDir.lengthSq() > 0) {
         this.syncState(provider);
       }
     }
@@ -1394,42 +1334,29 @@
     let currentTerrain = null;
     const updateEntitiesList = (interpolatedPositions) => {
       entities.length = 0;
-      const view = viewManager.getActiveView();
-      const terrainMesh = view?.terrainMesh;
       for (const [id, pos] of playerAnchors) {
-        const p = pos.clone();
-        if (terrainMesh) {
-          p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
-        }
         entities.push({
           id,
           type: "player",
-          pos: p,
+          pos: pos.clone(),
           char: "",
           charm: playerCharm.get(id) || 0
         });
       }
       for (const [id, anchorPos] of faunaAnchors) {
-        const p = (interpolatedPositions?.get(id) || anchorPos).clone();
-        if (terrainMesh) {
-          p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
-        }
+        const pos = interpolatedPositions?.get(id) || anchorPos;
         entities.push({
           id,
           type: "fauna",
-          pos: p,
+          pos: pos.clone(),
           char: ""
         });
       }
       for (const [id, anchorPos] of mineralAnchors) {
-        const p = anchorPos.clone();
-        if (terrainMesh) {
-          p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
-        }
         entities.push({
           id,
           type: "mineral",
-          pos: p,
+          pos: anchorPos.clone(),
           char: ""
         });
       }
