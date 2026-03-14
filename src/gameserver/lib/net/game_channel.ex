@@ -29,8 +29,8 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   def handle_info({:after_join, data}, socket) do
-    user_id = Map.get(socket.assigns, :user_id)
-    push(socket, "game_phase", %{phase: data.phase, user_id: user_id})
+    uid = Map.get(socket.assigns, :user_id, "guest")
+    push(socket, "game_phase", %{phase: data.phase, user_id: uid})
     push(socket, "game_state", data.game_state)
     {:noreply, socket}
   end

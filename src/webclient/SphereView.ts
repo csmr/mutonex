@@ -17,6 +17,7 @@ export class SphereView implements IView {
 
   private entityRenderer: EntityRenderer;
   private boundResize: () => void;
+  public terrainMesh: any | null = null;
 
   constructor(domElement: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
@@ -56,8 +57,14 @@ export class SphereView implements IView {
   }
 
   public updateTerrain(terrain: Terrain): void {
-    const mesh = createTerrainMesh(terrain);
-    this.scene.add(mesh);
+    if (this.terrainMesh) {
+      this.scene.remove(this.terrainMesh);
+      if (this.terrainMesh.geometry) {
+        this.terrainMesh.geometry.dispose();
+      }
+    }
+    this.terrainMesh = createTerrainMesh(terrain);
+    this.scene.add(this.terrainMesh);
   }
 
   public updateEntities(entities: EntityData[]): void {

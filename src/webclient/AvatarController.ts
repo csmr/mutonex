@@ -1,6 +1,7 @@
 import "./global_types.ts";
 import { ViewManager } from "./ViewManager.ts";
 import { GameStateProvider } from "./GameStateProvider.ts";
+import { sampleTerrainHeight } from "./TerrainMesh.ts";
 
 /**
  * Handles avatar movement, input, and state synchronization.
@@ -22,6 +23,7 @@ export class AvatarController {
   private tempR = new THREE.Vector3(1, 0, 0);
 
   public speed = 20.0;
+  public heightOffset = 1.7; // Typical eye level
 
   constructor(
     viewManager: ViewManager,
@@ -52,10 +54,26 @@ export class AvatarController {
         this.speed * delta,
       );
 
-      const view = this.viewManager.getActiveView();
-      if (view) view.camera.position.add(this.moveVec);
-
       this.position.add(this.moveVec);
+    }
+
+    // Always snap to terrain height if available
+    const view = this.viewManager.getActiveView();
+    if (view) {
+      let terrainY = 0;
+      if (view.terrainMesh) {
+        terrainY = sampleTerrainHeight(
+          view.terrainMesh,
+          this.position.x,
+          this.position.z,
+        );
+      }
+      this.position.y = terrainY;
+      view.camera.position.copy(this.position);
+      view.camera.position.y += this.heightOffset;
+    }
+
+    if (this.moveDir.lengthSq() > 0) {
       this.syncState(provider);
     }
   }

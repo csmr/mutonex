@@ -6,6 +6,7 @@ export interface IView {
   scene: any; // THREE.Scene
   camera: any; // THREE.Camera
   controls?: any; // THREE.OrbitControls
+  terrainMesh?: any; // THREE.Mesh
   update(deltaTime: number): void;
   updateEntities(entities: EntityData[]): void;
   updateTerrain(terrain: Terrain): void;

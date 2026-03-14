@@ -8,6 +8,7 @@ import { LidarStyles } from "./LidarStyles.ts";
 import { SphereView } from "./SphereView.ts";
 import { LobbyView, Sector } from "./LobbyView.ts";
 import { AvatarController } from "./AvatarController.ts";
+import { sampleTerrainHeight } from "./TerrainMesh.ts";
 import { EntityData, Terrain } from "./types.ts";
 import type { PlayerTuple } from "./MockGameStateProvider.ts";
 import { FeatureCardHUD } from "./FeatureCardHUD.ts";
@@ -96,22 +97,36 @@ function main() {
   ) => {
     entities.length = 0;
 
+    const view = viewManager.getActiveView();
+    const terrainMesh = view?.terrainMesh;
+
     for (const [id, pos] of playerAnchors) {
+      const p = pos.clone();
+      if (terrainMesh) {
+        p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
+      }
       entities.push({
-        id, type: "player", pos: pos.clone(), char: "", charm: playerCharm.get(id) || 0
+        id, type: "player", pos: p, char: "", charm: playerCharm.get(id) || 0
       });
     }
 
     for (const [id, anchorPos] of faunaAnchors) {
-      const pos = interpolatedPositions?.get(id) || anchorPos;
+      const p = (interpolatedPositions?.get(id) || anchorPos).clone();
+      if (terrainMesh) {
+        p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
+      }
       entities.push({
-        id, type: "fauna", pos: pos.clone(), char: ""
+        id, type: "fauna", pos: p, char: ""
       });
     }
 
     for (const [id, anchorPos] of mineralAnchors) {
+      const p = anchorPos.clone();
+      if (terrainMesh) {
+        p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
+      }
       entities.push({
-        id, type: "mineral", pos: anchorPos.clone(), char: ""
+        id, type: "mineral", pos: p, char: ""
       });
     }
 

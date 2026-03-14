@@ -4,6 +4,7 @@ import {
   FirstPersonControls
 } from "./FirstPersonControls.ts";
 import { EntityRenderer } from "./EntityRenderer.ts";
+import { createTerrainMesh } from "./TerrainMesh.ts";
 import {
   EntityData,
   Terrain
@@ -49,6 +50,7 @@ export class LidarView implements IView {
   private modelCache: Map<string, any> = new Map();
   private isRebuildingBuffer = false;
   private pendingStyleConfig: string | null = null;
+  public terrainMesh: any | null = null;
 
   constructor(domElement: HTMLCanvasElement) {
     this.initMainScene(domElement);
@@ -282,7 +284,16 @@ export class LidarView implements IView {
   }
 
   public updateTerrain(terrain: Terrain): void {
-    // Placeholder
+    if (this.terrainMesh) {
+      this.virtualScene.remove(this.terrainMesh);
+      if (this.terrainMesh.geometry) {
+        this.terrainMesh.geometry.dispose();
+      }
+    }
+
+    const material = this.getLidarBaseMaterial(0x88aa88);
+    this.terrainMesh = createTerrainMesh(terrain, material);
+    this.virtualScene.add(this.terrainMesh);
   }
 
   public updateEntities(entities: EntityData[]) {
