@@ -46,6 +46,7 @@ defmodule Mutonex.Engine.Entities do
                 flavor: nil # :red, :cyan, etc.
               },
               history: %{},
+              # TODO: Move token counts to browser client session
               invalid_token_count: 0,
               expired_token_count: 0
   end

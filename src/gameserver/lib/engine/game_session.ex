@@ -192,12 +192,11 @@ defmodule Mutonex.Engine.GameSession do
 
   defp validate_token_internal(state, uid, token) do
     tokens = Map.get(state.tokens, uid, %{})
-
-    cond do
-      token == tokens[:current] -> :ok
-      token == tokens[:previous] -> :expired
-      true -> :invalid
-    end
+    MessageToken.verify(
+      token,
+      tokens[:current],
+      tokens[:previous]
+    )
   end
 
   defp should_process_message?(validation) do

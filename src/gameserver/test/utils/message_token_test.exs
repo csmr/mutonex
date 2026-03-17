@@ -13,4 +13,12 @@ defmodule Mutonex.Utils.MessageTokenTest do
     token2 = MessageToken.generate()
     assert token1 != token2
   end
+
+  test "verify/3 handles current, previous, and invalid" do
+    curr = "token-a"
+    prev = "token-b"
+    assert MessageToken.verify(curr, curr, prev) == :ok
+    assert MessageToken.verify(prev, curr, prev) == :expired
+    assert MessageToken.verify("bad", curr, prev) == :invalid
+  end
 end
