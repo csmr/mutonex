@@ -146,7 +146,11 @@ defmodule Mutonex.Engine.GameSession do
     push_token(pid, token)
 
     new_tokens =
-      Map.put(state.tokens, uid, %{current: token, previous: nil, pid: pid})
+      Map.put(
+        state.tokens,
+        uid,
+        %{current: token, previous: nil, pid: pid}
+      )
 
     state = %{state | tokens: new_tokens}
 
@@ -169,15 +173,18 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  def handle_cast({:avatar_update, uid, payload, token}, state) do
+  def handle_cast({:avatar_update, uid, data, token}, state) do
     validation = validate_token_internal(state, uid, token)
 
     case should_process_message?(validation) do
       true ->
-        do_avatar_update(uid, payload, state, validation)
+        do_avatar_update(uid, data, state, validation)
 
       false ->
-        {:noreply, update_state_with_validation(state, uid, validation)}
+        state =
+          update_state_with_validation(state, uid, validation)
+
+        {:noreply, state}
     end
   end
 
@@ -194,7 +201,8 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp should_process_message?(validation) do
-    validation in [:ok, :expired] or not message_token_enabled?()
+    validation in [:ok, :expired] or
+      not message_token_enabled?()
   end
 
   defp message_token_enabled? do
@@ -252,10 +260,18 @@ defmodule Mutonex.Engine.GameSession do
     updated_unit =
       case type do
         :expired ->
-          %{unit | expired_token_count: unit.expired_token_count + 1}
+          %{
+            unit
+            | expired_token_count:
+                unit.expired_token_count + 1
+          }
 
         :invalid ->
-          %{unit | invalid_token_count: unit.invalid_token_count + 1}
+          %{
+            unit
+            | invalid_token_count:
+                unit.invalid_token_count + 1
+          }
       end
 
     new_p_state = %{p_state | player: updated_unit}

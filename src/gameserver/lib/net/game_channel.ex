@@ -47,7 +47,10 @@ defmodule Mutonex.Net.GameChannel do
         _ -> {nil, payload}
       end
 
-    GenServer.cast(via, {:avatar_update, user_id, inner_payload, token})
+    GenServer.cast(
+      via,
+      {:avatar_update, user_id, inner_payload, token}
+    )
 
     {:noreply, socket}
   end
