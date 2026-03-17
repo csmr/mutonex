@@ -8,6 +8,9 @@ generated from the source code's parameters.
 ## 2. Technical Strategy (AGENTS.md)
 *   **Source of Truth:** Game parameters in data-driven
     config (e.g., `Mutonex.Engine.Rules`).
+    **Runtime plan:** Look into if the Game Guide
+    would be best generated using Elixir or Deno
+    platform.
 *   **Generation:** Build-time script (Deno) parses
     params and renders to template.
 *   **Accessibility:** Integrated into web client,

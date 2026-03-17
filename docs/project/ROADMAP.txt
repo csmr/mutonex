@@ -34,7 +34,7 @@ Focus: Multiplayer interactions and world history.
 - Multi-sector session orchestration.
 
 PHASE IV: ATMOSPHERE & AUTHENTICATION
--------------------------------
+-------------------------------------
 Focus: Narrative events and strategic complexity.
 - Orbital Debris Cataclysm: Mid-game entropy events.
 - Advanced Units: Airpower, Activists, Fauna AI.
