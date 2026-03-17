@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-TEST_TIMEOUT="150s"
+TEST_TIMEOUT="20s"
 ENV_PATH="../src/.env"
 SERVER_PATH="../src/gameserver"
 
@@ -14,18 +14,18 @@ if [ -f "${ENV_PATH}" ]; then
   set -a
   source <(grep -v -E '^(UID|GID)=' "${ENV_PATH}")
   set +a
-  echo "Loaded environment variables from ${ENV_PATH}"
+  echo "Loaded ${ENV_PATH}"
 else
-  echo "Warning: ${ENV_PATH} file not found."
+  echo "Warning: ${ENV_PATH} not found."
 fi
 
 # Check if mix exists
 if ! command -v mix &> /dev/null; then
-    echo "Error: 'mix' command could not be found. Please ensure Elixir is installed and in your PATH."
+    echo "Error: 'mix' not found. Please ensure Elixir is installed & in PATH."
     exit 1
 fi
 
-echo "Running mix test in src/gameserver with ${TEST_TIMEOUT} timeout..."
+echo "Running mix test in ${SERVER_PATH} with ${TEST_TIMEOUT} timeout..."
 
 # Run tests with a timeout
 timeout "${TEST_TIMEOUT}" mix test

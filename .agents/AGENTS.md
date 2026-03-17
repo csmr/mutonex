@@ -50,7 +50,7 @@ The gameserver now absorbs both the web serving logic and the Simtellus planet s
 mix test
 ```
 
-*Agents run gameserver tests in the local shell with:*
+Agents run gameserver tests in local shell with:
 ```bash
 bash .agents/test_gameserver.sh
 ```
@@ -63,13 +63,15 @@ This covers:
 
 ### Webclient verification via bundle
 
-To verify the webclient, ensure it can be successfully bundled:
+To verify the webclient, ensure successful bundle:
 
 ```bash
 cd src && bash scripts/bundle-webclient.sh
 ```
 
-To run the suite of unit tests for the Webclient implementation logic independently:
+### Webclient unit tests:
+
+Run:
 
 ```bash
 bash .agents/test_webclient.sh
