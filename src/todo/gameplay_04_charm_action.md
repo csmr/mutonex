@@ -1,4 +1,4 @@
-# TODO 04: Charm Action Implementation
+# [IMPLEMENTED] TODO 04: Charm Action Implementation
 
 **Context:**
 Once the player unit has a `charm` attribute (TODO 01), the UI can display it (TODO 02), and there are targets to charm (TODO 03), the actual gameplay logic of clicking the "Charm" card to trigger the network command must be built.

@@ -1,4 +1,4 @@
-# TODO 02: Feature Card UI & HUD
+# [IMPLEMENTED] TODO 02: Feature Card UI & HUD
 
 **Context:**
 The Webclient currently relies purely on a 3D interface with crosshairs (FPS) or a generic birds-eye perspective (RTS) but possesses no HUD overlay for displaying a player's inventory, unlocked abilities, or properties. The "Charm" ability should be presented to the player as an actionable skill, potentially visually represented as a "Feature Card" or badge per the Design Document.
