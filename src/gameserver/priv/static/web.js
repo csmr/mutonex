@@ -1317,9 +1317,9 @@
     viewManager.animate();
     const lobbyView = new LobbyView();
     const mockSectors = [
-      { id: "game:lobby", name: "Sector Alpha (Dev)" },
-      { id: "game:lobby_beta", name: "Sector Beta (Test)" },
-      { id: "game:lobby_gamma", name: "Sector Gamma (High Pop)" }
+      { id: "game:sector_alpha", name: "Sector Alpha (Dev)" },
+      { id: "game:sector_beta", name: "Sector Beta (Test)" },
+      { id: "game:sector_gamma", name: "Sector Gamma (High Pop)" }
     ];
     lobbyView.renderSectorList(mockSectors);
     let gameStateProvider = null;
