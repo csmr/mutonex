@@ -12,9 +12,13 @@ config :mutonex_server, Mutonex.Net.Endpoint,
 if true do
   database_url =
     System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      """
+      if config_env() == :test do
+        "ecto://localtest/localtest"
+      else
+        raise """
+        environment variable DATABASE_URL is missing.
+        """
+      end
 
   config :mutonex_server, Mutonex.Server.Repo,
     url: database_url,
