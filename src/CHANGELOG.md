@@ -1,9 +1,11 @@
 # Changelog
 
+## v0.2.21 - Charm Ability
+- **Gameplay:** Implemented the Charm Ability Feature Card UI and network action handler.
+
 ## v0.2.20 - Webclient Geometry Improvements
 - **Game Engine & Systems:** SparseOctree depth limits & FaunaSystem density up to 22/sector.
 - **Webclient Refactor:** Fixed blocky OpenType geometry winding, expanding 3D pipeline to 50+ unique Unicode entities (Fauna, Minerals).
-- **Gameplay:** Implemented the Charm Ability Feature Card UI and network action handler.
 
 ## v0.2.19 - Orange Lidar Rendering
 - **Game Engine & Systems:**
