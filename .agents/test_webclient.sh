@@ -2,7 +2,7 @@
 set -e
 
 # Configuration
-TEST_TIMEOUT="30s"
+TEST_TIMEOUT="15s"
 CLIENT_PATH="../src/webclient"
 
 # Change to module directory

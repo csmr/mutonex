@@ -9,8 +9,8 @@ Mutonex is implemented with a functional style where possible, using Elixir and 
 1. Functional programming code, mix-ins, modules.
 2. Don't repeat yourself (DRY).
 3. Expressions formatted one thing per line.
-4. One thing functions, limit blocks to >11 lines.
-5. Lines as short as possible (60 chars).
+4. One thing functions, limit blocks to <11 lines.
+5. Lines as short as possible (<68 chars).
 6. Use data-driven configuration (dictionaries/maps) instead of imperative code (e.g., long `if/else` checks) for state cycling and definitions.
 
 

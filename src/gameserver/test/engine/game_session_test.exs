@@ -96,12 +96,12 @@ defmodule Mutonex.Engine.GameSessionTest do
     wait_for_phase(pid, :lobby)
 
     # Add the player, which initiates the start phase
-    GenServer.cast(pid, {:player_joined, "charm_caster"})
+    GenServer.cast(pid, {:player_joined, "charm_caster", self()})
     wait_for_phase(pid, :gamein)
 
     # Force the positions so the distance check passes
     pos = %{x: 0.0, y: 1.0, z: 0.0}
-    GenServer.cast(pid, {:avatar_update, "charm_caster", [pos.x, pos.y, pos.z]})
+    GenServer.cast(pid, {:avatar_update, "charm_caster", [pos.x, pos.y, pos.z], "mock_token"})
     
     # Cast the charm payload (targeting the default dummy npc that's spawned close by)
     GenServer.cast(pid, {:player_action, "charm_caster", "charm", "npc_charmable_beta"})

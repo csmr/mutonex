@@ -188,6 +188,13 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
+  def handle_cast({:player_action, source_id, "charm", target_id}, state) do
+    case state.phase do
+      :gamein -> process_charm_action(source_id, target_id, state)
+      _ -> {:noreply, state}
+    end
+  end
+
   # --- Private Helpers ---
 
   defp validate_token_internal(state, uid, token) do
@@ -231,13 +238,6 @@ defmodule Mutonex.Engine.GameSession do
 
       _ ->
         {:noreply, state}
-    end
-  end
-
-  def handle_cast({:player_action, source_id, "charm", target_id}, state) do
-    case state.phase do
-      :gamein -> process_charm_action(source_id, target_id, state)
-      _ -> {:noreply, state}
     end
   end
 

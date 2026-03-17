@@ -45,7 +45,7 @@ Focus: Narrative events and strategic complexity.
 ROADMAP WISHLIST:
 -----------------
 * Sector model for the planet globe.
-* Players client. Browser client the lowest hanging fruit? (Current focus: Features like Charm Abilities & HUD are now active)
+* Players client. Browser client the lowest hanging fruit?
 * Generative equidistantial fractal terrain for game instances
 * Turn Based gameplay. Turn Based turns are realtime, 20 s, 12 h and 24h.
 * Community: where can the audience be engaged?
