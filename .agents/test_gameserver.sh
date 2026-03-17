@@ -1,34 +1,23 @@
 #!/bin/bash
 set -e
 
-# Change to the src directory where the .env file is located
-cd "$(dirname "$0")/../src" || exit 1
+# Configuration
+TEST_TIMEOUT="150s"
+ENV_PATH="../src/.env"
+SERVER_PATH="../src/gameserver"
 
-# Export variables from the .env file if it exists
-if [ -f .env ]; then
-  # Read line by line, ignoring comments and empty lines
-  while IFS= read -r line || [ -n "$line" ]; do
-    if [[ "$line" != *"#"* ]] && [[ -n "$line" ]]; then
-      # Extract key and value separately to avoid 'export readonly' errors
-      key="${line%%=*}"
-      value="${line#*=}"
-      
-      # Skip readonly properties like UID
-      if [ "$key" = "UID" ]; then
-        continue
-      fi
-      
-      export "$key=$value"
-    fi
-  done < <(grep -v '^#' .env)
-  
-  echo "Loaded environment variables from src/.env"
+# Change to module directory
+cd "$(dirname "$0")/${SERVER_PATH}" || exit 1
+
+# Export variables from the .env file if it exists, skipping readonly UID/GID
+if [ -f "${ENV_PATH}" ]; then
+  set -a
+  source <(grep -v -E '^(UID|GID)=' "${ENV_PATH}")
+  set +a
+  echo "Loaded environment variables from ${ENV_PATH}"
 else
-  echo "Warning: src/.env file not found."
+  echo "Warning: ${ENV_PATH} file not found."
 fi
-
-# Run the elixir mix tests
-cd gameserver || exit 1
 
 # Check if mix exists
 if ! command -v mix &> /dev/null; then
@@ -36,14 +25,14 @@ if ! command -v mix &> /dev/null; then
     exit 1
 fi
 
-echo "Running mix test in src/gameserver with 150s timeout..."
+echo "Running mix test in src/gameserver with ${TEST_TIMEOUT} timeout..."
 
-# Run tests with a 150-second timeout
-timeout 150s mix test
+# Run tests with a timeout
+timeout "${TEST_TIMEOUT}" mix test
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 124 ]; then
-    echo "Error: mix test timed out after 150 seconds."
+    echo "Error: mix test timed out after ${TEST_TIMEOUT}."
     exit 124
 fi
 

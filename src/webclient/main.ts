@@ -193,22 +193,16 @@ function main() {
   featureHUD.setOnCharmClick(() => {
     if (!gameStateProvider || gameStateProvider.phase !== "gamein") return;
 
-    let nearestTargetId: string | null = null;
-    let minDistance = 20.0; // 20 km/meters range for charm
+    const targets = entities
+      .filter((ent) => ent.id !== gameStateProvider!.playerId)
+      .map((ent) => ({ id: ent.id, dist: avatar.position.distanceTo(ent.pos) }))
+      .filter((t) => t.dist <= 20.0)
+      .sort((a, b) => a.dist - b.dist);
 
-    for (const ent of entities) {
-      if (ent.id === gameStateProvider.playerId) continue; // Don't charm self
-
-      const dist = avatar.position.distanceTo(ent.pos);
-      if (dist < minDistance) {
-        minDistance = dist;
-        nearestTargetId = ent.id;
-      }
-    }
-
-    if (nearestTargetId) {
-      console.log(`[Charm] Attempting to charm target: ${nearestTargetId} at dist ${minDistance.toFixed(2)}`);
-      gameStateProvider.sendPlayerAction("charm", nearestTargetId);
+    if (targets.length > 0) {
+      const nearest = targets[0];
+      console.log(`[Charm] Attempting to charm target: ${nearest.id} at dist ${nearest.dist.toFixed(2)}`);
+      gameStateProvider.sendPlayerAction("charm", nearest.id);
     } else {
       console.log("[Charm] No valid targets within range.");
     }

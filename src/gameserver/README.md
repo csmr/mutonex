@@ -19,3 +19,8 @@ Elixir/Phoenix server for game sessions and simulation.
 ## Testing
 
 Run tests with `mix test`.
+
+*Agents run gameserver tests in the local shell with:*
+```bash
+./.agents/test_gameserver.sh
+```

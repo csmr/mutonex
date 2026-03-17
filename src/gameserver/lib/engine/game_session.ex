@@ -372,13 +372,13 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp process_charm_action(source_id, target_id, state) do
-    source = get_player_unit(state, source_id)
-    target = get_player_or_fauna(state, target_id)
-    
-    if source && target && target.is_charmable && distance(source.position, target.position) <= 20.0 do
+    with %{} = source <- get_player_unit(state, source_id),
+         %{} = target <- get_player_or_fauna(state, target_id),
+         true <- target.is_charmable,
+         true <- distance(source.position, target.position) <= 20.0 do
       apply_charm_update(target, source_id, state)
     else
-      {:noreply, state}
+      _ -> {:noreply, state}
     end
   end
   
