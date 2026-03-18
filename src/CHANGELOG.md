@@ -1,9 +1,10 @@
 # Changelog
 
-## v0.2.23 - Charm, Terrain & Tokens
-- **Gameplay:** Implemented the Charm Ability Feature Card UI and network action handler.
-- **Webclient Refactor:** Integrated implementation and improvements for browser-client terrain rendering.
+## v0.2.24 - Charm, Terrain, Tokens & Scripts
+- **Gameplay:** Implemented the Charm Ability Action HUD and network action handler.
+- **Webclient Refactor:** Integrated implementation and improvements for browser-client terrain rendering, and decoupled monolithic codebase.
 - **Security & Network:** Implemented rolling message tokens for enhanced payload security and verification.
+- **Infrastructure & Tooling:** Reorganized directory layout, separating the resource generating and infra scripts.
 
 ## v0.2.20 - Webclient Geometry Improvements
 - **Game Engine & Systems:** SparseOctree depth limits & FaunaSystem density up to 22/sector.

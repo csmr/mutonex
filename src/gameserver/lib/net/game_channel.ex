@@ -55,7 +55,11 @@ defmodule Mutonex.Net.GameChannel do
     {:noreply, socket}
   end
 
-  def handle_in("player_action", %{"action" => action, "target_id" => target_id}, socket) do
+  def handle_in(
+        "player_action",
+        %{"action" => action, "target_id" => target_id},
+        socket
+      ) do
     sector_id = get_sector_id(socket)
     user_id = Map.get(socket.assigns, :user_id, "guest")
 

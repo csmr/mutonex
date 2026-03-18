@@ -74,7 +74,7 @@ function resetDom() {
 
 function createDOMTreeFromHTML(html: string): MockElement[] {
     const root = new MockElement("hud-charm-card");
-    root.className = "feature-card";
+    root.className = "action-card";
 
     const title = new MockElement();
     title.className = "card-title";
@@ -102,23 +102,23 @@ function createDOMTreeFromHTML(html: string): MockElement[] {
     }
 };
 
-const { FeatureCardHUD } = await import("../FeatureCardHUD.ts");
+const { ActionHUD } = await import("../ActionHUD.ts");
 
-Deno.test("FeatureCardHUD: constructor initializes without error", () => {
+Deno.test("ActionHUD: constructor initializes without error", () => {
     resetDom();
-    const hud = new FeatureCardHUD();
+    const hud = new ActionHUD();
     assertExists(hud);
 });
 
-Deno.test("FeatureCardHUD: show renders the charm card correctly", () => {
+Deno.test("ActionHUD: show renders the charm card correctly", () => {
     resetDom();
-    const hud = new FeatureCardHUD();
+    const hud = new ActionHUD();
     hud.show();
 
     const overlay = dom["hud-overlay"];
     assertEquals(overlay.children.length, 1);
     const card = overlay.children[0];
-    assertEquals(card.className, "feature-card");
+    assertEquals(card.className, "action-card");
 
     // Title and Value
     assertEquals(card.children.length, 2);
@@ -127,9 +127,9 @@ Deno.test("FeatureCardHUD: show renders the charm card correctly", () => {
     assertEquals(card.children[1].className, "card-value");
 });
 
-Deno.test("FeatureCardHUD: setCharmLevel updates the dom node", () => {
+Deno.test("ActionHUD: setCharmLevel updates the dom node", () => {
     resetDom();
-    const hud = new FeatureCardHUD();
+    const hud = new ActionHUD();
     hud.show();
 
     hud.setCharmLevel(42);
@@ -138,9 +138,9 @@ Deno.test("FeatureCardHUD: setCharmLevel updates the dom node", () => {
     assertEquals(cardValue!.innerText, "42");
 });
 
-Deno.test("FeatureCardHUD: onCharmClick callback responds to events", () => {
+Deno.test("ActionHUD: onCharmClick callback responds to events", () => {
     resetDom();
-    const hud = new FeatureCardHUD();
+    const hud = new ActionHUD();
 
     let clicked = false;
     hud.setOnCharmClick(() => {

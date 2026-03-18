@@ -1,4 +1,4 @@
-export class FeatureCardHUD {
+export class ActionHUD {
     private container: HTMLElement;
     private charmValueEl: HTMLElement | null = null;
     private onCharmClick?: () => void;
@@ -31,7 +31,7 @@ export class FeatureCardHUD {
 
     private render() {
         this.container.innerHTML = `
-            <div class="feature-card" id="hud-charm-card">
+            <div class="action-card" id="hud-charm-card">
                 <div class="card-title">CHARM</div>
                 <div class="card-value">0</div>
             </div>

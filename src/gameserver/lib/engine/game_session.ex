@@ -188,7 +188,10 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  def handle_cast({:player_action, source_id, "charm", target_id}, state) do
+  def handle_cast(
+        {:player_action, source_id, "charm", target_id},
+        state
+      ) do
     case state.phase do
       :gamein -> process_charm_action(source_id, target_id, state)
       _ -> {:noreply, state}
@@ -315,8 +318,22 @@ defmodule Mutonex.Engine.GameSession do
 
   defp add_default_dummy_units(players) do
     ts = System.os_time(:millisecond)
-    dp = %Unit{id: "dummy_player_alpha", type: :head, position: %{x: 5.0, y: 1.0, z: -5.0}, attributes: %{charm: 10, tribe: :potassium, flavor: :red}}
-    npc = %Unit{id: "npc_charmable_beta", type: :follower, position: %{x: -5.0, y: 1.0, z: 5.0}, is_charmable: true, attributes: %{charm: 5, tribe: :helium, flavor: :cyan}}
+
+    dp = %Unit{
+      id: "dummy_player_alpha",
+      type: :head,
+      position: %{x: 5.0, y: 1.0, z: -5.0},
+      attributes: %{charm: 10, tribe: :potassium, flavor: :red}
+    }
+
+    npc = %Unit{
+      id: "npc_charmable_beta",
+      type: :follower,
+      position: %{x: -5.0, y: 1.0, z: 5.0},
+      is_charmable: true,
+      attributes: %{charm: 5, tribe: :helium, flavor: :cyan}
+    }
+
     players
     |> Map.put(dp.id, %{player: dp, last_update: ts})
     |> Map.put(npc.id, %{player: npc, last_update: ts})
@@ -389,19 +406,38 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
-  defp apply_charm_update(%Mutonex.Engine.Entities.Unit{} = target, source_id, state) do
+  defp apply_charm_update(
+         %Mutonex.Engine.Entities.Unit{} = target,
+         source_id,
+         state
+       ) do
     updated_target = %{target | is_charmable: false, society_id: source_id}
-    new_t_state = %{player: updated_target, last_update: System.os_time(:millisecond)}
+
+    new_t_state = %{
+      player: updated_target,
+      last_update: System.os_time(:millisecond)
+    }
+
     updated = Map.put(state.players, target.id, new_t_state)
     broadcast_state_update(state.sector_id, updated)
     {:noreply, %{state | players: updated}}
   end
 
-  defp apply_charm_update(%Mutonex.Engine.Entities.Fauna{} = target, source_id, state) do
+  defp apply_charm_update(
+         %Mutonex.Engine.Entities.Fauna{} = target,
+         source_id,
+         state
+       ) do
     updated_target = %{target | is_charmable: false, society: source_id}
     updated_fauna = Map.put(state.fauna, target.id, updated_target)
     list = fauna_to_list(updated_fauna)
-    Mutonex.Net.Endpoint.broadcast("game:#{state.sector_id}", "fauna_update", %{fauna: list})
+
+    Mutonex.Net.Endpoint.broadcast(
+      "game:#{state.sector_id}",
+      "fauna_update",
+      %{fauna: list}
+    )
+
     {:noreply, %{state | fauna: updated_fauna}}
   end
   
