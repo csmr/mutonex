@@ -8,7 +8,7 @@ services:
       - .:/app
       - ./dist:/app/dist
     working_dir: /app
-    command: sh -c "./scripts/build_and_watch_webclient.sh"
+    command: sh -c "./scripts/build-webclient.sh"
     depends_on:
       postgres:
         condition: service_healthy
