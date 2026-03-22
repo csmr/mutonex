@@ -26,7 +26,7 @@ bundle_code() {
 assemble_assets() {
   local dest_geometry="$RUNTIME_DIR/assets/entity_geometry"
   
-  log "Assembling static assets to $dest_geometry."
+  log "Assembling static assets to $RUNTIME_DIR."
   mkdir -p "$dest_geometry"
   [ -d "$models_src" ] && cp -a "$models_src/." "$dest_geometry/"
   
