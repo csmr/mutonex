@@ -59,7 +59,7 @@ services:
     volumes:
       - ./gameserver:/app
       - ./res:/app/res
-      - ./dist:/app/priv/static
+      - ./dist:/dist
     working_dir: /app
     command: sh -c "mix deps.get && mix phx.server"
     depends_on:
