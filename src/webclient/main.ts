@@ -31,6 +31,15 @@ function bindDebugConsole(viewManager: ViewManager, lidarView: LidarView) {
     "font-size: 16px; font-weight: bold; color: #1E90FF;", "",
     "background: #222; color: #0f0; padding: 2px 4px; border-radius: 2px;", ""
   );
+
+  console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
+  console.log("%cMUTONEX WEBCLIENT DEBUG CONTROLS:", "color: #00ff00; font-weight: bold;");
+  console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
+  console.log("W,A,S,D   : Move Avatar");
+  console.log("Tab       : Toggle View (Lidar/Sphere)");
+  console.log("L         : Toggle Lidar Mode (Horiz/Vert)");
+  console.log("[ and ]   : Adjust Lidar Entropy (Noise)");
+  console.log("=======================================");
 }
 
 function computeEntityState(
