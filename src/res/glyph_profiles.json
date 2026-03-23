@@ -249,6 +249,52 @@
             "name": "Sunflower",
             "template": "stationary_default",
             "scale": 0.6
+        },
+        "23FF": {
+            "name": "LIDAR Scanner",
+            "template": "stationary_default",
+            "scale": 0.5
+        },
+        "1F4DF": {
+            "name": "Video-phone",
+            "template": "stationary_default",
+            "scale": 0.3
+        },
+        "1F6E4": {
+            "name": "Conveyor Belt",
+            "template": "stationary_default"
+        },
+        "1F4F0": {
+            "name": "Society Policy",
+            "template": "stationary_default"
+        },
+        "1F36F": {
+            "name": "Sunspot Cream",
+            "template": "stationary_default",
+            "scale": 0.3
+        },
+        "1F9F6": {
+            "name": "Fiber Optic",
+            "template": "stationary_default"
+        },
+        "1F93A": {
+            "name": "Attack Modifier",
+            "template": "stationary_default"
+        },
+        "2622": {
+            "name": "Nuclear Fallout",
+            "template": "stationary_default",
+            "scale": 2.0
+        },
+        "2600": {
+            "name": "Solar Panel",
+            "template": "stationary_default",
+            "scale": 1.0
+        },
+        "1F6F0": {
+            "name": "Space Debris",
+            "template": "stationary_default",
+            "scale": 1.5
         }
     }
 }
