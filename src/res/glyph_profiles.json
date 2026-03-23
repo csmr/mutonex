@@ -46,17 +46,22 @@
         "1F3AA": {
             "name": "Circus Tent",
             "template": "stationary_default",
-            "scale": 2.5
+            "scale": 6.0
         },
         "1F3D8": {
             "name": "Houses",
             "template": "stationary_default",
-            "scale": 3.5
+            "scale": 7.5
         },
         "1F3D9": {
             "name": "Cityscape",
             "template": "stationary_default",
             "scale": 25
+        },
+        "1F3F0": {
+            "name": "Power Structure",
+            "template": "stationary_default",
+            "scale": 12.0
         },
         "2B53": {
             "name": "Mineral A",
@@ -169,7 +174,7 @@
         "1F4A9": {
             "name": "Poo",
             "template": "stationary_default",
-            "scale": 0.5
+            "scale": 0.2
         },
         "1F54A": {
             "name": "Dove",
