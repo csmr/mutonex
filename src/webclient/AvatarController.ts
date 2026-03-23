@@ -114,11 +114,15 @@ export class AvatarController {
     if (this.position.distanceTo(this.lastSent) > 1.0) {
       provider.sendAvatarPosition([
         this.position.x,
+        this.position.y,
         this.position.z,
-        0,
       ]);
       this.lastSent.copy(this.position);
     }
+  }
+
+  public getForwardVector(): THREE.Vector3 {
+    return this.forward.clone();
   }
 
   public isPressed(key: string): boolean {

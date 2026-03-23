@@ -55,16 +55,15 @@ defmodule Mutonex.Net.GameChannel do
     {:noreply, socket}
   end
 
-  def handle_in(
-        "player_action",
-        %{"action" => action, "target_id" => target_id},
-        socket
-      ) do
+  def handle_in("player_action", payload, socket) do
+    %{"action" => action, "target_id" => target_id} = payload
+    metadata = Map.get(payload, "metadata")
+
     sector_id = get_sector_id(socket)
     user_id = Map.get(socket.assigns, :user_id, "guest")
 
     via = via_session(sector_id)
-    GenServer.cast(via, {:player_action, user_id, action, target_id})
+    GenServer.cast(via, {:player_action, user_id, action, target_id, metadata})
 
     {:noreply, socket}
   end

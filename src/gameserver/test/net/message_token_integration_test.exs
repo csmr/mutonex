@@ -41,7 +41,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
     # GameSession broadcasts state_update
     Enum.find_value(1..10, fn _ ->
       assert_broadcast "state_update", %{players: players}
-      if Enum.any?(players, fn [id, x, y, z, _] ->
+      if Enum.any?(players, fn [id, x, y, z, _, _] ->
         id == uid && x == 10.0 && y == 1.0 && z == 10.0
       end), do: true, else: false
     end) || flunk("Update not found")
@@ -54,7 +54,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
     })
 
     # It should NOT be broadcast with the updated position
-    refute_broadcast "state_update", %{players: [[^uid, 20.0, 1.0, 20.0, 0]]}
+    refute_broadcast "state_update", %{players: [[^uid, 20.0, 1.0, 20.0, 0, []]]}
 
     # Verify invalid_token_count increased
     via = {:via, Registry, {Mutonex.GameRegistry, "integration_test"}}
@@ -80,7 +80,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
     # Should be processed
     Enum.find_value(1..10, fn _ ->
       assert_broadcast "state_update", %{players: players}
-      if Enum.any?(players, fn [id, x, y, z, _] ->
+      if Enum.any?(players, fn [id, x, y, z, _, _] ->
         id == uid && x == 30.0 && y == 1.0 && z == 30.0
       end), do: true, else: false
     end) || flunk("Update not found")

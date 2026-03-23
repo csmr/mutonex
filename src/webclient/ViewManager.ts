@@ -8,10 +8,11 @@ export interface IView {
   controls?: any; // THREE.OrbitControls
   terrainMesh?: any; // THREE.Mesh
   update(deltaTime: number): void;
-  updateEntities(entities: EntityData[]): void;
+  updateEntities(entities: EntityData[], localPlayerId?: string): void;
   updateTerrain(terrain: Terrain): void;
   onActivate(): void;
   onDeactivate(): void;
+  getInteractableObjects(): any[]; // THREE.Object3D[]
   dispose?(): void;
   preRender?(renderer: any): void; // THREE.WebGLRenderer
 }

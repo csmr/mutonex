@@ -27,6 +27,7 @@ defmodule Mutonex.Engine.Entities do
               minerals: [], # Added minerals list
               conveyors: [], # Added conveyors list
               buildings: [], # Added buildings list
+              items: [], # Added items list
               game_time: 0
   end
 
@@ -38,13 +39,17 @@ defmodule Mutonex.Engine.Entities do
               position: %{x: 0, y: 0, z: 0},
               society_id: nil,
               home_id: nil, # building_id
+              birthplace: nil, # building_id
               sight_area: 0,
               is_charmable: true,
               attributes: %{
-                charm: 0,
-                tribe: nil, # :potassium, :helium, etc.
-                flavor: nil # :red, :cyan, etc.
+                tribe: nil, # ethnic faction like "Maori"
+                flavor: nil,  # element like "Neon"
+                scale: 1.0
               },
+              inventory: [], # Added inventory list
+              energy: 100.0,
+              status: :active, # :active, :mummified
               history: %{},
               # TODO: Move token counts to browser client session
               invalid_token_count: 0,
@@ -62,6 +67,13 @@ defmodule Mutonex.Engine.Entities do
               sight_area: 0,
               function: nil, # :resource_conversion, etc.
               connected_mineral_ids: [], # List of mineral_ids connected via conveyor
+              attributes: %{
+                element: nil,
+                ethnicity: nil,
+                scale: 1.0
+              },
+              energy: 0,
+              status: :active, # :active, :ruined
               history: %{} # {build_year, build_style}
   end
 
@@ -82,7 +94,13 @@ defmodule Mutonex.Engine.Entities do
               position: %{x: 0, y: 0, z: 0},
               society: nil, # Replaces ethnicity
               charm: 0,
-              is_charmable: false
+              is_charmable: false,
+              attributes: %{
+                scale: 1.0
+              },
+              energy: 0,
+              status: :active, # :active, :mummified
+              last_spawn_time: 0
   end
 
   defmodule Mineral do
@@ -102,5 +120,14 @@ defmodule Mutonex.Engine.Entities do
               mineral_id: nil,
               building_id: nil,
               status: :building # :building, :active
+  end
+
+  defmodule Item do
+    @moduledoc "Represents a pickable item in the game world."
+    @derive Jason.Encoder
+    defstruct id: nil,
+              type: nil, # :video_phone, :sunspot_cream, etc.
+              position: %{x: 0, y: 0, z: 0},
+              metadata: %{}
   end
 end

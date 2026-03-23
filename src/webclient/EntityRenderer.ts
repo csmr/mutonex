@@ -18,6 +18,9 @@ export class EntityRenderer {
     "building": ["🏛"],
     "society": ["🎪", "🏘", "🏙", "🏰", "🗿", "💩"],
     "mineral": ["⭓", "⬠", "💎", "🌱", "🌲", "🌳", "🌴", "🌵", "🌾", "🍄", "🌺", "🌻"],
+    "item": ["💎", "📟", "🧴", "🤺"],
+    "item_gem": ["💎"],
+    "item_video_phone": ["📟"],
   };
 
   private colorMap: { [key in string]: number } = {
@@ -27,6 +30,9 @@ export class EntityRenderer {
     "building": 0x8B4513,
     "society": 0x00CED1,
     "mineral": 0x800080,
+    "item": 0xFFFF00,
+    "item_gem": 0xFFFF00,
+    "item_video_phone": 0x00FF00,
   };
 
   constructor(
@@ -100,6 +106,7 @@ export class EntityRenderer {
     if (!mesh) {
       const box = new THREE.BoxGeometry(0.5, 0.5, 0.5);
       mesh = new THREE.Mesh(box, this.matFactory(color));
+      mesh.userData = { entityId: id, entityType: ent.type };
       this.scene.add(mesh);
       this.meshes.set(id, mesh);
       this.fetchGeo(id, hex);
@@ -153,6 +160,7 @@ export class EntityRenderer {
     // Create new mesh with baked transformed geometry
     const next = new THREE.Mesh(geo, ex.material);
     next.position.copy(ex.position);
+    next.userData = ex.userData;
 
     this.scene.add(next);
     this.meshes.set(id, next);

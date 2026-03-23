@@ -6,6 +6,9 @@ export type EntityType =
   | "unit"
   | "building"
   | "society"
+  | "item"
+  | "item_gem"
+  | "item_video_phone"
   | "mineral";
 
 export interface EntityData {
