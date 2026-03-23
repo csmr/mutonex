@@ -27,6 +27,7 @@ defmodule Mutonex.Engine.Entities do
               minerals: [], # Added minerals list
               conveyors: [], # Added conveyors list
               buildings: [], # Added buildings list
+              items: [], # Added items list
               game_time: 0
   end
 
@@ -45,6 +46,7 @@ defmodule Mutonex.Engine.Entities do
                 tribe: nil, # :potassium, :helium, etc.
                 flavor: nil # :red, :cyan, etc.
               },
+              inventory: [], # Added inventory list
               history: %{},
               # TODO: Move token counts to browser client session
               invalid_token_count: 0,
@@ -102,5 +104,14 @@ defmodule Mutonex.Engine.Entities do
               mineral_id: nil,
               building_id: nil,
               status: :building # :building, :active
+  end
+
+  defmodule Item do
+    @moduledoc "Represents a pickable item in the game world."
+    @derive Jason.Encoder
+    defstruct id: nil,
+              type: nil, # :video_phone, :sunspot_cream, etc.
+              position: %{x: 0, y: 0, z: 0},
+              metadata: %{}
   end
 end

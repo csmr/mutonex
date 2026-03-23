@@ -268,11 +268,13 @@
         },
         "1F6E4": {
             "name": "Conveyor Belt",
-            "template": "item_default"
+            "template": "item_default",
+            "scale": 4.0
         },
         "1F4F0": {
             "name": "Society Policy",
-            "template": "item_default"
+            "template": "item_default",
+            "scale": 0.3
         },
         "1F36F": {
             "name": "Sunspot Cream",
@@ -285,12 +287,18 @@
         },
         "1F93A": {
             "name": "Attack Modifier",
-            "template": "item_default"
+            "template": "item_default",
+            "scale": 0.3
         },
         "2622": {
             "name": "Nuclear Fallout",
             "template": "stationary_default",
             "scale": 2.0
+        },
+        "2600": {
+            "name": "Solar Panel",
+            "template": "stationary_default",
+            "scale": 1.0
         },
         "1F6F0": {
             "name": "Space Debris",

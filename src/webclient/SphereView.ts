@@ -29,7 +29,7 @@ export class SphereView implements IView {
       0.1,
       1000,
     );
-    this.camera.position.set(10, 1.7, 10);
+    this.camera.position.set(20, 40, 20); // Elevated birdseye start
 
     const ambientLight = new THREE.AmbientLight(
       0xffffff,
@@ -43,10 +43,11 @@ export class SphereView implements IView {
     directionalLight.position.set(50, 50, 50);
     this.scene.add(directionalLight);
 
-    this.controls = new FirstPersonControls(
+    this.controls = new THREE.OrbitControls(
       this.camera,
       domElement,
     );
+    this.controls.enableDamping = true;
 
     this.entityRenderer = new EntityRenderer(
       this.scene,
@@ -67,7 +68,7 @@ export class SphereView implements IView {
     this.scene.add(this.terrainMesh);
   }
 
-  public updateEntities(entities: EntityData[]): void {
+  public updateEntities(entities: EntityData[], _localPlayerId?: string): void {
     this.entityRenderer.update(entities);
   }
 
@@ -93,6 +94,10 @@ export class SphereView implements IView {
     if (this.controls) {
       this.controls.enabled = false;
     }
+  }
+
+  public getInteractableObjects(): any[] {
+    return this.scene.children;
   }
 
   public dispose(): void {

@@ -8,7 +8,7 @@ import { SphereView } from "./SphereView.ts";
 import { LobbyView, Sector } from "./LobbyView.ts";
 import { AvatarController } from "./AvatarController.ts";
 import { sampleTerrainHeight } from "./TerrainMesh.ts";
-import { EntityData, Terrain } from "./types.ts";
+import { EntityData, EntityType, Terrain } from "./types.ts";
 import type { PlayerTuple } from "./MockGameStateProvider.ts";
 import { ActionHUD } from "./ActionHUD.ts";
 
@@ -66,6 +66,11 @@ function computeEntityState(
     if (terrainMesh) p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
     entities.push({ id, type: "mineral", pos: p, char: "" });
   }
+  for (const [id, data] of (window as any).itemAnchors || []) {
+    const p = data.pos.clone();
+    if (terrainMesh) p.y = sampleTerrainHeight(terrainMesh, p.x, p.z);
+    entities.push({ id, type: `item_${data.type}` as EntityType, pos: p, char: "" });
+  }
   return entities;
 }
 
@@ -84,6 +89,19 @@ function bindActionHUD(getProvider: () => GameStateProvider | null, entities: En
       p.sendPlayerAction("charm", targets[0].id);
     } else {
       console.log("[Charm] No valid targets within range.");
+    }
+  });
+
+  actionHUD.setOnPickUpClick((itemId) => {
+    const p = getProvider();
+    if (p) p.sendPlayerAction("pick_up", itemId);
+  });
+
+  actionHUD.setOnDropClick((itemId) => {
+    const p = getProvider();
+    if (p) {
+      const forward = avatar.getForwardVector();
+      p.sendPlayerAction("drop_item", itemId, { x: forward.x, y: forward.y, z: forward.z });
     }
   });
 }
@@ -113,6 +131,8 @@ function main() {
   const faunaAnchors = new Map<string, any>();
   const faunaTargets = new Map<string, any>();
   const mineralAnchors = new Map<string, any>();
+  const itemAnchors = new Map<string, any>(); // Added itemAnchors
+  (window as any).itemAnchors = itemAnchors;
   const entities: EntityData[] = [];
 
   bindActionHUD(() => gameStateProvider, entities, avatar, actionHUD);
@@ -123,16 +143,17 @@ function main() {
     const newEntities = computeEntityState(terrainMesh, playerAnchors, playerCharm, faunaAnchors, mineralAnchors, interpolatedPositions);
     entities.length = 0;
     entities.push(...newEntities);
-    if (activeView) activeView.updateEntities(entities);
+    if (activeView) activeView.updateEntities(entities, gameStateProvider?.playerId || undefined);
   };
 
   const syncPlayers = (players: PlayerTuple[]) => {
-    for (const [id, x, y, z, charm] of players as any[]) {
+    for (const [id, x, y, z, charm, inventory] of players as any[]) {
       playerAnchors.set(id, new THREE.Vector3(x, 1, z));
       if (charm !== undefined) {
         playerCharm.set(id, charm);
         if (gameStateProvider && id === gameStateProvider.playerId) {
           actionHUD.setCharmLevel(charm);
+          if (inventory) actionHUD.setInventory(inventory);
         }
       }
     }
@@ -158,6 +179,14 @@ function main() {
     if (gameState.minerals) {
       for (const min of gameState.minerals) mineralAnchors.set(min.id, new THREE.Vector3(min.position.x, 1, min.position.z));
     }
+    if (gameState.items) {
+      for (const item of gameState.items) {
+        itemAnchors.set(item.id, {
+          pos: new THREE.Vector3(item.position.x, 1, item.position.z),
+          type: item.type
+        });
+      }
+    }
     updateEntitiesList();
   };
 
@@ -172,6 +201,15 @@ function main() {
     }
     if (update.fauna) {
       for (const [id, x, y, z] of update.fauna) faunaAnchors.set(id, new THREE.Vector3(x, 1, z));
+    }
+    if (update.items) {
+      itemAnchors.clear();
+      for (const item of update.items) {
+        itemAnchors.set(item.id, {
+          pos: new THREE.Vector3(item.position.x, 1, item.position.z),
+          type: item.type
+        });
+      }
     }
   };
 
@@ -232,10 +270,69 @@ function main() {
         currentInterp.set(id, target);
       }
 
+      const nearby = Array.from(itemAnchors.entries())
+        .map(([id, pos]) => ({ id, dist: avatar.position.distanceTo(pos) }))
+        .filter(i => i.dist <= 15.0)
+        .sort((a,b) => a.dist - b.dist);
+      
+      if (nearby.length > 0) {
+        actionHUD.setNearbyItem({ id: nearby[0].id, name: nearby[0].id.replace("item_", "") });
+      } else {
+        actionHUD.setNearbyItem(null);
+      }
+
       avatar.update(delta);
       updateEntitiesList(currentInterp);
+
+      // Raycasting for 3D interaction
+      const currentView = viewManager.getActiveView();
+      if (currentView) {
+        const interactables = currentView.getInteractableObjects();
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, currentView.camera);
+        const intersects = raycaster.intersectObjects(interactables, true);
+        
+        let hoverTarget: { id: string, name: string } | null = null;
+        for (const hit of intersects) {
+          const data = hit.object.userData;
+          if (data && data.entityId && (data.entityType as string).startsWith("item")) {
+            hoverTarget = { id: data.entityId, name: data.entityId.replace("item_", "") };
+            break;
+          }
+        }
+        actionHUD.setHoveredItem(hoverTarget);
+      }
     }
     updateLoop();
+
+    const mouse = new THREE.Vector2();
+    window.addEventListener("mousemove", (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    });
+
+    canvas.addEventListener("click", () => {
+      const activeView = viewManager.getActiveView();
+      if (!activeView || !gameStateProvider) return;
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, activeView.camera);
+      const intersects = raycaster.intersectObjects(activeView.getInteractableObjects(), true);
+
+      for (const hit of intersects) {
+        const data = hit.object.userData;
+        if (data && data.entityId && (data.entityType as string).startsWith("item")) {
+          const dist = avatar.position.distanceTo(hit.point);
+          if (dist <= 15.0) {
+            console.log(`[Interaction] Picking up item via click: ${data.entityId}`);
+            gameStateProvider.sendPlayerAction("pick_up", data.entityId);
+          } else {
+            console.log(`[Interaction] Item ${data.entityId} too far to pick up: ${dist.toFixed(2)}m`);
+          }
+          break;
+        }
+      }
+    });
   }
 }
 

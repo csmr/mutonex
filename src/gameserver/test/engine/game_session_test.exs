@@ -104,7 +104,7 @@ defmodule Mutonex.Engine.GameSessionTest do
     GenServer.cast(pid, {:avatar_update, "charm_caster", [pos.x, pos.y, pos.z], "mock_token"})
     
     # Cast the charm payload (targeting the default dummy npc that's spawned close by)
-    GenServer.cast(pid, {:player_action, "charm_caster", "charm", "npc_charmable_beta"})
+    GenServer.cast(pid, {:player_action, "charm_caster", "charm", "npc_charmable_beta", nil})
     
     # Process sleep for genserver
     Process.sleep(50)
@@ -115,6 +115,31 @@ defmodule Mutonex.Engine.GameSessionTest do
     # Verify the state mutated correctly
     assert target_state.player.is_charmable == false
     assert target_state.player.society_id == "charm_caster"
+  end
+
+  test "drop action with metadata applies offset", %{sector_id: sid} do
+    Mutonex.Engine.SimtellusClientMock |> stub(:is_available?, fn -> true end)
+    {:ok, pid} = GameSession.start_link(sid)
+    wait_for_phase(pid, :lobby)
+
+    # Joined player starts with empty inventory, let's give them something
+    GenServer.cast(pid, {:player_joined, "dropper", self()})
+    wait_for_phase(pid, :gamein)
+
+    # Initial pickup to put item in inventory
+    GenServer.cast(pid, {:player_action, "dropper", "pick_up", "item_gem_01", nil})
+    Process.sleep(50)
+
+    # Drop with forward vector {1, 0, 0}
+    meta = %{"x" => 1.0, "y" => 0.0, "z" => 0.0}
+    GenServer.cast(pid, {:player_action, "dropper", "drop_item", "item_gem_01", meta})
+    Process.sleep(50)
+
+    state = :sys.get_state(pid)
+    item = Enum.find(state.items, &(&1.id == "item_gem_01"))
+    
+    # Player initial pos is (0, 1, 0). With offset (1, 0, 0) -> (1, 1, 0)
+    assert item.position == %{x: 1.0, y: 1.0, z: 0.0}
   end
 
   defp wait_for_phase(pid, expected_phase, retries \\ 10) do

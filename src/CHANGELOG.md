@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.25 - Item Interaction & Visual Refinement
+- **Gameplay:** Implemented 3D item interaction (Hover "Ghost Cards" and Click-to-pickup) with 15m range enforcement.
+- **Webclient Refactor:** Upgraded SphereView to a true Birdseye perspective with OrbitControls and optimized Action HUD state synchronization.
+- **Geometry & Graphics:** Fixed item glyph mapping for distinct Gem and Video-phone models; implemented local avatar visibility toggle for FPS views.
+- **Game Engine:** Refactored GameSession into modular Environment/Action systems and improved player coordinate synchronization.
+
 ## v0.2.24 - Charm, Terrain, Tokens & Scripts
 - **Gameplay:** Implemented the Charm Ability Action HUD and network action handler.
 - **Webclient Refactor:** Integrated implementation and improvements for browser-client terrain rendering, and decoupled monolithic codebase.

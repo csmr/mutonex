@@ -296,8 +296,9 @@ export class LidarView implements IView {
     this.virtualScene.add(this.terrainMesh);
   }
 
-  public updateEntities(entities: EntityData[]) {
-    this.entityRenderer.update(entities);
+  public updateEntities(entities: EntityData[], localPlayerId?: string) {
+    const filtered = localPlayerId ? entities.filter(e => e.id !== localPlayerId) : entities;
+    this.entityRenderer.update(filtered);
   }
 
   private createGroundGrid() {
@@ -323,19 +324,20 @@ export class LidarView implements IView {
     }
   }
 
-  public onDeactivate(): void {
+  public onDeactivate(): void { }
+
+  public getInteractableObjects(): any[] {
+    return this.virtualScene.children;
+  }
+
+  public dispose(): void {
     window.removeEventListener(
       "resize",
       this.boundResize,
     );
     if (this.controls) {
-      this.controls.enabled = false;
-    }
-  }
-
-  public dispose(): void {
-    if (this.controls) {
       this.controls.dispose();
+      this.controls.enabled = false;
     }
   }
 

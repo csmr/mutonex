@@ -10,7 +10,8 @@ defmodule Mutonex.Game.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      config_path: "config/config.exs"
+      config_path: "config/config.exs",
+      listeners: [Phoenix.CodeReloader]
     ]
   end
 
