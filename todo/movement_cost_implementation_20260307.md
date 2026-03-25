@@ -16,9 +16,10 @@ The target formula for actual velocity (`V_actual`) is:
 - **Local:** 80 km/h
 - **Airpower:** 220 km/h (Special: limited flight hours)
 
-### Multipliers and Penalties:
-- **Latitude Multiplier:** `1.0 - (floor(|Latitude| / 10) / 10.0)` (Example: at 60°N, multiplier is 0.4).
-- **Elevation Penalty:** `Elevation * Cost_Per_Km` (Requires absolute elevation in meters).
+### Multipliers and Penalties (from `rule-calculator.rb`):
+- **Elevation Penalty:** `66` (cost per km). Actual formula: `V_actual = V_base - (Elevation_km * 66)`.
+- **Latitude Penalty:** Starts at `50°` threshold. Penalty is `2` (km/h?) per degree beyond threshold.
+- **Latitude Multiplier (GDD):** `1.0 - (floor(|Latitude| / 10) / 10.0)` (Example: at 60°N, multiplier is 0.4).
 - **Weather Multiplier:** Derived from `Simtellus.Planet.temp` and `rain`. Extreme cold or storms reduce speed.
 
 ## 3. Implementation Challenges
@@ -41,3 +42,17 @@ The target formula for actual velocity (`V_actual`) is:
 - [ ] **Phase D: Pathfinding (Advanced)**
     - [ ] Implement a grid-based A* to validate long-range paths (if applicable).
     - [ ] Update client-side UI to show "estimated travel time" based on terrain.
+
+## 5. Scalability & Concurrency (Online Game Design)
+Mutonex aims to support dozens of concurrent players per sector across hundreds of sectors.
+
+### Concurrency Challenges:
+- **GenServer Bottleneck:** High-frequency `avatar_update` messages (100ms interval) can overwhelm a single `GameSession` process. Movement validation logic must be extremely fast to avoid mailbox backpressure.
+- **Asynchronous Validation:** Consider validating move legality asynchronously or in the client, using the server primarily as a coarse-grained authority to prevent cheating.
+
+### Scalability Challenges:
+- **Memory Footprint:** Storing a 2400x2400 16-bit heightmap per sector (approx. 11.5 MB per sector) across 648 sectors (36x18) would require ~7.5 GB of RAM.
+    - *Solution:* Use `ETS` (Erlang Term Storage) for global terrain data instead of keeping it in GenServer state. Alternatively, load only "active" sectors or use memory-mapped binary chunks.
+- **CPU Load (Pathfinding):** Running A* for dozens of NPC units across hundreds of sectors every turn will spike CPU.
+    - *Solution:* Use a simplified 100x100 grid for "Strategic Pathfinding" instead of the full 2400x2400 resolution.
+- **Global Clock Sync:** Ensure `Simtellus` state (weather/daynight) is updated centrally to prevent inconsistent speed penalties across neighboring sectors.
