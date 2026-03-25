@@ -13,6 +13,7 @@ defmodule Mutonex.Engine.FaunaBehavior do
   """
 
   alias Mutonex.Engine.Entities.Fauna
+  alias Mutonex.Engine.NpcBehavior
 
   @doc """
   Spawns a given number of fauna entities for a specific sector.
@@ -44,6 +45,18 @@ defmodule Mutonex.Engine.FaunaBehavior do
   Returns the updated `Fauna` struct.
   """
   def move(%Fauna{position: pos} = fauna) do
+    # Stochastic action selection
+    action = NpcBehavior.decide_action(:fauna)
+
+    case action do
+      :jitter -> apply_jitter(fauna, pos)
+      :wander -> apply_wander(fauna, pos)
+      :rest -> fauna
+      _ -> fauna
+    end
+  end
+
+  defp apply_jitter(fauna, pos) do
     # Random small movement (reduced range for "short" travel)
     # Target Speed: ~40 km/h (~0.011 km/s)
     # Avg Tick: 6s => Dist: ~0.066 km
@@ -51,7 +64,15 @@ defmodule Mutonex.Engine.FaunaBehavior do
     dx = (:rand.uniform() - 0.5) * 0.14
     dz = (:rand.uniform() - 0.5) * 0.14
     new_pos = %{pos | x: pos.x + dx, z: pos.z + dz}
+    %{fauna | position: new_pos}
+  end
 
+  defp apply_wander(fauna, pos) do
+    # Larger movement for "wander" action
+    # Range +/- 0.5 km
+    dx = (:rand.uniform() - 0.5) * 1.0
+    dz = (:rand.uniform() - 0.5) * 1.0
+    new_pos = %{pos | x: pos.x + dx, z: pos.z + dz}
     %{fauna | position: new_pos}
   end
 
