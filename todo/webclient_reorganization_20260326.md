@@ -1,0 +1,75 @@
+# Webclient Source Reorganization Plan
+
+## Analysis of Current `src/webclient/` Structure
+
+The current flat structure in `src/webclient/` is becoming crowded. Below is an analysis of each file's responsibility:
+
+| File | Responsibility |
+| :--- | :--- |
+| `ActionHUD.ts` | UI layer for player actions, inventory, and interactions. |
+| `AvatarController.ts` | Logic for avatar movement, camera-relative controls, and interaction triggers. |
+| `EntityRenderer.ts` | Management of 3D entity meshes and their lifecycle within a scene. |
+| `FirstPersonControls.ts` | Specialized camera control logic for first-person perspective. |
+| `GameStateProvider.ts` | WebSocket communication with the Elixir backend and state synchronization. |
+| `GlobeView.ts` | Planet-level overview rendering strategy (`IView`). |
+| `LidarShaders.ts` | GLSL code for GPU-based Lidar reconstruction and effects. |
+| `LidarStyles.ts` | Configuration for Lidar visual presets (colors, scan modes). |
+| `LidarView.ts` | The primary Lidar-style rendering strategy (`IView`). |
+| `LobbyView.ts` | UI and logic for sector selection and the pre-game lobby. |
+| `MockGameStateProvider.ts` | Mock implementation of the game state for offline development/testing. |
+| `SphereView.ts` | Legacy/standard 3D mesh rendering strategy (`IView`). |
+| `TerrainMesh.ts` | Terrain geometry generation and height sampling logic. |
+| `ViewManager.ts` | Orchestrator for switching views and managing the render loop. |
+| `global_types.ts` | Type definitions for CDN-loaded globals (Three.js, etc.). |
+| `main.ts` | Application entry point and system wiring. |
+| `mutonex.html` | Client-side HTML shell. |
+| `types.ts` | Shared data structures and interfaces. |
+
+## Proposed Reorganization
+
+To improve accessibility and maintainability, the following directory structure is proposed:
+
+```text
+src/webclient/
+├── core/               # Main orchestration and engine state
+│   ├── ViewManager.ts
+│   ├── GameStateProvider.ts
+│   ├── main.ts
+│   ├── types.ts
+│   └── global_types.ts
+├── rendering/          # Graphics-specific systems and shaders
+│   ├── EntityRenderer.ts
+│   ├── TerrainMesh.ts
+│   ├── LidarShaders.ts
+│   └── LidarStyles.ts
+├── views/              # Implementations of the IView interface
+│   ├── LidarView.ts
+│   ├── GlobeView.ts
+│   └── SphereView.ts
+├── ui/                 # Web-based UI components (DOM)
+│   ├── LobbyView.ts
+│   └── ActionHUD.ts
+├── input/              # Input handling and camera controls
+│   ├── AvatarController.ts
+│   └── FirstPersonControls.ts
+├── mocks/              # Mock providers for development
+│   └── MockGameStateProvider.ts
+├── assets/             # (Existing) Static assets directory
+├── tests/              # (Existing) Unit tests directory
+└── mutonex.html        # Main entry HTML (kept at root for clarity)
+```
+
+## Pragmatic Steps for Reorganization
+
+1.  **Draft Migration Script**: Create a temporary script to move files and update import paths (sed/grep).
+2.  **Move Files**: Execute the move into the proposed subdirectories.
+3.  **Update `mutonex.html`**: Ensure the entry script path is updated if necessary (depending on bundler config).
+4.  **Update `deno.json`**: Update task paths for bundling if they refer to specific files.
+5.  **Fix Imports**: Update internal relative imports across all files.
+6.  **Verify Build**: Run `bash scripts/build-webclient.sh` to ensure bundling still works.
+7.  **Verify Tests**: Run `bash .agents/test_webclient.sh` to ensure no broken imports in tests.
+
+## Documentation Updates
+
+- Update `RENDERING_ARCHITECTURE.md` to reflect the new file locations.
+- Update `ENTITY_MODELS.md` if any paths are impacted.

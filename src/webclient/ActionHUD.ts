@@ -22,9 +22,11 @@ export class ActionHUD {
     }
 
     public setCharmLevel(level: number) {
-        if (this.charmValueEl && this.charmValueEl.innerText === level.toString()) return;
+        const val = level.toString();
+        if (this.charmValueEl && (this.charmValueEl.innerText === val || this.charmValueEl.textContent === val)) return;
         if (this.charmValueEl) {
-            this.charmValueEl.innerText = level.toString();
+            this.charmValueEl.innerText = val;
+            this.charmValueEl.textContent = val;
         }
     }
 
@@ -114,8 +116,9 @@ export class ActionHUD {
             });
         });
 
-        if (!(window as any).hasGlobalHudListeners) {
-            window.addEventListener("mousemove", (e) => {
+        const win = (globalThis as any).window || globalThis;
+        if (!win.hasGlobalHudListeners) {
+            win.addEventListener("mousemove", (e: MouseEvent) => {
                 if (!this.dragTarget) return;
                 const dy = e.clientY - this.dragTarget.startY;
                 if (dy < 0) {
@@ -123,7 +126,7 @@ export class ActionHUD {
                 }
             });
 
-            window.addEventListener("mouseup", (e) => {
+            win.addEventListener("mouseup", (e: MouseEvent) => {
                 if (!this.dragTarget) return;
                 const dy = e.clientY - this.dragTarget.startY;
                 const cardHeight = this.dragTarget.el.offsetHeight || 64;
@@ -137,7 +140,7 @@ export class ActionHUD {
                 this.dragTarget.el.style.zIndex = "";
                 this.dragTarget = null;
             });
-            (window as any).hasGlobalHudListeners = true;
+            win.hasGlobalHudListeners = true;
         }
     }
 }
