@@ -105,7 +105,7 @@ function resetListeners() {
 
 // ── Import after globals ────────────────────
 const { LobbyView } = await import(
-  "../LobbyView.ts"
+  "../views/LobbyView.ts"
 );
 
 // Helper to dispatch key event to all

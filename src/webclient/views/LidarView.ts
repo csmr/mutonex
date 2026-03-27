@@ -1,22 +1,22 @@
-import "./global_types.ts";
-import { IView } from "./ViewManager.ts";
+import "../core/global_types.ts";
+import { IView } from "../core/ViewManager.ts";
 import {
   FirstPersonControls
-} from "./FirstPersonControls.ts";
-import { EntityRenderer } from "./EntityRenderer.ts";
-import { createTerrainMesh } from "./TerrainMesh.ts";
+} from "../ui/FirstPersonControls.ts";
+import { EntityRenderer } from "../rendering/EntityRenderer.ts";
+import { createTerrainMesh } from "../rendering/TerrainMesh.ts";
 import {
   EntityData,
   Terrain
-} from "./types.ts";
+} from "../core/types.ts";
 import {
   LidarFragmentShader,
   LidarVertexShader,
   ProceduralMeshVertexShader,
   ProceduralMeshFragmentShader
-} from "./LidarShaders.ts";
+} from "../rendering/LidarShaders.ts";
 
-import { LidarStyleConfig, LidarStyles } from "./LidarStyles.ts";
+import { LidarStyleConfig, LidarStyles } from "../rendering/LidarStyles.ts";
 
 export class LidarView implements IView {
   public scene: any; // THREE.Scene

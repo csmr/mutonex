@@ -1,77 +1,44 @@
 # Webclient Rendering Architecture
 
 ## Overview
-
-The webclient uses **Three.js** via CDN globals, managed by a
-**Deno/TypeScript** application. Rendering logic is decoupled from the game loop
-using the **Strategy Pattern** via `ViewManager`.
+Webclient uses **Three.js** via CDN. Rendering logic decoupled from game loop using **Strategy Pattern** via `ViewManager`.
 
 ## Core Components
 
 ### 1. ViewManager
-
-- **Role**: Manages the active render loop and delegates logic to the current
-  `IView`.
+- Orchestrates render loop.
+- Delegates to active `IView`.
 - **Interface (`IView`)**:
   - `updateEntities(entities)`: Syncs game state.
   - `updateTerrain(terrain)`: Generates ground geometry.
-  - `preRender(renderer)`: Optional hook for multi-pass effects (e.g., FBOs).
+  - `preRender(renderer)`: Optional hook for multi-pass effects.
 
 ### 2. LidarView (GPU-Based Scanning)
-
-Implements the "High-Tech / Low-Fi" visual style.
-
+Implements "High-Tech / Low-Fi" visual style.
 - **Pipeline**:
-  1. **Virtual Scene**: Hidden scene containing **pre-baked 3D Text Geometry**
-     (emoji glyphs loaded via `BufferGeometryLoader` from JSON) and a ground
-     plane.
-  2. **Linear Depth Pass**: `preRender` renders the Virtual Scene to a
-     **FloatType colour render target** using a custom `ShaderMaterial` that
-     writes `z_view / cameraFar` into the R channel. This avoids the WebGL2
-     limitation that prevents vertex-shader sampling of `DepthTexture`, and the
-     quantization loss of `UnsignedByteType` at the 0.1/1000 near/far ratio.
-  3. **Point Cloud**: The main scene renders a `THREE.Points` grid (480×270
-     samples, same density for both scan modes).
-  4. **Shader Reconstruction**: The Vertex Shader samples the FloatType colour
-     texture to displace points from screen-space UVs back to world-space
-     positions.
+  1. **Virtual Scene**: Hidden scene with pre-baked 3D Text Geometry (emoji glyphs) and ground plane.
+  2. **Linear Depth Pass**: `preRender` renders Virtual Scene to **FloatType color target**. Writes `z_view / cameraFar` to R channel to avoid WebGL2 vertex-shader sampling limits and `UnsignedByteType` quantization loss.
+  3. **Point Cloud**: Main scene renders `THREE.Points` grid (480×270 samples).
+  4. **Shader Reconstruction**: Vertex shader samples float texture to displace points from screen UVs to world-space.
 - **Optimization**:
-  - **Geometry Caching**: `Map<hex, BufferGeometry>` reuses pre-generated
-    model JSONs.
-  - **Scan Modes**: Vertical (dense points) and Horizontal (fragment-shader
-    scanline bands) both use 480×270 sample grids; the visual difference is
-    shader-only.
+  - **Geometry Caching**: Reuses BufferGeometry JSONs via `Map<hex, BufferGeometry>`.
+  - **Scan Modes**: Vertical and Horizontal modes use 480×270 grids; visual differences are shader-driven.
 
-### 3. SphereView (Standard 3D, may be deprecated)
+### 3. SphereView
+Legacy standard 3D rendering.
+- **Entities**: Instantiates `SphereGeometry` meshes.
+- **Terrain**: `PlaneGeometry` with vertex displacement from heightmap.
 
-Standard object-based rendering.
-
-- **Entities**: Instantiates `THREE.SphereGeometry` meshes.
-- **Terrain**: `THREE.PlaneGeometry` with vertex displacement from heightmap
-  data.
-
-### 4. GlobeView (Planet Overview)
-
-Globe-based rendering for planetary overview.
-
-- **GeoJSON**: Renders country outlines on a sphere using `THREE.Line`.
-- **Sectors/Units**: Placed on the globe surface via lon/lat conversion.
+### 4. GlobeView
+Planetary overview.
+- **GeoJSON**: Renders country outlines via `Line`.
+- **Projection**: Places sectors and units on globe surface via lon/lat conversion.
 
 ## Data Flow
+1. **Server**: WebSocket sends `[id, x, y, z]` JSON.
+2. **Main Loop**: Interpolates fauna; aggregates `EntityData[]`; calls `activeView.updateEntities()`.
+3. **Input**: `Tab` toggles View; `L` toggles Lidar mode; `[`/`]` adjust entropy.
 
-1. **Server**: Sends `[id, x, y, z]` tuples via WebSocket (Phoenix channels).
-2. **Main Loop**:
-   - Interpolates Fauna positions (client-side wandering).
-   - Aggregates entities into `EntityData[]`.
-   - Calls `activeView.updateEntities()`.
-3. **Input**:
-   - `Tab`: Toggles Active View.
-   - `L`: Toggles Lidar Scan Mode.
-   - `[` / `]`: Adjusts Lidar entropy.
-
-## Environment Constraints
-
-- **Globals**: `THREE` and `OrbitControls` are accessed via `window` (declared
-  in `global_types.ts`) to avoid complex bundler configuration for CDN scripts.
-- **Build**: `esbuild` bundles the TypeScript; `mutonex.html` provides runtime
-  dependencies.
+## Environment
+- **Globals**: `THREE` accessed via `window` (declared in `global_types.ts`).
+- **Build**: `esbuild` bundles TypeScript.

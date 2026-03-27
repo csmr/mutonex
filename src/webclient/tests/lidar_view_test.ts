@@ -219,7 +219,7 @@ const THREE_MOCK: any = {
 
 // Import after globals are ready.
 const { LidarView } = await import(
-  "../LidarView.ts"
+  "../views/LidarView.ts"
 );
 
 // ── Tests ───────────────────────────────────

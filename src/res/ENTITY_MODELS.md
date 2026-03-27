@@ -16,7 +16,7 @@ build time — no fonts shipped to client.
 
 ## Model Generation Pipeline
 
-The Deno script `src/res/scripts/build_entity_models.ts` drives
+The Deno script `content-package/generators/build_entity_models.ts` drives
 the pipeline:
 
 1. Reads entity icons from the Design Document.
@@ -29,16 +29,16 @@ the pipeline:
 6. Centering and Grounding: Models are centered on X and
    translated on Y so their base (min Y) sits at 0.0.
 7. Serializes as non-indexed `THREE.BufferGeometry` JSON.
-8. Output: `src/res/models/<CODEPOINT_HEX>.json`.
+8. Output: `src/res/entity_geometry/<CODEPOINT_HEX>.json`.
 
 ## Runtime Loading
 
 The client (`LidarView.ts`) lazily fetches these assets
-via `BufferGeometryLoader` from `assets/models/`.
+via `BufferGeometryLoader` from `assets/entity_geometry/`.
 
 ## Rendering Pipeline
 
-See `RENDERING_ARCHITECTURE.md` § LidarView for the full
+See `webclient/RENDERING_ARCHITECTURE.md` § LidarView for the full
 GPU pipeline. In summary:
 
 1. Extruded models placed in a hidden Virtual Scene.

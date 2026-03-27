@@ -1,7 +1,7 @@
 // Declare THREE as a global variable to access it from the <script> tag
 declare const THREE: any;
 
-import type { Terrain } from "./types.ts";
+import type { Terrain } from "../core/types.ts";
 
 export function createTerrainMesh(
   terrain: Terrain,

@@ -1,4 +1,4 @@
-import type { GameState, PlayerTuple } from "./MockGameStateProvider.ts";
+import type { GameState, PlayerTuple } from "../tests/MockGameStateProvider.ts";
 
 type InitialStateCallback = (gameState: GameState) => void;
 type StateUpdateCallback = (

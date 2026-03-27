@@ -122,7 +122,7 @@ function createDOMTreeFromHTML(html: string): MockElement[] {
     }
 };
 
-const { ActionHUD } = await import("../ActionHUD.ts");
+const { ActionHUD } = await import("../ui/ActionHUD.ts");
 
 Deno.test("ActionHUD: constructor initializes without error", () => {
     resetDom();
