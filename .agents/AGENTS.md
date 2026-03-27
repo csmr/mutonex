@@ -74,7 +74,7 @@ cd src && bash scripts/bundle-webclient.sh
 Run:
 
 ```bash
-bash .agents/test_webclient.sh
+bash src/webclient/tests/test.sh
 ```
 
 

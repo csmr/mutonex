@@ -39,4 +39,4 @@ src/webclient/
 ## Build & Test
 
 - **Bundle**: `bash src/scripts/build-webclient.sh` (outputs to `src/dist/`)
-- **Test**: `bash .agents/test_webclient.sh` (runs Deno unit tests)
+- **Test**: `bash src/webclient/tests/test.sh` (runs Deno unit tests)

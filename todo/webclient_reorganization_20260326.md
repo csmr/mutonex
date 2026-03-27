@@ -67,7 +67,7 @@ src/webclient/
 4.  **Update `deno.json`**: Update task paths for bundling if they refer to specific files. (Done)
 5.  **Fix Imports**: Update internal relative imports across all files. (Done)
 6.  **Verify Build**: Run `bash scripts/build-webclient.sh` to ensure bundling still works. (Done)
-7.  **Verify Tests**: Run `bash .agents/test_webclient.sh` to ensure no broken imports in tests. (Done)
+7.  **Verify Tests**: Run `bash src/webclient/tests/test.sh` to ensure no broken imports in tests. (Done)
 
 ## Documentation Updates
 
