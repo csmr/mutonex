@@ -7,17 +7,22 @@ The project is transitioning from procedural heightmaps to real-world GEBCO_2024
 ## 2. Testing Strategy
 Since the full GEBCO dataset is several gigabytes, we must provide a "Test Geodata" artifact that can be included in the repository or generated locally for CI/CD and local development.
 
-### Phase 1: Test Artifact Generation
-- [ ] Create a Python script `src/res/geodata/generate_test_geotiff.py` that generates a small (e.g., 240x240 pixels), valid GeoTIFF file with known elevation patterns (slopes, pits, peaks).
-- [ ] This script should use `rasterio` and `numpy` to ensure compatibility with the existing `slice_geodata.py`.
+### Phase 1: Test Artifact & Default Consumption
+- [ ] **Content/Engine Split:** In branch `mainteinance-202303232008-engine-content-split-709370905147214257`, ensure all terrain-related generators move to `content-package/geodata/`.
+- [ ] **Default Test Data:** Create a Python script `content-package/geodata/generate_test_geotiff.py` to generate a small (e.g., 240x240 pixels) synthetic GeoTIFF.
+- [ ] **Out-of-the-box Experience:** The game should default to the test terrain TIFF consumption without source code modification.
 
-### Phase 2: Pipeline Verification
-- [ ] Run `slice_geodata.py` against the test GeoTIFF.
-- [ ] Verify that it produces a valid 16-bit grayscale PNG with the expected `+12000` elevation offset.
+### Phase 2: Pipeline Verification & Configurable Data Paths
+- [ ] **Dynamic Discovery:** Modify the engine to check a configurable directory on startup for "fullblown" data.
+- [ ] **Configuration:** Add `config :mutonex_server, terrain_data_path: "priv/static/geodata"` (or similar) to `config/config.exs`.
+- [ ] **Priority:** If full data is available in the path, use it; otherwise, default to the test terrain.
 
-### Phase 3: Gameserver Integration (Sector Alpha)
-- [ ] Update `Mutonex.Engine.TerrainGenerator` to support loading terrain data from a file (PNG or raw binary).
-- [ ] Modify `Mutonex.Engine.Systems.Environment.build/1` to check for a `sector.png` or `sector.bin` in `src/res/geodata/slices/N00E000/` (or similar) when initializing "Sector Alpha".
+### Phase 3: Gameserver Integration & Scaling
+- [ ] **Scaling Fix:** The current terrain transport (JSON array in `GameState`) is unsuitable for 2400x2400 grids.
+  - [ ] Implement a `BinaryTerrain` entity or use `priv/static` to serve PNGs directly to the client.
+  - [ ] Server-side: Load 16-bit PNG into an efficient memory structure (e.g., `:ets` or a flattened binary) for O(1) height lookups during movement validation.
+- [ ] Update `Mutonex.Engine.TerrainGenerator` to support loading terrain data from a file.
+- [ ] Modify `Mutonex.Engine.Systems.Environment.build/1` to check for geodata slices when initializing "Sector Alpha".
 - [ ] If the geodata file is missing, fallback to the current procedural generator.
 - [ ] Reconcile `Sector Alpha` in `src/webclient/main.ts` with the chosen geodata coordinates.
 
