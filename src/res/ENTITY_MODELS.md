@@ -33,12 +33,12 @@ the pipeline:
 
 ## Runtime Loading
 
-The client (`LidarView.ts`) lazily fetches these assets
+The client (`views/LidarView.ts`) lazily fetches these assets
 via `BufferGeometryLoader` from `assets/entity_geometry/`.
 
 ## Rendering Pipeline
 
-See `webclient/RENDERING_ARCHITECTURE.md` § LidarView for the full
+See `../webclient/RENDERING_ARCHITECTURE.md` § LidarView for the full
 GPU pipeline. In summary:
 
 1. Extruded models placed in a hidden Virtual Scene.
