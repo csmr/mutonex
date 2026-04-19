@@ -3,6 +3,8 @@
 # monorepo_transformer_20260329.sh
 # Restructures Mutonex into a flat, top-level monorepo structure.
 
+set -e # Exit on any error
+
 # 1. Immutable Truth
 BASE_COMMIT="cea3b25c0c80ada2ab99dc7982a46907fc49373f"
 
@@ -73,11 +75,13 @@ transform_webclient() {
     safe_move "$SOURCE_DIR/deno.json" "$TARGET_WEBCLIENT/"
     safe_move "$SOURCE_DIR/deno.lock" "$TARGET_WEBCLIENT/"
 
+    # Move webclient-related scripts
     for f in build-webclient.sh generate-api-key.js \
              hash-utils.ts make-credits.js; do
         safe_move "$SOURCE_DIR/scripts/$f" "$TARGET_WEBCLIENT/"
     done
 
+    # Patch Webclient
     local deno_cfg="$TARGET_WEBCLIENT/deno.json"
     apply_sed 's|webclient/main.ts|main.ts|g' "$deno_cfg"
     apply_sed 's|./dist/web.js|../dist/web.js|g' "$deno_cfg"
@@ -90,10 +94,15 @@ transform_webclient() {
     apply_sed "s|cp res/img/|cp ../$TARGET_CONTENT/res/img/|g" "$build_sh"
     apply_sed "s|webclient/|./|g" "$build_sh"
     apply_sed "s|gameserver/priv/static|../$TARGET_GAMESERVER/priv/static|g" "$build_sh"
+    apply_sed "s|distribution_target=\"../../dist\"|distribution_target=\"../dist\"|g" "$build_sh"
 
     local key_js="$TARGET_WEBCLIENT/generate-api-key.js"
     apply_sed "s|join(Deno.cwd(), \"webclient\",|join(Deno.cwd(),|g" "$key_js"
     apply_sed "s|join(Deno.cwd(), \".env\")|join(Deno.cwd(), \"..\", \".env\")|g" "$key_js"
+    apply_sed "s|src/.env|.env|g" "$key_js"
+    apply_sed "s|src/webclient/|webclient/|g" "$key_js"
+
+    apply_sed "s|src/webclient/|webclient/|g" "$TARGET_WEBCLIENT/tests/test.sh"
 }
 
 # 6. Phase 3: Gameserver, Infra, and Finalizing
@@ -152,6 +161,16 @@ transform_platform_and_infra() {
     local app_cfg="$TARGET_SCRIPTS/app.config.sh"
     apply_sed "s|BASE_DIR=\"\$(realpath \.)\"|BASE_DIR=\"\$(realpath ..)\"|g" "$app_cfg"
     apply_sed "s|DATA_HOME=\"\$BASE_DIR/data\"|DATA_HOME=\"\$BASE_DIR/$TARGET_INFRA/data\"|g" "$app_cfg"
+
+    for f in init-database-env.sh init-dotenv.sh test_endpoints.sh; do
+        apply_sed "s|source ./scripts/|source ./|g" "$TARGET_SCRIPTS/$f"
+    done
+
+    # Final cleanup of hardcoded references
+    grep -rl "src/" "$TARGET_GAMESERVER" "$TARGET_WEBCLIENT" "$TARGET_INFRA" "$TARGET_SCRIPTS" "$TARGET_CONTENT" docs/ .agents/ | while read -r file; do
+        log "Cleaning paths in $file"
+        apply_sed "s|src/||g" "$file"
+    done
 
     rm -rf "$SOURCE_DIR"
 }
