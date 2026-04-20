@@ -18,7 +18,7 @@ mutonex/
 ├── scripts/            # Infrastructure scripts (build, key generation, credits).
 ├── docs/               # Technical and design documentation.
 ├── todo/               # Ongoing project management.
-└── mutonex.sh          # Root-level orchestrator (The "One Script").
+└── devenv.sh           # Root-level orchestrator (The "One Script").
 ```
 
 ### Advantages:
@@ -26,8 +26,8 @@ mutonex/
 - **Git Clone & Run**: The entire game environment is still acquired with a single command.
 - **Explicit Boundaries**: Developers can work in `gameserver/` without needing to understand the internals of `webclient/`, as long as the interface (WebSocket API and static assets) is respected.
 
-## 3. The Root-Level Orchestrator (`mutonex.sh`)
-To maintain the "simplest" setup, a single bash script at the root (`mutonex.sh`) acts as the entry point. This script replaces `src/devenv.sh` and performs the following:
+## 3. The Root-Level Orchestrator (`devenv.sh`)
+To maintain the "simplest" setup, a single bash script at the root (`devenv.sh`) acts as the entry point. This script replaces `src/devenv.sh` and performs the following:
 
 1.  **Dependency Sniffing**: Check for `docker-compose`, `deno`, and `mix`.
 2.  **Environment Setup**: Initialize `.env` and DB credentials.
@@ -37,9 +37,9 @@ To maintain the "simplest" setup, a single bash script at the root (`mutonex.sh`
 4.  **Launch**: Execute `docker-compose up`.
 
 ## 4. Phased Implementation (Monorepo Transformer)
-The transition is orchestrated by `monorepo_transformer_20260329.sh` in four phases:
+The transition is orchestrated by `monorepo_transformer_20260329.sh` in four phases using `git mv` to preserve history and staging:
 
 - **Phase 1**: **Basic Structure Initialization.** Create top-level directories (`gameserver/`, `webclient/`, `content/`, `infra/`, `scripts/`).
 - **Phase 2**: **Webclient Module Transformation.** Relocate `src/webclient/`, `src/deno.json`, and webclient infrastructure scripts. Move essential dependencies (`src/res/`, `src/scripts/app.config.sh`) to their new homes. Update relative paths.
 - **Phase 3**: **Gameserver and Infra Transformation.** Relocate the Elixir engine (`src/gameserver/`) and container/deployment configs (`src/compose.yaml`, `src/conf/`, `src/data/`).
-- **Phase 4**: **Finalize and Validate.** Implement the root-level `mutonex.sh`, clean up the `src/` directory, and validate Docker Compose configuration validity.
+- **Phase 4**: **Finalize and Validate.** Implement the root-level `devenv.sh`, clean up the `src/` directory, and validate Docker Compose configuration validity.
