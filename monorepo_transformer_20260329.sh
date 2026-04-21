@@ -40,9 +40,8 @@ safe_git_mv_contents() {
     if [ -d "$src" ]; then
         log "Git moving contents of $src to $dst"
         mkdir -p "$dst"
-        for item in "$src"/*; do
-            # Handle the case where the directory might be empty or glob fails
-            [ -e "$item" ] || continue
+        # Use find to get all items including hidden ones, but exclude . and ..
+        find "$src" -mindepth 1 -maxdepth 1 | while read -r item; do
             git mv "$item" "$dst/"
         done
         # Remove the now-empty source directory (non-git remove)
@@ -109,11 +108,12 @@ transform_webclient() {
         safe_git_mv "$SOURCE_DIR/scripts/$f" "$TARGET_WEBCLIENT/$f"
     done
 
-    # Patch Webclient
+    # Patch Webclient config
     local deno_cfg="$TARGET_WEBCLIENT/deno.json"
     apply_sed 's|webclient/main.ts|main.ts|g' "$deno_cfg"
     apply_sed 's|./dist/web.js|../dist/web.js|g' "$deno_cfg"
 
+    # Patch Webclient scripts
     local build_sh="$TARGET_WEBCLIENT/build-webclient.sh"
     apply_sed "s|source scripts/|source ../scripts/|g" "$build_sh"
     apply_sed "s|models_src=\"res/|models_src=\"../content/res/|g" "$build_sh"
@@ -131,8 +131,6 @@ transform_webclient() {
     local key_js="$TARGET_WEBCLIENT/generate-api-key.js"
     apply_sed "s|join(Deno.cwd(), \"webclient\",|join(Deno.cwd(),|g" "$key_js"
     apply_sed "s|join(Deno.cwd(), \".env\")|join(Deno.cwd(), \"..\", \".env\")|g" "$key_js"
-    apply_sed "s|src/.env|.env|g" "$key_js"
-    apply_sed "s|src/webclient/|webclient/|g" "$key_js"
 
     apply_sed "s|src/webclient/|webclient/|g" "$TARGET_WEBCLIENT/tests/test.sh"
 }
@@ -152,7 +150,7 @@ transform_platform_and_infra() {
         safe_git_mv "$SOURCE_DIR/scripts/$f" "$TARGET_SCRIPTS/$f"
     done
 
-    log "Patching infra/compose.yaml..."
+    # Patch infra/compose.yaml
     local compose_yml="$TARGET_INFRA/compose.yaml"
     apply_sed 's| \.:/app| ../:/app|g' "$compose_yml"
     apply_sed 's| \./dist:| ../dist:|g' "$compose_yml"
@@ -161,9 +159,11 @@ transform_platform_and_infra() {
     apply_sed 's| \./res:| ../content/res:|g' "$compose_yml"
     apply_sed 's| - \./\.env| - ../.env|g' "$compose_yml"
 
-    log "Patching app.config.sh..."
+    # Critical: Update webclient builder working dir
+    apply_sed 's|working_dir: /app|working_dir: /app/webclient|g' "$compose_yml"
+
+    # Patch app.config.sh
     local app_cfg="$TARGET_SCRIPTS/app.config.sh"
-    # Use a more robust root-discovery logic
     apply_sed 's|BASE_DIR="$(realpath .)"|BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." \&\& pwd)"|g' "$app_cfg"
     apply_sed "s|DATA_HOME=\"\$BASE_DIR/data\"|DATA_HOME=\"\$BASE_DIR/infra/data\"|g" "$app_cfg"
 
@@ -185,11 +185,11 @@ finalize_transformation() {
     safe_git_mv "$SOURCE_DIR/README.md" "./README.src.md"
     safe_git_mv "$SOURCE_DIR/.env.template" "./.env.template"
 
-    # Move dist if it exists (might be ignored)
+    # Move dist if it exists (might be gitignored)
     if [ -d "$SOURCE_DIR/dist" ]; then
         mv "$SOURCE_DIR/dist" "./dist"
     fi
-    # .env is ignored
+    # .env is definitely gitignored
     if [ -f "$SOURCE_DIR/.env" ]; then
         mv "$SOURCE_DIR/.env" "./.env"
     fi
@@ -201,20 +201,16 @@ finalize_transformation() {
         apply_sed "s|docker-compose up|cd $TARGET_INFRA \&\& docker-compose up|g" "./devenv.sh"
     fi
 
-    # Final targeted cleanup of hardcoded references
-    set +e
-    grep -rl "src/" "$TARGET_GAMESERVER" "$TARGET_WEBCLIENT" "$TARGET_INFRA" "$TARGET_SCRIPTS" "$TARGET_CONTENT" docs/ .agents/ 2>/dev/null | while read -r file; do
-        log "Cleaning paths in $file"
+    # Final targeted cleanup
+    log "Performing global path cleanup..."
+    find "$TARGET_GAMESERVER" "$TARGET_WEBCLIENT" "$TARGET_INFRA" "$TARGET_SCRIPTS" "$TARGET_CONTENT" docs/ .agents/ -type f 2>/dev/null | \
+    grep -v "_build" | grep -v "deps" | while read -r file; do
         clean_src_paths "$file"
     done
-    set -e
 
-    # Update .gitignore
-    local gitignore=".gitignore"
-    if [ -f "$gitignore" ]; then
-        apply_sed "s|src/||g" "$gitignore"
-        apply_sed "s|/res/|/content/res/|g" "$gitignore"
-    fi
+    # .gitignore
+    clean_src_paths ".gitignore"
+    apply_sed 's|/res/|/content/res/|g' ".gitignore"
 
     # Remove the now empty src directory
     [ -d "$SOURCE_DIR" ] && rm -rf "$SOURCE_DIR"
@@ -222,9 +218,13 @@ finalize_transformation() {
     log "Verifying transformation..."
     (
         cd "$TARGET_INFRA"
-        # Mock files for compose config validation if they don't exist
+        # Mock files for config validation if needed
         mkdir -p data/conf conf
-        touch ../.env data/.env.postgres data/conf/postgresql.conf data/conf/pg_hba.conf conf/nginx.conf
+        [ -f ../.env ] || touch ../.env
+        [ -f data/.env.postgres ] || touch data/.env.postgres
+        [ -f data/conf/postgresql.conf ] || touch data/conf/postgresql.conf
+        [ -f data/conf/pg_hba.conf ] || touch data/conf/pg_hba.conf
+        [ -f conf/nginx.conf ] || touch conf/nginx.conf
 
         if docker compose config > /dev/null 2>&1; then
             log "Docker Compose configuration is VALID."
@@ -243,6 +243,7 @@ main() {
     transform_platform_and_infra
     finalize_transformation
     log "Monorepo transformation COMPLETE."
+    log "All changes are staged in git. Review with 'git status' and commit."
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
