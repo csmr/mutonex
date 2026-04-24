@@ -17,14 +17,14 @@ The asset construction pipeline using container-driven processes to compile opti
 - **Implementation**: Managed by the `webclient_builder` container.
 - **Technology**: Deno execution engine running fast `esbuild` tasks. Ensures modern JavaScript (ES6+), optimized static assets, and unified CSS are packaged seamlessly for the Gameserver's static directory.
 
-See `src/webclient/GEOMETRY_STRATEGY.md` for the 3D geometry generation pipeline.
+See `webclient/GEOMETRY_STRATEGY.md` for the 3D geometry generation pipeline.
 
 ### 3. Browser Client
 The front-end user experience delivered seamlessly through the browser.
 - **Interface**: Uses modern Vanilla JS/TS alongside a robust Three.js integration for rendering both 3D perspective scenes (globe, lidar) and dynamic 2D lobbies.
 - **Connectivity**: Connects to the Elixir backend via Phoenix WebSocket channels, receiving JSON `[id, x, y, z]` tuples to interpolate and animate game entities within the active view.
 
-See `src/webclient/RENDERING_ARCHITECTURE.md` for the rendering pipeline and view system details.
+See `webclient/RENDERING_ARCHITECTURE.md` for the rendering pipeline and view system details.
 
 ## Hosting & Infrastructure
 

@@ -19,7 +19,7 @@ generated from the source code's parameters.
 ## 3. Initial Solution Design
 1.  **Extraction:** Create `Mutonex.Engine.Rules` for
     constants (speeds, sight). Export to JSON.
-2.  **Template:** Use `src/scripts/generate_guide.ts`
+2.  **Template:** Use `webclient/generate_guide.ts`
     to render parameters to HTML.
 3.  **Integration:** Serve at `/guide` via Phoenix
     or embed in SPA.

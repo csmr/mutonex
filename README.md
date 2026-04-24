@@ -1,14 +1,13 @@
-    ███╗   ███╗██╗   ██╗████████╗ ██████╗ ███╗   ██╗███████╗██╗  ██╗
-    ████╗ ████║██║   ██║╚══██╔══╝██╔═══██╗████╗  ██║██╔════╝╚██╗██╔╝
-    ██╔████╔██║██║   ██║   ██║   ██║   ██║██╔██╗ ██║█████╗   ╚███╔╝ 
-    ██║╚██╔╝██║██║   ██║   ██║   ██║   ██║██║╚██╗██║██╔══╝   ██╔██╗ 
-    ██║ ╚═╝ ██║╚██████╔╝   ██║   ╚██████╔╝██║ ╚████║███████╗██╔╝ ██╗
-    ╚═╝     ╚═╝ ╚═════╝    ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
-    
-    · · · Mutiny  On  Exoplanet · · · · · · · · · · · · · · · · · ·
+# Mutonex
 
-    Mutonex is a Just For Fun, Free Open Source (JFF FOS) project to
-    create fun turn-based Earth-simulation multiplayer strategy game.
-    
-    Target audience is grown-up linux strategy fans and Open Source
-    fans of sim-strategy games.
+Mutonex is a modular multiplayer strategy game monorepo.
+
+## Structure
+- `/gameserver`: Elixir/Phoenix simulation engine.
+- `/webclient`: TypeScript/Three.js frontend.
+- `/content`: Game assets, lore, and procedural generators.
+- `/infra`: Docker Compose and deployment configurations.
+- `/scripts`: Shared infrastructure utilities.
+
+## Getting Started
+Run `./devenv.sh` from the root.

@@ -33,7 +33,7 @@ We utilize **16-bit Grayscale PNG** to store elevation data.
 
 ## 3. Data Processing Workflow
 
-The conversion tool is located at `src/res/geodata/slice_geodata.py`.
+The conversion tool is located at `content/res/geodata/slice_geodata.py`.
 
 ### Dependencies
 *   Python 3
@@ -44,7 +44,7 @@ The conversion tool is located at `src/res/geodata/slice_geodata.py`.
 ### Execution
 The easiest way to set up the data is to run the pipeline script, which handles downloading and slicing automatically.
 
-1.  Navigate to `src/res/geodata/`.
+1.  Navigate to `content/res/geodata/`.
 2.  Install dependencies: `pip install -r requirements.txt`.
 3.  Run the runner script:
     ```bash
@@ -58,7 +58,7 @@ The script will:
 *   Run the slicing process.
 
 **Manual Option:**
-If the automated download fails, you can manually download `GEBCO_2024.tif` from [Source Cooperative](https://source.coop/alexgleith/gebco-2024), place it in `src/res/geodata/`, and run `python3 slice_geodata.py`.
+If the automated download fails, you can manually download `GEBCO_2024.tif` from [Source Cooperative](https://source.coop/alexgleith/gebco-2024), place it in `content/res/geodata/`, and run `python3 slice_geodata.py`.
 
 ### Output Structure
 The script generates a `slices` directory structured by sector:

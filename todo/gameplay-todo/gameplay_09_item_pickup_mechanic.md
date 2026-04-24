@@ -5,7 +5,7 @@ Implement a mechanism for Units (primarily the player's Head unit) to interact w
 
 ## Technical Plan
 
-### 1. Data Model (`src/gameserver/lib/engine/entities.ex`)
+### 1. Data Model (`gameserver/lib/engine/entities.ex`)
 - [ ] Define `Mutonex.Engine.Entities.Item` struct:
     ```elixir
     defmodule Item do
@@ -15,18 +15,18 @@ Implement a mechanism for Units (primarily the player's Head unit) to interact w
 - [ ] Add `inventory: []` field to `Mutonex.Engine.Entities.Unit`.
 - [ ] Add `items: []` to `GameState` for world-level tracking.
 
-### 2. Backend Logic (`src/gameserver/lib/engine/game_session.ex`)
+### 2. Backend Logic (`gameserver/lib/engine/game_session.ex`)
 - [ ] Create action handler for `pick_up`:
     - Use `SparseOctree.query_range` to find items near the actor.
     - Validate proximity (e.g., < 15km).
     - Use `SparseOctree.remove` to excise the item from the world.
     - Update `Unit` state by appending to `inventory`.
 
-### 3. Client Interaction (`src/webclient/main.ts` & `ActionHUD.ts`)
+### 3. Client Interaction (`webclient/main.ts` & `ActionHUD.ts`)
 - [ ] **Scene Click**: Implement raycasting or identifier matching in `LidarView` or `ViewManager` to detect when a user clicks an entity of type `item_default`.
 - [ ] **HUD State**: When an item is targeted and within range, display a "PICK UP" card in the `ActionHUD`.
 - [ ] **Message**: Use `gameStateProvider.sendPlayerAction("pick_up", target_id)` to trigger the server sync.
 
 ### 4. Doctrine Alignment (`AGENTS.md`)
 - Ensure handlers are decoupled and succinct (<11 lines per block).
-- Implement a standalone test in `src/gameserver/test/mutonex_engine/inventory_test.exs` to verify transfer without a full network stack.
+- Implement a standalone test in `gameserver/test/mutonex_engine/inventory_test.exs` to verify transfer without a full network stack.

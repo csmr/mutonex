@@ -1,8 +1,8 @@
 # Webclient Source Reorganization Plan
 
-## Analysis of Current `src/webclient/` Structure
+## Analysis of Current `webclient/` Structure
 
-The current flat structure in `src/webclient/` is becoming crowded. Below is an analysis of each file's responsibility:
+The current flat structure in `webclient/` is becoming crowded. Below is an analysis of each file's responsibility:
 
 | File | Responsibility |
 | :--- | :--- |
@@ -30,7 +30,7 @@ The current flat structure in `src/webclient/` is becoming crowded. Below is an 
 The following directory structure has been implemented:
 
 ```text
-src/webclient/
+webclient/
 ├── core/               # Engine state and management
 │   ├── ViewManager.ts
 │   ├── GameStateProvider.ts
@@ -67,10 +67,10 @@ src/webclient/
 4.  **Update `deno.json`**: Update task paths for bundling if they refer to specific files. (Done)
 5.  **Fix Imports**: Update internal relative imports across all files. (Done)
 6.  **Verify Build**: Run `bash scripts/build-webclient.sh` to ensure bundling still works. (Done)
-7.  **Verify Tests**: Run `bash src/webclient/tests/test.sh` to ensure no broken imports in tests. (Done)
+7.  **Verify Tests**: Run `bash webclient/tests/test.sh` to ensure no broken imports in tests. (Done)
 
 ## Documentation Updates
 
-- Moved `ENTITY_MODELS.md` to `src/res/ENTITY_MODELS.md`.
+- Moved `ENTITY_MODELS.md` to `content/res/ENTITY_MODELS.md`.
 - Refined `RENDERING_ARCHITECTURE.md` for succinct technical depth.
-- Created `src/webclient/README.md` with the new structure.
+- Created `webclient/README.md` with the new structure.

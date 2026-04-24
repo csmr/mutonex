@@ -6,7 +6,7 @@
 Migrate web endpoint responsibilities to the Elixir/Phoenix `gameserver`, implementing a minimal, secure user account system and token-based authentication for WebSocket connections.
 
 ## 1. Dependencies
-Add the following to `src/gameserver/mix.exs`:
+Add the following to `gameserver/mix.exs`:
 - `{:ecto_sql, "~> 3.10"}`: For database interaction.
 - `{:postgrex, ">= 0.0.0"}`: Postgres driver.
 - `{:bcrypt_elixir, "~> 3.0"}`: For secure password hashing.
@@ -83,7 +83,7 @@ Refactor `Mutonex.Net.Endpoint` to use a Router instead of a monolithic Plug.
 3.  JavaScript reads this token.
 
 ### WebSocket Connection
-Update `src/gameserver/lib/net/user_socket.ex`:
+Update `gameserver/lib/net/user_socket.ex`:
 -   `connect(params, socket)`:
     -   Extract `token` from `params` (e.g., `ws://.../socket?token=XYZ`).
     -   Verify token using `Phoenix.Token.verify(socket, "user auth", token, max_age: 1209600)`.

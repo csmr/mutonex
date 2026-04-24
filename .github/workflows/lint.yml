@@ -15,5 +15,5 @@ jobs:
           elixir-version: '1.18.4'
           otp-version: '28.0.2'
       - name: Check formatting
-        working-directory: ./src/gameserver
+        working-directory: ./gameserver
         run: mix format --check-formatted
