@@ -1,6 +1,6 @@
 # Data Directory
 
-This directory (`infra/data`) is the project's data root, defined by `DATA_HOME` in `scripts/app.config.sh`.
+This directory (`infra/data`) is the project's data root, defined by `DATA_HOME` in `webclient/app.config.sh`.
 
 ## PostgreSQL
 

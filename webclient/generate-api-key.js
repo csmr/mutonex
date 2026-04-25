@@ -5,7 +5,7 @@ import { generateApiKeyHash } from "./hash-utils.ts";
 
 /*
  * Generates unique API key
- * - key stored in `.env`.
+ * - key stored in `src/.env`.
  * - key-hash stored in `webclient/api-key-hash.ts`.
  */
 
