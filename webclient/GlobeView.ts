@@ -1,5 +1,5 @@
-import { IView } from "../core/ViewManager.ts";
-import { GameState, Unit } from "../tests/MockGameStateProvider.ts";
+import { IView } from "./ViewManager.ts";
+import { GameState, Unit } from "./MockGameStateProvider.ts";
 
 const GLOBE_RADIUS = 5;
 const UNIT_RADIUS = 0.05;

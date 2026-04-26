@@ -5,7 +5,7 @@ import { generateApiKeyHash } from "./hash-utils.ts";
 
 /*
  * Generates unique API key
- * - key stored in `src/.env`.
+ * - key stored in `.env`.
  * - key-hash stored in `webclient/api-key-hash.ts`.
  */
 
@@ -13,8 +13,8 @@ import { generateApiKeyHash } from "./hash-utils.ts";
 const cfg = {
   LEN_BYTES: 16,
   LF: "\n",
-  ENV_PATH: join(Deno.cwd(), ".env"),
-  CLIENT_PATH: join(Deno.cwd(), "webclient", "api-key-hash.ts"),
+  ENV_PATH: join(Deno.cwd(), "..", ".env"),
+  CLIENT_PATH: join(Deno.cwd(), "api-key-hash.ts"),
   KEY_ENABLED: "API_KEY_AUTH_ENABLE=true",
   apiKeyStr: "API_KEY=",
   hashPrefix: "export const API_KEY_HASH = ",

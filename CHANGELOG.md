@@ -1,8 +1,5 @@
 # Changelog
 
-## v0.2.26 - Webclient Reorganization
-- **Webclient Refactor:** Reorganized source into domain-driven subdirectories and refined technical documentation.
-
 ## v0.2.25 - Item Interaction & Visual Refinement
 - **Gameplay:** Implemented 3D item interaction (Hover "Ghost Cards" and Click-to-pickup) with 15m range enforcement.
 - **Webclient Refactor:** Upgraded SphereView to a true Birdseye perspective with OrbitControls and optimized Action HUD state synchronization.

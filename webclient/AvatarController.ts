@@ -1,7 +1,7 @@
-import "../core/global_types.ts";
-import { ViewManager } from "../core/ViewManager.ts";
-import { GameStateProvider } from "../core/GameStateProvider.ts";
-import { sampleTerrainHeight } from "../rendering/TerrainMesh.ts";
+import "./global_types.ts";
+import { ViewManager } from "./ViewManager.ts";
+import { GameStateProvider } from "./GameStateProvider.ts";
+import { sampleTerrainHeight } from "./TerrainMesh.ts";
 
 /**
  * Handles avatar movement, input, and state synchronization.

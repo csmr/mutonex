@@ -1,5 +1,5 @@
-import "../core/global_types.ts";
-import { EntityData, EntityType } from "../core/types.ts";
+import "./global_types.ts";
+import { EntityData, EntityType } from "./types.ts";
 
 /**
  * Manages 3D representation of game entities.

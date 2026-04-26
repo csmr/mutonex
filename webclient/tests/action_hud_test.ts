@@ -8,6 +8,7 @@ class MockElement {
     children: MockElement[] = [];
     textContent = "";
     className = "";
+    innerText = "";
 
     set innerHTML(html: string) {
         if (!html) {
@@ -30,44 +31,22 @@ class MockElement {
     }
 
     querySelector(selector: string): MockElement | null {
-        const parts = selector.trim().split(/\s+/);
-        let current: MockElement = this;
-        for (const part of parts) {
-            const found = current.querySelectorAll(part);
-            if (found.length === 0) return null;
-            current = found[0];
-        }
-        return current;
-    }
-
-    querySelectorAll(selector: string): MockElement[] {
-        const results: MockElement[] = [];
         if (selector.startsWith(".")) {
             const cls = selector.substring(1);
-            if (this.className && this.className.includes(cls)) {
-                results.push(this);
+            if (this.className && this.className.includes(cls)) return this;
+            for (const child of this.children) {
+                const found = child.querySelector(selector);
+                if (found) return found;
             }
         } else if (selector.startsWith("#")) {
             const targetId = selector.substring(1);
-            if (this.id === targetId) {
-                results.push(this);
+            if (this.id === targetId) return this;
+            for (const child of this.children) {
+                const found = child.querySelector(selector);
+                if (found) return found;
             }
         }
-        for (const child of this.children) {
-            results.push(...child.querySelectorAll(selector));
-        }
-        return results;
-    }
-
-    getAttribute(name: string): string | null {
         return null;
-    }
-
-    set innerText(val: string) {
-        this.textContent = val;
-    }
-    get innerText() {
-        return this.textContent;
     }
 
     addEventListener(event: string, fn: (e: any) => void) {
@@ -94,22 +73,23 @@ function resetDom() {
 }
 
 function createDOMTreeFromHTML(html: string): MockElement[] {
-    if (html.includes('id="hud-charm-card"')) {
-        const root = new MockElement("hud-charm-card");
-        root.className = "action-card";
+    const root = new MockElement("hud-charm-card");
+    root.className = "action-card";
 
-        const title = new MockElement();
-        title.className = "card-title";
-        title.innerText = "CHARM";
+    const title = new MockElement();
+    title.className = "card-title";
+    title.innerText = "CHARM";
 
-        const value = new MockElement();
-        value.className = "card-value";
-        value.innerText = "0";
+    const value = new MockElement();
+    value.className = "card-value";
+    value.innerText = "0";
 
-        root.appendChild(title);
-        root.appendChild(value);
-        return [root];
-    }
+    root.appendChild(title);
+    root.appendChild(value);
+
+    // Naively return the root if the html string contains the id
+    // This perfectly mirrors our specific render payload for the test environment.
+    if (html.includes('id="hud-charm-card"')) return [root];
     return [];
 }
 
@@ -122,7 +102,7 @@ function createDOMTreeFromHTML(html: string): MockElement[] {
     }
 };
 
-const { ActionHUD } = await import("../ui/ActionHUD.ts");
+const { ActionHUD } = await import("../ActionHUD.ts");
 
 Deno.test("ActionHUD: constructor initializes without error", () => {
     resetDom();

@@ -1,16 +1,16 @@
 // webclient/main.ts
-import "./core/global_types.ts";
-import { GameStateProvider } from "./core/GameStateProvider.ts";
-import { ViewManager } from "./core/ViewManager.ts";
-import { LidarView } from "./views/LidarView.ts";
-import { LidarStyles } from "./rendering/LidarStyles.ts";
-import { SphereView } from "./views/SphereView.ts";
-import { LobbyView, Sector } from "./views/LobbyView.ts";
-import { AvatarController } from "./ui/AvatarController.ts";
-import { sampleTerrainHeight } from "./rendering/TerrainMesh.ts";
-import { EntityData, EntityType, Terrain } from "./core/types.ts";
-import type { PlayerTuple } from "./tests/MockGameStateProvider.ts";
-import { ActionHUD } from "./ui/ActionHUD.ts";
+import "./global_types.ts";
+import { GameStateProvider } from "./GameStateProvider.ts";
+import { ViewManager } from "./ViewManager.ts";
+import { LidarView } from "./LidarView.ts";
+import { LidarStyles } from "./LidarStyles.ts";
+import { SphereView } from "./SphereView.ts";
+import { LobbyView, Sector } from "./LobbyView.ts";
+import { AvatarController } from "./AvatarController.ts";
+import { sampleTerrainHeight } from "./TerrainMesh.ts";
+import { EntityData, EntityType, Terrain } from "./types.ts";
+import type { PlayerTuple } from "./MockGameStateProvider.ts";
+import { ActionHUD } from "./ActionHUD.ts";
 
 function initRenderPipeline(canvas: HTMLCanvasElement) {
   const viewManager = new ViewManager(canvas);

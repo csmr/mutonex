@@ -1,7 +1,7 @@
 // Defines the structure of the game state
 // data transported from the server.
 
-import { Terrain } from "../core/types.ts";
+import { Terrain } from "./types.ts";
 export type { Terrain };
 
 // [id, x, y, z, charm]

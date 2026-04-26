@@ -13,11 +13,11 @@ Dev-env startup script `devenv.sh`
   2. sets up app env & database credentials once
   3. executes `docker-compose up` to run services in `infra/compose.yaml`, find port numbers there.
 
-Unless `devenv.sh` runs, no credentials in `src/.env` and `data/.env.postgres`, so `docker-compose` will fail.
+Unless `devenv.sh` runs, no credentials in `.env` and `data/.env.postgres`, so `docker-compose` will fail.
 
 
 ## .env file
-This `src/.env` file is created once, using `infra/data/.env.postgres`. If deleted, access to database is lost.
+This `.env` file is created once, using `infra/data/.env.postgres`. If deleted, access to database is lost.
 
 To generate the `.env` file, `dev-env.sh` startup runs `webclient/init-database-env.sh` and `webclient/init-dotenv.sh`.
 
@@ -35,7 +35,7 @@ See `gameserver` for the unified Elixir Phoenix application. It handles the webs
 ## Database
 DB initialized with `infra/compose.yaml` config, where `volumes:` sets data-dir and `env_file:` default credentials.
 
-DB access for servers depends on the credentials in `src/.env`.
+DB access for servers depends on the credentials in `.env`.
 
 
 ## .agents
