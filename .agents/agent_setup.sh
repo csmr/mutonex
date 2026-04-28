@@ -16,7 +16,7 @@ fi
 
 # 2. Change to gameserver dir, install deps
 # - because mix commands must be run from the dir with mix.exs file
-(cd src/gameserver && mix local.hex --force && mix deps.get)
+(cd gameserver && mix local.hex --force && mix deps.get)
 
 # 3. Install Deno
 if ! command -v deno &> /dev/null
@@ -29,9 +29,9 @@ fi
 
 # 4. Generate API key and set session salt
 # TODO API key setup needs work
-deno run --allow-read --allow-write src/scripts/generate-api-key.js
+(cd webclient && deno run --allow-read --allow-write generate-api-key.js)
 source ./.env
 export PHX_SESSION_SALT=$API_KEY_HASH
 
 # 5. Run tests
-(cd src/gameserver && mix test)
+(cd gameserver && mix test)

@@ -3,7 +3,7 @@ set -e
 
 # Configuration
 TEST_TIMEOUT="15s"
-CLIENT_PATH="../src/webclient"
+CLIENT_PATH="../webclient"
 
 # Change to module directory
 cd "$(dirname "$0")/${CLIENT_PATH}" || exit 1

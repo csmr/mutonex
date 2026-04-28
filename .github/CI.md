@@ -23,7 +23,7 @@ This job guarantees that the core logic of the `gameserver` is functioning as ex
 
 ### How to run locally:
 
-To run the Elixir tests on your local machine, navigate to the `src/gameserver` directory and run the following commands:
+To run the Elixir tests on your local machine, navigate to the `gameserver` directory and run the following commands:
 
 ```bash
 mix deps.get
@@ -36,7 +36,7 @@ This job performs a higher-level integration test to ensure that all the differe
 
 ### What it does:
 
-1.  **Builds and Starts Services:** It uses `docker-compose -f src/compose.yaml up -d` to build the Docker images for all services and start them in the background.
+1.  **Builds and Starts Services:** It uses `docker compose -f infra/compose.yaml up -d` to build the Docker images for all services and start them in the background.
 2.  **Waits for Services to be Healthy:** Instead of a fixed delay, this job now uses a script to poll the `/health` endpoints of the `webserver` (at `http://localhost:8888/health`) and the `gameserver` (at `http://localhost:4000/health`). It waits until both services return a `200 OK` status, with a timeout of 60 seconds.
 3.  **Checks Services:** After the services are healthy, it runs `docker-compose ps` to list the running containers and their statuses, providing a clear snapshot of the environment. It then explicitly curls the health endpoints again to confirm they are responsive.
 
@@ -46,10 +46,10 @@ This job verifies that the services are not only buildable but can also run toge
 
 ### How to run locally:
 
-To run the Docker Compose integration tests on your local machine, navigate to the `src/` directory and run:
+To run the Docker Compose integration tests on your local machine, run:
 
 ```bash
-docker-compose -f compose.yaml up -d --build
+docker compose -f infra/compose.yaml up -d --build
 ```
 
 You can then manually check the health of the services by running:

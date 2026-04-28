@@ -20,9 +20,9 @@ Working with this project has two avenues:
 1. For testing and agentic development, tests are executed standalone in local scope (deno, elixir interpreter).
 2. For development and hosting purposes, each Mutonex component runs in a container defined in `compose.yaml`, and `.env` files must be generated.
 
-First read `src/devenv.sh` script, to see how `src/.env` and `src/data/.env.postgres` files are generated.
+First read `devenv.sh` script, to see how `.env` and `infra/data/.env.postgres` files are generated.
 
-Second, the basics of developing the modules in this project and repository are described in src/README.md file, read it next.
+Second, the basics of developing the modules in this project and repository are described in README.md file, read it next.
 
 Read the game design document `./docs/mutonex-design-document.html` Table of Contents, and use that as an index for finding implementation design related details.
 
@@ -44,7 +44,7 @@ bash .agents/agent_setup.sh
 
 ### Gameserver & Simulation tests
 
-The gameserver now absorbs both the web serving logic and the Simtellus planet simulation. All backend logic is tested via Elixir's ExUnit. Execute from the `src/gameserver` directory:
+The gameserver now absorbs both the web serving logic and the Simtellus planet simulation. All backend logic is tested via Elixir's ExUnit. Execute from the `gameserver` directory:
 
 ```bash
 mix test
@@ -66,7 +66,7 @@ This covers:
 To verify the webclient, ensure successful bundle:
 
 ```bash
-cd src && bash scripts/bundle-webclient.sh
+bash webclient/build-webclient.sh
 ```
 
 ### Webclient unit tests:

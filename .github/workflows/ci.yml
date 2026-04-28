@@ -15,7 +15,7 @@ jobs:
           elixir-version: '1.18.4' # Replace with your Elixir version
           otp-version: '28.0.2'   # Replace with your OTP version
       - name: Install dependencies and run tests
-        working-directory: ./src/gameserver
+        working-directory: ./gameserver
         run: |
           mix deps.get
           mix test
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build and start services
-        run: docker-compose -f src/compose.yaml up -d
+        run: docker compose -f infra/compose.yaml up -d
       - name: Wait for services to be healthy
         run: |
           echo "Waiting for services to be healthy..."
@@ -37,7 +37,7 @@ jobs:
           '
           echo "All services are healthy."
       - name: Check running services
-        run: docker-compose -f src/compose.yaml ps
+        run: docker compose -f infra/compose.yaml ps
       - name: Check webserver health
         run: curl -f http://localhost:8888/health
       - name: Check gameserver health

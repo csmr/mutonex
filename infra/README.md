@@ -10,7 +10,7 @@ This directory manages the hosting environments for:
 - **Gameserver**: (Websockets) Real-time state and geometry.
 - **Nginx**: Production-grade reverse proxy.
 
-The application services are defined in `src/compose.yaml`.
+The application services are defined in `infra/compose.yaml`.
 
 ## Hosting Configurations
 

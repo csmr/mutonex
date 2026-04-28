@@ -10,7 +10,7 @@ Precondition: `http://localhost:4000` must be reachable and all three containers
 
 1. Read the test script file into memory:
    ```
-   cat /home/gamete/_doxxx/Mutonex/repository/src/scripts/lidar_diag_test.js
+   cat webclient/tests/lidar_diag_test.js
    ```
 
 2. Open the browser to `http://localhost:4000` (or reload if already open).

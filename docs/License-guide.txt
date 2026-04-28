@@ -38,4 +38,4 @@ Github.com/csmr/mutonex is the source-of-truth for contributors identity.
 
 All contributors will be mentioned in title credits. Contributor list is
 sourced from the repository committers and will (can) be compiled with
-'$ bash ./src/make-credits.sh', which will create list in ./temp/CREDITS.
+'$ deno run -A ./webclient/make-credits.js', which will create list in ./dist/CREDITS.
