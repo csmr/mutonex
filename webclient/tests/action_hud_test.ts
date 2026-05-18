@@ -31,22 +31,37 @@ class MockElement {
     }
 
     querySelector(selector: string): MockElement | null {
+        const parts = selector.trim().split(/\s+/);
+        let current: MockElement = this;
+        for (const part of parts) {
+            const found = current.querySelectorAll(part);
+            if (found.length === 0) return null;
+            current = found[0];
+        }
+        return current;
+    }
+
+    querySelectorAll(selector: string): MockElement[] {
+        const results: MockElement[] = [];
         if (selector.startsWith(".")) {
             const cls = selector.substring(1);
-            if (this.className && this.className.includes(cls)) return this;
-            for (const child of this.children) {
-                const found = child.querySelector(selector);
-                if (found) return found;
+            if (this.className && this.className.includes(cls)) {
+                results.push(this);
             }
         } else if (selector.startsWith("#")) {
             const targetId = selector.substring(1);
-            if (this.id === targetId) return this;
-            for (const child of this.children) {
-                const found = child.querySelector(selector);
-                if (found) return found;
+            if (this.id === targetId) {
+                results.push(this);
             }
         }
-        return null;
+        for (const child of this.children) {
+            results.push(...child.querySelectorAll(selector));
+        }
+        return results;
+    }
+
+    getAttribute(_name: string): string | null {
+        return "";
     }
 
     addEventListener(event: string, fn: (e: any) => void) {
@@ -93,6 +108,7 @@ function createDOMTreeFromHTML(html: string): MockElement[] {
     return [];
 }
 
+(globalThis as any).window = globalThis;
 (globalThis as any).document = {
     getElementById(id: string) {
         return dom[id] || null;
