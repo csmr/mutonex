@@ -1,6 +1,6 @@
 defmodule Mutonex.Simtellus.Planet do
   @moduledoc """
-  Port of src/simtellus/planet.rb
+  Port of content/ruleset/simtellus/planet.rb (legacy)
   Collection of modules to approximate planetary energy fluxes in ISO units.
   """
 

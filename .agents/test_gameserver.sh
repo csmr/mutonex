@@ -3,8 +3,8 @@ set -e
 
 # Configuration
 TEST_TIMEOUT="20s"
-ENV_PATH="../src/.env"
-SERVER_PATH="../src/gameserver"
+ENV_PATH="../.env"
+SERVER_PATH="../gameserver"
 
 # Change to module directory
 cd "$(dirname "$0")/${SERVER_PATH}" || exit 1

@@ -3,25 +3,34 @@
 Infrastructure as Code for the Mutonex game project.
 
 ## Overview
+<pre>
+infra
+├── compose.yaml    # app container services
+├── conf            # for production nginx reverse proxy
+├── data            # game data, a postgres cluster
+├── terraform       # hosting provisions
+└── README.md
+</pre>
 
-This directory manages the hosting environments for:
-- **Webserver**: (Phoenix) Handles accounts and Auth.
-- **Database**: (Postgres) Persistent user data.
-- **Gameserver**: (Websockets) Real-time state and geometry.
-- **Nginx**: Production-grade reverse proxy.
+## Persistence
 
-The application services are defined in `src/compose.yaml`.
+The `data/` dir contains postgres configuration and data. On postgres
+container startup, `data/.env.postgres` with credentials and `data/postgres/`
+are created.
+
+Note: if `data/` is wiped, dot-env credential accounts, user, game and sim 
+data is lost.
 
 ## Hosting Configurations
 
-### GCP (`terraform/gcp/`)
-Targeted for GCP Engineer certification studies.
+### GCP
+- `./terraform/gcp/`
 - **Services**: Provisions a GKE Autopilot cluster.
 - **Hosting**: Managed Kubernetes for multi-container apps.
 - **Pragmatic Level**: High (managed control plane).
 
-### Hetzner (`terraform/hetzner/`)
-Targeted for cost-effective, hands-on production.
+### Hetzner 
+- `./terraform/hetzner/`
 - **Services**: Provisions a Cloud VPS (CPX21).
 - **Hosting**: Docker Compose on Ubuntu.
 - **Pragmatic Level**: Extreme (direct control, low cost).
@@ -34,3 +43,4 @@ cd terraform/<provider>
 terraform init
 terraform plan
 ```
+
