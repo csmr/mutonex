@@ -26,7 +26,10 @@ defmodule Mutonex.Engine.EntitiesTest do
         check(unit.society_id == nil) &&
         check(unit.home_id == nil) &&
         check(unit.sight_area == 0) &&
-        check(unit.attributes == %{charm: 0, tribe: nil, flavor: nil}) &&
+        check(unit.attributes == %{charm: 0, tribe: nil, flavor: nil, scale: 1.0}) &&
+        check(unit.inventory == []) &&
+        check(unit.energy == 100.0) &&
+        check(unit.status == :active) &&
         check(unit.history == %{})
       end),
 
@@ -38,7 +41,7 @@ defmodule Mutonex.Engine.EntitiesTest do
           society_id: 100,
           home_id: 200,
           sight_area: 5,
-          attributes: %{charm: 10, tribe: :potassium, flavor: :red},
+          attributes: %{charm: 10, tribe: :potassium, flavor: :red, scale: 1.0},
           history: %{birth: ~D[2023-01-01]}
         }
         unit = struct(Mutonex.Engine.Entities.Unit, unit_data)
@@ -49,6 +52,7 @@ defmodule Mutonex.Engine.EntitiesTest do
         check(unit.home_id == 200) &&
         check(unit.sight_area == 5) &&
         check(unit.attributes.charm == 10) &&
+        check(unit.attributes.flavor == :red) &&
         check(unit.history.birth == ~D[2023-01-01])
       end),
 

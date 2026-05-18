@@ -110,8 +110,25 @@ defmodule Mutonex.Engine.GameLoop do
           "Successfully fetched and decoded data for sector " <>
             "#{lat},#{lon}: #{inspect(planet_state_map)}"
         )
-        # TODO: Game logic for updating state.
-        :ok # Return value for Enum.each
+        
+        # Broadcast to matching game sessions
+        # For now, we use a simple PubSub or Registry broadcast
+        # In a real system, sid would be derived from lat/lon
+        registry_key = "sector_#{lat}_#{lon}"
+        
+        # We also notify the current active dev sector for demo
+        # (This is a PoC hack to ensure the test sector gets updates)
+        dev_sid = "Sector Alpha (Dev)"
+        
+        [registry_key, dev_sid] |> Enum.each(fn key ->
+            Registry.dispatch(Mutonex.GameRegistry, key, fn entries ->
+            Enum.each(entries, fn {pid, _} -> 
+                send(pid, {:update_planet_state, planet_state_map}) 
+            end)
+            end)
+        end)
+
+        :ok
 
       {:error, reason} ->
         Logger.error(

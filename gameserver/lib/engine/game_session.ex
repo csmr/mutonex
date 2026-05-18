@@ -27,7 +27,13 @@ defmodule Mutonex.Engine.GameSession do
   def init(sid) do
     send(self(), :check_simtellus)
     schedule_token_rotation()
+    schedule_sector_tick()
     {:ok, Environment.initial_state(sid)}
+  end
+
+  defp schedule_sector_tick do
+    # Sector turn is ~17s per GDD, but for testing we use a faster rate (5s)
+    Process.send_after(self(), :tick_sector, 5000)
   end
 
   def handle_call(:get_initial_state, _from, s) do
@@ -48,6 +54,41 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
+  def handle_info(:tick_sector, s) do
+    if s.phase == :gamein do
+      new_buildings = Enum.map(s.buildings, fn b ->
+        if b.status == :active do
+          scale = Map.get(b.attributes, :scale, 1.0)
+          # Energy/Turn = Scale * SectorWatts - Maintenance(3W)
+          new_energy = max(0, min(100.0, b.energy + (scale * s.sector_energy) - 3.0))
+          status = if new_energy <= 0, do: :ruined, else: :active
+          %{b | energy: new_energy, status: status}
+        else
+          b
+        end
+      end)
+
+      # 2. Update Players (Energy depletion)
+      new_players = Enum.into(s.players, %{}, fn {uid, p} ->
+        # Deplete energy by 0.5 per tick (mobile)
+        new_unit = %{p.player | energy: max(0, p.player.energy - 0.5)}
+        new_unit = if new_unit.energy <= 0, do: %{new_unit | status: :mummified}, else: new_unit
+        {uid, %{p | player: new_unit}}
+      end)
+      
+      ns = %{s | buildings: new_buildings, players: new_players}
+      
+      # 3. Broadcast updates (including buildings and fauna)
+      broadcast_state_update(ns.sector_id, ns.players, ns.items, ns.buildings, ns.fauna)
+      
+      schedule_sector_tick()
+      {:noreply, ns}
+    else
+      schedule_sector_tick()
+      {:noreply, s}
+    end
+  end
+
   def handle_info(:rotate_tokens, s) do
     ts = Enum.into(s.players, %{}, fn {uid, _} ->
       t = MessageToken.generate()
@@ -57,6 +98,12 @@ defmodule Mutonex.Engine.GameSession do
     end)
     schedule_token_rotation()
     {:noreply, %{s | tokens: ts}}
+  end
+
+  def handle_info({:update_planet_state, data}, s) do
+    # Update sector energy from Simtellus data
+    new_energy = Map.get(data, "energy", s.sector_energy)
+    {:noreply, %{s | sector_energy: new_energy}}
   end
 
   def handle_info({:tick_fauna, id}, s) do
@@ -220,20 +267,28 @@ defmodule Mutonex.Engine.GameSession do
     Enum.map(ps, fn {_, %{player: p}} ->
       [
         p.id, p.position.x, p.position.y, p.position.z,
-        p.attributes.charm, p.inventory
+        p.attributes.charm, p.inventory, p.energy, p.status
       ]
     end)
   end
 
   defp fauna_to_list(fs) do
     Enum.map(fs, fn {_, f} ->
-      [f.id, f.position.x, f.position.y, f.position.z]
+      [f.id, f.position.x, f.position.y, f.position.z, f.energy, f.status]
     end)
   end
 
-  defp broadcast_state_update(sid, ps, items \\ nil) do
+  defp buildings_to_list(bs) do
+    Enum.map(bs, fn b ->
+      [b.id, b.position.x, b.position.y, b.position.z, b.type, b.energy, b.status]
+    end)
+  end
+
+  defp broadcast_state_update(sid, ps, items \\ nil, buildings \\ nil, fauna \\ nil) do
     payload = %{players: players_to_list(ps)}
     payload = if items, do: Map.put(payload, :items, items), else: payload
+    payload = if buildings, do: Map.put(payload, :buildings, buildings_to_list(buildings)), else: payload
+    payload = if fauna, do: Map.put(payload, :fauna, fauna_to_list(fauna)), else: payload
     Endpoint.broadcast("game:#{sid}", "state_update", payload)
   end
 
