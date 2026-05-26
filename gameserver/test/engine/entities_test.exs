@@ -26,7 +26,7 @@ defmodule Mutonex.Engine.EntitiesTest do
         check(unit.society_id == nil) &&
         check(unit.home_id == nil) &&
         check(unit.sight_area == 0) &&
-        check(unit.attributes == %{charm: 0, tribe: nil, flavor: nil, scale: 1.0}) &&
+        check(unit.attributes == %{charm: 1, tribe: nil, flavor: nil, scale: 1.0}) &&
         check(unit.inventory == []) &&
         check(unit.energy == 100.0) &&
         check(unit.status == :active) &&

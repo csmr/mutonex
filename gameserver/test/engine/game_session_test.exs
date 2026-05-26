@@ -61,7 +61,7 @@ defmodule Mutonex.Engine.GameSessionTest do
     unit = player_state.player
     assert unit.__struct__ == Mutonex.Engine.Entities.Unit
     assert unit.type == :head
-    assert unit.attributes.charm == 0
+    assert unit.attributes.charm == 1
   end
 
   test "queues start during boot", %{sector_id: sid} do

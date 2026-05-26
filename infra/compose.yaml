@@ -5,8 +5,7 @@ services:
     image: denoland/deno:2.5.6
     container_name: mutondeno
     volumes:
-      - .:/app
-      - ../dist:/app/dist
+      - ..:/app
     working_dir: /app/webclient
     command: sh -c "./build-webclient.sh"
     depends_on:
@@ -70,6 +69,8 @@ services:
       - ../.env
     environment:
       PHX_SIGNING_SALT: ${PHX_SIGNING_SALT}
+      ERL_AFLAGS: "+c false"
+      ELIXIR_ERL_OPTIONS: "+c false"
     ports:
       - "4000:4000"
 
