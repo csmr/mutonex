@@ -12,3 +12,5 @@ function log () {
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUNTIME_DIR="$BASE_DIR/dist"
 DATA_HOME="$BASE_DIR/infra/data"
+DOTENV_PATH="$BASE_DIR/.env"
+WEB_PATH="$BASE_DIR/gameserver/priv/static"

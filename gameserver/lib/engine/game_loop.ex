@@ -2,8 +2,11 @@ defmodule Mutonex.Engine.GameLoop do
   use GenServer
   require Logger
 
-  # Turn interval in milliseconds.
-  @turn_interval_ms 20 * 1000
+  @turn_interval_ms Application.compile_env(
+                      :mutonex_server,
+                      [__MODULE__, :turn_interval_ms],
+                      20_000
+                    )
 
   #
   # Client API
@@ -31,12 +34,8 @@ defmodule Mutonex.Engine.GameLoop do
 
   @impl true
   def init(opts) do
-    # Hardcoded sectors for PoC.
-    active_sectors = [
-      %{lat: 0, lon: 0},
-      %{lat: 51.5, lon: -0.12}, # London
-      %{lat: 35.6, lon: 139.6}  # Tokyo
-    ]
+    cfg = Mutonex.Utils.ConfigReader.get(__MODULE__)
+    active_sectors = cfg[:active_sectors] || []
 
     state = %{
       turn_number: 1,
@@ -56,18 +55,17 @@ defmodule Mutonex.Engine.GameLoop do
 
   @impl true
   def handle_info(:tick, state) do
-    Logger.info(
-      "Processing Turn ##{state.turn_number} for " <>
-        "#{Enum.count(state.active_sectors)} sectors..."
-    )
-
-    # Resolve client dynamically.
     client =
       Application.get_env(
         :mutonex_server,
         :simtellus_client,
         Mutonex.Engine.SimtellusClient
       )
+
+    Logger.info(
+      "Processing Turn ##{state.turn_number} for " <>
+        "#{Enum.count(state.active_sectors)} sectors..."
+    )
 
     # Process all sectors using the abstracted function.
     Enum.each(
@@ -98,6 +96,8 @@ defmodule Mutonex.Engine.GameLoop do
   defp process_sector(client, sector) do
     lat = sector.lat
     lon = sector.lon
+    registry_key = "sector_#{lat}_#{lon}"
+    dev_sid = "Sector Alpha (Dev)"
 
     Logger.info(
       "Fetching planet state for sector at " <>
@@ -110,22 +110,15 @@ defmodule Mutonex.Engine.GameLoop do
           "Successfully fetched and decoded data for sector " <>
             "#{lat},#{lon}: #{inspect(planet_state_map)}"
         )
-        
+
         # Broadcast to matching game sessions
-        # For now, we use a simple PubSub or Registry broadcast
-        # In a real system, sid would be derived from lat/lon
-        registry_key = "sector_#{lat}_#{lon}"
-        
-        # We also notify the current active dev sector for demo
-        # (This is a PoC hack to ensure the test sector gets updates)
-        dev_sid = "Sector Alpha (Dev)"
-        
-        [registry_key, dev_sid] |> Enum.each(fn key ->
-            Registry.dispatch(Mutonex.GameRegistry, key, fn entries ->
-            Enum.each(entries, fn {pid, _} -> 
-                send(pid, {:update_planet_state, planet_state_map}) 
+        [registry_key, dev_sid]
+        |> Enum.each(fn key ->
+          Registry.dispatch(Mutonex.GameRegistry, key, fn entries ->
+            Enum.each(entries, fn {pid, _} ->
+              send(pid, {:update_planet_state, planet_state_map})
             end)
-            end)
+          end)
         end)
 
         :ok

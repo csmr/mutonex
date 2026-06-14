@@ -13,3 +13,4 @@
 /infra/data/.env.postgres
 .env
 *.log
+/gameserver/priv/static

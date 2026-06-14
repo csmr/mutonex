@@ -6,8 +6,13 @@ defmodule Mutonex.Engine.GameSession do
   alias Mutonex.Utils.MessageToken
   alias Mutonex.Net.Endpoint
   alias Mutonex.Engine.SimtellusClient
+  alias Mutonex.Utils.ConfigReader
 
-  @max_speed_ms (8000 * 1000 / 3600)
+  @max_speed_ms Application.compile_env(
+                  :mutonex_server,
+                  [__MODULE__, :max_speed_ms],
+                  8000 * 1000 / 3600
+                )
   @action_dispatch %{
     "charm" => :charm,
     "pick_up" => :pick_up,
@@ -32,8 +37,8 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp schedule_sector_tick do
-    # Sector turn is ~17s per GDD, but for testing we use a faster rate (5s)
-    Process.send_after(self(), :tick_sector, 5000)
+    interval = ConfigReader.get(__MODULE__, :sector_tick_ms, 5000)
+    Process.send_after(self(), :tick_sector, interval)
   end
 
   def handle_call(:get_initial_state, _from, s) do
@@ -55,26 +60,39 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   def handle_info(:tick_sector, s) do
+    cfg = ConfigReader.get(__MODULE__)
+    maint = cfg[:building_maintenance_cost] || 3.0
+    depletion = cfg[:player_energy_depletion] || 0.5
+
     if s.phase == :gamein do
-      new_buildings = Enum.map(s.buildings, fn b ->
-        if b.status == :active do
-          scale = Map.get(b.attributes, :scale, 1.0)
-          # Energy/Turn = Scale * SectorWatts - Maintenance(3W)
-          new_energy = max(0, min(100.0, b.energy + (scale * s.sector_energy) - 3.0))
-          status = if new_energy <= 0, do: :ruined, else: :active
-          %{b | energy: new_energy, status: status}
-        else
-          b
-        end
-      end)
+      new_buildings =
+        Enum.map(s.buildings, fn b ->
+          if b.status == :active do
+            scale = Map.get(b.attributes, :scale, 1.0)
+            # Energy/Turn = Scale * SectorWatts - Maintenance
+            new_energy =
+              max(0, min(100.0, b.energy + scale * s.sector_energy - maint))
+
+            status = if new_energy <= 0, do: :ruined, else: :active
+            %{b | energy: new_energy, status: status}
+          else
+            b
+          end
+        end)
 
       # 2. Update Players (Energy depletion)
-      new_players = Enum.into(s.players, %{}, fn {uid, p} ->
-        # Deplete energy by 0.5 per tick (mobile)
-        new_unit = %{p.player | energy: max(0, p.player.energy - 0.5)}
-        new_unit = if new_unit.energy <= 0, do: %{new_unit | status: :mummified}, else: new_unit
-        {uid, %{p | player: new_unit}}
-      end)
+      new_players =
+        Enum.into(s.players, %{}, fn {uid, p} ->
+          # Deplete energy per tick (mobile)
+          new_unit = %{p.player | energy: max(0, p.player.energy - depletion)}
+
+          new_unit =
+            if new_unit.energy <= 0,
+              do: %{new_unit | status: :mummified},
+              else: new_unit
+
+          {uid, %{p | player: new_unit}}
+        end)
       
       ns = %{s | buildings: new_buildings, players: new_players}
       
@@ -296,15 +314,27 @@ defmodule Mutonex.Engine.GameSession do
     if s.players[uid] do
       s
     else
+      pos =
+        ConfigReader.get(__MODULE__, :default_spawn_position, %{
+          x: 0,
+          y: 1,
+          z: 0
+        })
+
       p = %Unit{
         id: uid,
         type: :head,
-        position: %{x: 0, y: 1, z: 0}
+        position: pos
       }
-      %{s | players: Map.put(s.players, uid, %{
-        player: p,
-        last_update: nil
-      })}
+
+      %{
+        s
+        | players:
+            Map.put(s.players, uid, %{
+              player: p,
+              last_update: nil
+            })
+      }
     end
   end
 
@@ -346,7 +376,8 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp schedule_token_rotation do
-    Process.send_after(self(), :rotate_tokens, 10000)
+    interval = ConfigReader.get(__MODULE__, :token_rotation_ms, 10_000)
+    Process.send_after(self(), :rotate_tokens, interval)
   end
 
   defp via_tuple(sid) do

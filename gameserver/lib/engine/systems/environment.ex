@@ -3,14 +3,17 @@ defmodule Mutonex.Engine.Systems.Environment do
   alias Mutonex.Engine.Systems.FaunaSystem
   alias Mutonex.Engine.Mineral, as: MineralLogic
   alias Mutonex.Engine.Entities.{Unit, Item}
+  alias Mutonex.Utils.ConfigReader
 
   def initial_state(sid) do
+    cfg = ConfigReader.get(__MODULE__)
+
     %{
       sector_id: sid,
       players: %{},
       tokens: %{},
       terrain: nil,
-      game_time: 720,
+      game_time: cfg[:game_time] || 720,
       phase: :booting,
       fauna: %{},
       octree: nil,
@@ -18,22 +21,28 @@ defmodule Mutonex.Engine.Systems.Environment do
       items: [],
       conveyors: [],
       buildings: [],
-      sector_energy: 200.0, # Watts per m2
+      sector_energy: cfg[:sector_energy] || 200.0,
       pending_start: false
     }
   end
 
   def build(s) do
-    {fauna, octree} = spawn_fauna(s.sector_id)
-    s = %{s | 
-      phase: :gamein,
-      terrain: TerrainGenerator.generate_heightmap(20, 20),
-      octree: octree,
-      fauna: fauna,
-      minerals: MineralLogic.spawn_minerals(5, %{x: 20, z: 20}),
-      items: spawn_items(),
-      players: add_dummies(s.players),
-      pending_start: false
+    cfg = ConfigReader.get(__MODULE__)
+    fauna_count = cfg[:fauna_spawn] || 22
+    {fauna, octree} = spawn_fauna(s.sector_id, fauna_count)
+    {tw, th} = cfg[:terrain_size] || {20, 20}
+    {mc, mpos} = cfg[:mineral_spawn] || {5, %{x: 20, z: 20}}
+
+    s = %{
+      s
+      | phase: :gamein,
+        terrain: TerrainGenerator.generate_heightmap(tw, th),
+        octree: octree,
+        fauna: fauna,
+        minerals: MineralLogic.spawn_minerals(mc, mpos),
+        items: spawn_items(),
+        players: add_dummies(s.players),
+        pending_start: false
     }
     if String.contains?(s.sector_id, "test") do
       apply_test_layout(s)
@@ -50,97 +59,138 @@ defmodule Mutonex.Engine.Systems.Environment do
   end
 
   defp spawn_unit_row(s) do
-    # Archetypes from glyph_profiles.json
-    types = [:mage, :phaistos_1, :phaistos_2, :worker, :headscarf, :robot, :airplane]
-    
-    {ps, bs, _} = Enum.reduce(types, {s.players, s.buildings, -30}, fn type, {p_acc, b_acc, x} ->
-      id = "test_unit_#{type}"
-      # Create a birthplace building for this unit
-      building = %Mutonex.Engine.Entities.Building{
-        id: "birthplace_#{type}",
-        type: :spawn_hub,
-        position: %{x: x, y: 0, z: 45},
-        energy: 100.0,
-        attributes: %{
-          # Randomized if region/mineral not defined
-          ethnicity: Mutonex.Engine.Systems.FactionResolver.resolve_ethnicity(),
-          element: Mutonex.Engine.Systems.FactionResolver.resolve_flavor(),
-          scale: 10.0 # Spawn hub scale
-        }
-      }
-      
-      unit = %Unit{
-        id: id,
-        type: type,
-        position: %{x: x, y: 1, z: 40},
-        birthplace: building.id,
-        attributes: %{
-          charm: 0,
-          tribe: building.attributes.ethnicity,
-          flavor: building.attributes.element,
-          scale: 1.0 # Default unit scale
-        }
-      }
-      
-      new_ps = Map.put(p_acc, id, %{player: unit, last_update: System.os_time(:millisecond)})
-      new_bs = [building | b_acc]
-      {new_ps, new_bs, x + 10}
-    end)
-    
+    cfg = ConfigReader.get(__MODULE__)[:test_layout] || %{}
+
+    types = [
+      :mage,
+      :phaistos_1,
+      :phaistos_2,
+      :worker,
+      :headscarf,
+      :robot,
+      :airplane
+    ]
+
+    {ps, bs, _} =
+      Enum.reduce(
+        types,
+        {s.players, s.buildings, -30},
+        &do_spawn_unit_pair(&1, &2, cfg)
+      )
+
     %{s | players: ps, buildings: bs}
   end
 
+  defp do_spawn_unit_pair(type, {p_acc, b_acc, x}, cfg) do
+    alias Mutonex.Engine.Systems.FactionResolver
+    eth = FactionResolver.resolve_ethnicity()
+    flv = FactionResolver.resolve_flavor()
+    b = build_test_spawn_hub(type, x, eth, flv, cfg)
+    u = build_test_unit(type, x, b.id, eth, flv, cfg)
+    p = %{player: u, last_update: System.os_time(:millisecond)}
+    {Map.put(p_acc, u.id, p), [b | b_acc], x + 10}
+  end
+
+  defp build_test_spawn_hub(type, x, eth, flv, cfg) do
+    %Mutonex.Engine.Entities.Building{
+      id: "birthplace_#{type}",
+      type: :spawn_hub,
+      position: %{x: x, y: 0, z: cfg[:spawn_hub_z] || 45},
+      energy: 100.0,
+      attributes: %{ethnicity: eth, element: flv, scale: cfg[:spawn_hub_scale] || 10.0}
+    }
+  end
+
+  defp build_test_unit(type, x, bid, eth, flv, cfg) do
+    %Unit{
+      id: "test_unit_#{type}",
+      type: type,
+      position: %{x: x, y: 1, z: cfg[:unit_z] || 40},
+      birthplace: bid,
+      attributes: %{charm: 0, tribe: eth, flavor: flv, scale: 1.0}
+    }
+  end
+
   defp spawn_item_row(s) do
-    # Archetypes from glyph_profiles.json (item_default)
-    types = [:gem, :video_phone, :conveyor_belt, :society_policy, :sunspot_cream, :fiber_optic, :attack_modifier]
-    
-    {is, _} = Enum.reduce(types, {[], -30}, fn type, {acc, x} ->
-      id = "test_item_#{type}"
-      item = %Item{
-        id: id,
-        type: type,
-        position: %{x: x, y: 1, z: -40}
-      }
-      {[item | acc], x + 8}
-    end)
-    
+    cfg = ConfigReader.get(__MODULE__)[:test_layout] || %{}
+
+    types = [
+      :gem,
+      :video_phone,
+      :conveyor_belt,
+      :society_policy,
+      :sunspot_cream,
+      :fiber_optic,
+      :attack_modifier
+    ]
+
+    {is, _} =
+      Enum.reduce(
+        types,
+        {[], -30},
+        &do_spawn_item(&1, &2, cfg)
+      )
     %{s | items: is ++ s.items}
   end
 
+  defp do_spawn_item(type, {acc, x}, cfg) do
+    item = %Item{
+      id: "test_item_#{type}",
+      type: type,
+      position: %{x: x, y: 1, z: cfg[:item_z] || -40}
+    }
+
+    {[item | acc], x + 8}
+  end
+
   defp spawn_building_row(s) do
-    # Stationary / Building archetypes
-    types = [:tent, :houses, :cityscape, :power_structure, :moyai, :solar_panel]
-    
-    {bs, _} = Enum.reduce(types, {s.buildings, -30}, fn type, {acc, x} ->
-      id = "test_building_#{type}"
-      building = %Mutonex.Engine.Entities.Building{
-        id: id,
-        type: type,
-        position: %{x: x, y: 0, z: 0},
-        energy: 100.0,
-        attributes: %{
-          ethnicity: Mutonex.Engine.Systems.FactionResolver.resolve_ethnicity(),
-          element: Mutonex.Engine.Systems.FactionResolver.resolve_flavor(),
-          scale: case type do
-            :power_structure -> 10.0
-            :cityscape -> 4.0
-            :moyai -> 3.0
-            :solar_panel -> 5.0
-            :houses -> 1.5
-            :tent -> 0.8
-            _ -> 1.0
-          end
-        }
-      }
-      {[building | acc], x + 12}
-    end)
-    
+    cfg = ConfigReader.get(__MODULE__)[:test_layout] || %{}
+
+    types = [
+      :tent,
+      :houses,
+      :cityscape,
+      :power_structure,
+      :moyai,
+      :solar_panel
+    ]
+
+    {bs, _} =
+      Enum.reduce(
+        types,
+        {s.buildings, -30},
+        &do_spawn_building(&1, &2, cfg)
+      )
+
     %{s | buildings: bs}
   end
 
-  defp spawn_fauna(sid) do
+  defp do_spawn_building(type, {acc, x}, cfg) do
+    b = build_test_building(type, x, cfg)
+    {[b | acc], x + 12}
+  end
+
+  defp build_test_building(type, x, cfg) do
+    alias Mutonex.Engine.Systems.FactionResolver
+
+    %Mutonex.Engine.Entities.Building{
+      id: "test_building_#{type}",
+      type: type,
+      position: %{x: x, y: 0, z: cfg[:building_z] || 0},
+      energy: 100.0,
+      attributes: %{
+        ethnicity: FactionResolver.resolve_ethnicity(),
+        element: FactionResolver.resolve_flavor(),
+        scale: Map.get(cfg[:building_scales] || %{}, type, 1.0)
+      }
+    }
+  end
+
+  defp spawn_fauna(sid, count) do
     FaunaSystem.initialize(
-      sid, 22, SparseOctree.new({-50, -50, -50, 50, 50, 50})
+      sid,
+      count,
+      SparseOctree.new({-50, -50, -50, 50, 50, 50})
     )
   end
 
@@ -167,10 +217,14 @@ defmodule Mutonex.Engine.Systems.Environment do
   def spawn_items do
     [
       %Item{
-        id: "item_gem_01", type: :gem, position: %{x: 2, y: 1, z: 2}
+        id: "item_gem_01",
+        type: :gem,
+        position: %{x: 2, y: 1, z: 2}
       },
       %Item{
-        id: "item_pager_01", type: :video_phone, position: %{x: -2, y: 1, z: -2}
+        id: "item_pager_01",
+        type: :video_phone,
+        position: %{x: -2, y: 1, z: -2}
       }
     ]
   end

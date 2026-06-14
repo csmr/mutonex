@@ -10,10 +10,10 @@ fi
 if [ -n "$DOCKER_CMD" ]; then
   echo "мμτοηεχ δεv εηv ιηιτ"
   source ./scripts/app.config.sh
-  mkdir -p "$RUNTIME_DIR" "gameserver/priv/static"
-  git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
-  touch gameserver/priv/static/index.html
   ./scripts/init-database-env.sh
   ./scripts/init-dotenv.sh
-  cd infra && $DOCKER_CMD up
+  mkdir -p "$RUNTIME_DIR" "$WEB_PATH"
+  git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
+  touch "$WEB_PATH/index.html"
+  cd infra && $DOCKER_CMD --env-file "$DOTENV_PATH" up
 fi

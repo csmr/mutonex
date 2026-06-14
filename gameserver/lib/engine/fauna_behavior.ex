@@ -14,6 +14,7 @@ defmodule Mutonex.Engine.FaunaBehavior do
 
   alias Mutonex.Engine.Entities.Fauna
   alias Mutonex.Engine.NpcBehavior
+  alias Mutonex.Utils.ConfigReader
 
   @doc """
   Spawns a given number of fauna entities for a specific sector.
@@ -57,30 +58,30 @@ defmodule Mutonex.Engine.FaunaBehavior do
   end
 
   defp apply_jitter(fauna, pos) do
-    # Random small movement (reduced range for "short" travel)
-    # Target Speed: ~40 km/h (~0.011 km/s)
-    # Avg Tick: 6s => Dist: ~0.066 km
-    # Range +/- 0.07 km covers this.
-    dx = (:rand.uniform() - 0.5) * 0.14
-    dz = (:rand.uniform() - 0.5) * 0.14
+    range = ConfigReader.get(__MODULE__, :jitter_range, 0.14)
+
+    dx = (:rand.uniform() - 0.5) * range
+    dz = (:rand.uniform() - 0.5) * range
     new_pos = %{pos | x: pos.x + dx, z: pos.z + dz}
     %{fauna | position: new_pos}
   end
 
   defp apply_wander(fauna, pos) do
-    # Larger movement for "wander" action
-    # Range +/- 0.5 km
-    dx = (:rand.uniform() - 0.5) * 1.0
-    dz = (:rand.uniform() - 0.5) * 1.0
+    range = ConfigReader.get(__MODULE__, :wander_range, 1.0)
+
+    dx = (:rand.uniform() - 0.5) * range
+    dz = (:rand.uniform() - 0.5) * range
     new_pos = %{pos | x: pos.x + dx, z: pos.z + dz}
     %{fauna | position: new_pos}
   end
 
   @doc """
   Returns a random delay in milliseconds for the next fauna tick.
-  Range: 2000 to 10000 ms.
   """
   def tick_delay do
-    :rand.uniform(8000) + 2000
+    cfg = ConfigReader.get(__MODULE__)
+    base = cfg[:tick_delay_base] || 2000
+    rand = cfg[:tick_delay_random] || 8000
+    :rand.uniform(rand) + base
   end
 end
