@@ -16,5 +16,10 @@ config :phoenix, :plug_init_mode, :runtime
 # Use the mock Simtellus client in tests
 config :mutonex_server, :simtellus_client, Mutonex.Engine.SimtellusClientMock
 
-# Do not start Repo in test by default to avoid connection errors in isolation
-config :mutonex_server, start_repo: false
+# Disable Ecto Repo auto-start during test environment boot to ensure isolation.
+config :mutonex_server, auto_start_ecto_repo: false
+
+# Enable API key auth for security tests
+config :mutonex_server, Mutonex.Net.Plugs.Auth,
+  api_key_auth_enabled: true,
+  api_key_hash: "test_hash"

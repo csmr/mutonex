@@ -2,12 +2,7 @@ defmodule Mutonex.Simtellus.Simulation do
   use GenServer
   require Logger
   alias Mutonex.Simtellus.Planet
-
-  @sector_size 10
-  @lat_divs div(180, @sector_size)
-  @lon_divs div(360, @sector_size)
-  @default_years_before 100
-  @default_start_date ~D[2088-01-01]
+  alias Mutonex.Utils.ConfigReader
 
   defmodule State do
     defstruct [
@@ -15,7 +10,8 @@ defmodule Mutonex.Simtellus.Simulation do
       :artifacts,
       :current_date,
       :start_date,
-      :ready
+      :ready,
+      :sector_size
     ]
   end
 
@@ -50,19 +46,18 @@ defmodule Mutonex.Simtellus.Simulation do
 
   @impl true
   def init(opts) do
-    sd = Keyword.get(opts, :start_date, @default_start_date)
-    yb = Keyword.get(
-      opts,
-      :years_before,
-      @default_years_before
-    )
+    cfg = ConfigReader.get(__MODULE__)
+    sd = Keyword.get(opts, :start_date, cfg[:default_start_date])
+    yb = Keyword.get(opts, :years_before, cfg[:default_years_before])
+    sz = cfg[:sector_size] || 10
 
     state = %State{
       sector_states: %{},
       artifacts: %{},
       current_date: sd,
       start_date: sd,
-      ready: false
+      ready: false,
+      sector_size: sz
     }
 
     {:ok, state, {:continue, {:init_simulation, yb}}}
@@ -70,25 +65,18 @@ defmodule Mutonex.Simtellus.Simulation do
 
   @impl true
   def handle_continue({:init_simulation, years}, state) do
+    sz = state.sector_size
+    l_divs = div(180, sz)
+    o_divs = div(360, sz)
+
     Logger.info("Initializing Simtellus simulation...")
 
     states =
-      for lat_idx <- (-@lat_divs)..@lat_divs,
-          lon_idx <- 0..@lon_divs,
+      for lat_idx <- (-l_divs)..l_divs,
+          lon_idx <- 0..o_divs,
           into: %{} do
-        lat = lat_idx * @sector_size
-        lon = lon_idx * @sector_size
-        key = sector_key(lat, lon)
-
-        val = %{
-          energy: 0,
-          temperature: 15.0,
-          rainfall: 0,
-          historical_min_temp: 15.0,
-          historical_max_temp: 15.0
-        }
-
-        {key, val}
+        key = {lat_idx * sz, lon_idx * sz}
+        {key, initial_sector_state()}
       end
 
     acc = %{state | sector_states: states}
@@ -97,20 +85,30 @@ defmodule Mutonex.Simtellus.Simulation do
     {:noreply, %{state | ready: true}}
   end
 
+  defp initial_sector_state do
+    %{
+      energy: 0,
+      temperature: 15.0,
+      rainfall: 0,
+      historical_min_temp: 15.0,
+      historical_max_temp: 15.0
+    }
+  end
+
   @impl true
   def handle_call({:get_state, lat, lon}, _from, state) do
-    if state.ready do
-      key = sector_key(lat, lon)
-      val = Map.get(state.sector_states, key)
-      {:reply, {:ok, val}, state}
-    else
-      {:reply, {:error, :not_ready}, state}
+    key = sector_key(lat, lon, state.sector_size)
+    val = Map.get(state.sector_states, key)
+
+    case state.ready do
+      true -> {:reply, {:ok, val}, state}
+      false -> {:reply, {:error, :not_ready}, state}
     end
   end
 
   @impl true
   def handle_call({:get_artifacts, la, lo}, _from, state) do
-    key = sector_key(la, lo)
+    key = sector_key(la, lo, state.sector_size)
     val = Map.get(state.artifacts, key, [])
     {:reply, val, state}
   end
@@ -128,7 +126,7 @@ defmodule Mutonex.Simtellus.Simulation do
 
   @impl true
   def handle_cast({:add_artifact, lat, lon, art}, state) do
-    key = sector_key(lat, lon)
+    key = sector_key(lat, lon, state.sector_size)
 
     new_arts =
       Map.update(state.artifacts, key, [art], fn existing ->
@@ -145,15 +143,14 @@ defmodule Mutonex.Simtellus.Simulation do
 
   # --- Private Functions ---
 
-  defp sector_key(lat, lon) do
-    # Normalize lat/lon
+  defp sector_key(lat, lon, sz) do
     lat = max(-90, min(90, lat))
     lon = if lon < 0, do: lon + 360, else: lon
     lon = lon - 360 * floor(lon / 360)
 
-    l_idx = floor(lat / @sector_size)
-    o_idx = floor(lon / @sector_size)
-    "#{l_idx}_#{o_idx}"
+    l_base = floor(lat / sz) * sz
+    o_base = floor(lon / sz) * sz
+    {l_base, o_base}
   end
 
   defp run_history(state, years) do
@@ -174,27 +171,26 @@ defmodule Mutonex.Simtellus.Simulation do
 
     new_states =
       Map.new(state.sector_states, fn {key, cur} ->
-        [lat_s, _] = String.split(key, "_")
-        lat = String.to_integer(lat_s) * @sector_size
-
-        new_e = Planet.irradiance_daily_wm2(lat, yearday)
-        new_t = Planet.temp(yearday, lat, 0, 0)
-        new_r = 5.0
-
-        h_min = min(cur.historical_min_temp || new_t, new_t)
-        h_max = max(cur.historical_max_temp || new_t, new_t)
-
-        val = %{
-          energy: new_e,
-          temperature: new_t,
-          rainfall: new_r,
-          historical_min_temp: h_min,
-          historical_max_temp: h_max
-        }
-
+        val = calculate_sector_update(key, cur, yearday)
         {key, val}
       end)
 
     %{state | sector_states: new_states}
+  end
+
+  defp calculate_sector_update({lat, _lon}, cur, yearday) do
+    new_e = Planet.irradiance_daily_wm2(lat, yearday)
+    new_t = Planet.temp(yearday, lat, 0, 0)
+    new_r = 5.0
+    h_min = min(cur.historical_min_temp || new_t, new_t)
+    h_max = max(cur.historical_max_temp || new_t, new_t)
+
+    %{
+      energy: new_e,
+      temperature: new_t,
+      rainfall: new_r,
+      historical_min_temp: h_min,
+      historical_max_temp: h_max
+    }
   end
 end

@@ -3,26 +3,32 @@ defmodule Mutonex.Utils.Resource do
   Utility for resolving resource paths at compile time.
   """
 
+  @default_roots [
+    "/app/res",
+    "/res",
+    "../../content/res",
+    "../../../content/res"
+  ]
+
+  @roots Application.compile_env(
+           :mutonex_server,
+           [__MODULE__, :candidate_paths],
+           @default_roots
+         )
+
   @doc "Resolves a file path from a list of candidates."
   def resolve_path(filename, base_dir) do
-    candidates(filename)
-    |> Enum.map(&Path.expand(&1, base_dir))
+    @roots
+    |> Enum.map(&Path.expand(Path.join(&1, filename), base_dir))
     |> Enum.find(&File.exists?/1)
-    |> case do
-      nil ->
-        raise "Resource missing: #{filename}"
-
-      path ->
-        path
-    end
+    |> handle_resolve_result(filename)
   end
 
-  defp candidates(name) do
-    [
-      "/app/res/#{name}",
-      "/res/#{name}",
-      "../../content/res/#{name}",
-      "../../../content/res/#{name}"
-    ]
+  defp handle_resolve_result(nil, filename) do
+    raise "Resource missing: #{filename}"
+  end
+
+  defp handle_resolve_result(path, _filename) do
+    path
   end
 end

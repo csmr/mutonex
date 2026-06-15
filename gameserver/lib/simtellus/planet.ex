@@ -71,7 +71,11 @@ defmodule Mutonex.Simtellus.Planet do
     lat_rad = lat * :math.pi() / 180
     decl_rad = declination_angle(yearday)
     h_rad = hour_angle(hour)
+    incident_angle_fast(lat_rad, decl_rad, h_rad)
+  end
 
+  # Optimized variant for Simulation loop
+  def incident_angle_fast(lat_rad, decl_rad, h_rad) do
     sin_term = :math.sin(lat_rad) * :math.sin(decl_rad)
     cos_term = :math.cos(lat_rad) *
                :math.cos(decl_rad) *
@@ -81,24 +85,28 @@ defmodule Mutonex.Simtellus.Planet do
   end
 
   def irradiance_daily_wm2(lat, yearday) do
-    hourly_fluxes = for hour <- 0..23, do: hourly_flux(lat, yearday, hour)
+    # Optimization: Pre-calculate values constant for this yearday/latitude
+    decl_rad = declination_angle(yearday)
+    irradiance = solar_irradiance_wm2(yearday)
+    multiplier = weather_multiplier(yearday, lat)
+    lat_rad = lat * :math.pi() / 180
+
+    hourly_fluxes =
+      for hour <- 0..23 do
+        hourly_flux_fast(lat_rad, hour, decl_rad, irradiance, multiplier)
+      end
+
     Enum.sum(hourly_fluxes) / 24.0
   end
 
-  defp hourly_flux(lat, yearday, hour) do
-    zenith_angle = incident_angle(lat, yearday, hour)
+  defp hourly_flux_fast(lat_rad, hour, decl_rad, irr, mult) do
+    h_rad = hour_angle(hour)
+    zenith_angle = incident_angle_fast(lat_rad, decl_rad, h_rad)
 
     case zenith_angle > :math.pi() / 2 do
       true -> 0.0
-      false -> calculate_solar_flux(lat, yearday, zenith_angle)
+      false -> irr * mult * :math.cos(zenith_angle) |> max(0.0)
     end
-  end
-
-  defp calculate_solar_flux(lat, yearday, zenith_angle) do
-    flux = solar_irradiance_wm2(yearday) *
-           weather_multiplier(yearday, lat) *
-           :math.cos(zenith_angle)
-    max(flux, 0.0)
   end
 
   # Atmos Module

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Mutonex Root Orchestrator
+# Mutonex dev-env generator
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   DOCKER_CMD="docker compose"
 elif command -v docker-compose >/dev/null 2>&1; then

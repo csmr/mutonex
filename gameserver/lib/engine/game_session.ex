@@ -30,14 +30,24 @@ defmodule Mutonex.Engine.GameSession do
 
   # --- Callbacks ---
   def init(sid) do
+    cfg = ConfigReader.get(__MODULE__)
     send(self(), :check_simtellus)
-    schedule_token_rotation()
-    schedule_sector_tick()
-    {:ok, Environment.initial_state(sid)}
+    schedule_token_rotation(cfg[:token_rotation_ms] || 10_000)
+    schedule_sector_tick(cfg[:sector_tick_ms] || 5000)
+
+    state =
+      Environment.initial_state(sid)
+      |> Map.put(:cfg_cache, %{
+        maint: cfg[:building_maintenance_cost] || 3.0,
+        depletion: cfg[:player_energy_depletion] || 0.5,
+        tick_ms: cfg[:sector_tick_ms] || 5000,
+        rotation_ms: cfg[:token_rotation_ms] || 10_000
+      })
+
+    {:ok, state}
   end
 
-  defp schedule_sector_tick do
-    interval = ConfigReader.get(__MODULE__, :sector_tick_ms, 5000)
+  defp schedule_sector_tick(interval) do
     Process.send_after(self(), :tick_sector, interval)
   end
 
@@ -46,75 +56,47 @@ defmodule Mutonex.Engine.GameSession do
       phase: Atom.to_string(s.phase),
       game_state: build_payload(s)
     }
+
     {:reply, resp, s}
   end
 
   def handle_info(:check_simtellus, s) do
-    client = Application.get_env(
-      :mutonex_server, :simtellus_client, SimtellusClient
-    )
+    client =
+      Application.get_env(
+        :mutonex_server,
+        :simtellus_client,
+        SimtellusClient
+      )
+
     case client.is_available?() do
-      true -> process_availability(s)
-      false -> Process.send_after(self(), :check_simtellus, 1000); {:noreply, s}
+      true ->
+        process_availability(s)
+
+      false ->
+        Process.send_after(self(), :check_simtellus, 1000)
+        {:noreply, s}
     end
   end
 
   def handle_info(:tick_sector, s) do
-    cfg = ConfigReader.get(__MODULE__)
-    maint = cfg[:building_maintenance_cost] || 3.0
-    depletion = cfg[:player_energy_depletion] || 0.5
-
     if s.phase == :gamein do
-      new_buildings =
-        Enum.map(s.buildings, fn b ->
-          if b.status == :active do
-            scale = Map.get(b.attributes, :scale, 1.0)
-            # Energy/Turn = Scale * SectorWatts - Maintenance
-            new_energy =
-              max(0, min(100.0, b.energy + scale * s.sector_energy - maint))
-
-            status = if new_energy <= 0, do: :ruined, else: :active
-            %{b | energy: new_energy, status: status}
-          else
-            b
-          end
-        end)
-
-      # 2. Update Players (Energy depletion)
-      new_players =
-        Enum.into(s.players, %{}, fn {uid, p} ->
-          # Deplete energy per tick (mobile)
-          new_unit = %{p.player | energy: max(0, p.player.energy - depletion)}
-
-          new_unit =
-            if new_unit.energy <= 0,
-              do: %{new_unit | status: :mummified},
-              else: new_unit
-
-          {uid, %{p | player: new_unit}}
-        end)
-      
-      ns = %{s | buildings: new_buildings, players: new_players}
-      
-      # 3. Broadcast updates (including buildings and fauna)
-      broadcast_state_update(ns.sector_id, ns.players, ns.items, ns.buildings, ns.fauna)
-      
-      schedule_sector_tick()
-      {:noreply, ns}
+      do_tick_sector(s)
     else
-      schedule_sector_tick()
+      schedule_sector_tick(s.cfg_cache.tick_ms)
       {:noreply, s}
     end
   end
 
   def handle_info(:rotate_tokens, s) do
-    ts = Enum.into(s.players, %{}, fn {uid, _} ->
-      t = MessageToken.generate()
-      old = s.tokens[uid]
-      if p = old[:pid], do: send(p, {:new_token, t})
-      {uid, %{current: t, previous: old[:current], pid: old[:pid]}}
-    end)
-    schedule_token_rotation()
+    ts =
+      Enum.into(s.players, %{}, fn {uid, _} ->
+        t = MessageToken.generate()
+        old = s.tokens[uid]
+        if p = old[:pid], do: send(p, {:new_token, t})
+        {uid, %{current: t, previous: old[:current], pid: old[:pid]}}
+      end)
+
+    schedule_token_rotation(s.cfg_cache.rotation_ms)
     {:noreply, %{s | tokens: ts}}
   end
 
@@ -133,24 +115,61 @@ defmodule Mutonex.Engine.GameSession do
     end
   end
 
+  defp do_tick_sector(s) do
+    maint = s.cfg_cache.maint
+    depletion = s.cfg_cache.depletion
+
+    new_buildings = update_buildings_energy(s.buildings, s.sector_energy, maint)
+    new_players = update_players_energy(s.players, depletion)
+    ns = %{s | buildings: new_buildings, players: new_players}
+
+    broadcast_state_update(ns.sector_id, ns.players, ns.items, ns.buildings, ns.fauna)
+    schedule_sector_tick(s.cfg_cache.tick_ms)
+    {:noreply, ns}
+  end
+
+  defp update_buildings_energy(buildings, sector_energy, maint) do
+    Enum.map(buildings, fn b ->
+      if b.status == :active do
+        scale = Map.get(b.attributes, :scale, 1.0)
+        new_e = max(0, min(100.0, b.energy + scale * sector_energy - maint))
+        status = if new_e <= 0, do: :ruined, else: :active
+        %{b | energy: new_e, status: status}
+      else
+        b
+      end
+    end)
+  end
+
+  defp update_players_energy(players, depletion) do
+    Enum.into(players, %{}, fn {uid, p} ->
+      new_unit = %{p.player | energy: max(0, p.player.energy - depletion)}
+      new_unit = if new_unit.energy <= 0, do: %{new_unit | status: :mummified}, else: new_unit
+      {uid, %{p | player: new_unit}}
+    end)
+  end
+
   def handle_cast({:player_joined, uid, pid}, s) do
     s = add_player_if_missing(s, uid)
     t = MessageToken.generate()
     send(pid, {:new_token, t})
     ts = Map.put(s.tokens, uid, %{current: t, previous: nil, pid: pid})
     s = %{s | tokens: ts}
+
     case s.phase do
       :lobby -> start_session(s)
       :booting -> {:noreply, %{s | pending_start: true}}
-      :gamein -> 
+      :gamein ->
         broadcast_state_update(s.sector_id, s.players)
         {:noreply, s}
+
       _ -> {:noreply, s}
     end
   end
 
   def handle_cast({:avatar_update, uid, pos, token}, s) do
     val = validate_token_internal(s, uid, token)
+
     if should_process?(val, s.phase),
       do: do_avatar_update(uid, pos, s, val),
       else: {:noreply, sync_tokens(s, uid, val)}
@@ -212,6 +231,7 @@ defmodule Mutonex.Engine.GameSession do
   defp process_availability(s) do
     if s.pending_start, do: start_session(s), else: lobby(s)
   end
+
   defp lobby(s) do
     Endpoint.broadcast("game:#{s.sector_id}", "game_phase", %{phase: "lobby"})
     {:noreply, %{s | phase: :lobby}}
@@ -233,11 +253,22 @@ defmodule Mutonex.Engine.GameSession do
 
   defp do_avatar_update(uid, [x, y, z], s, val) do
     s = sync_tokens(s, uid, val)
-    handle_player_update(s.players[uid], uid, %{x: x, y: y, z: z}, System.os_time(:millisecond), s)
+
+    handle_player_update(
+      s.players[uid],
+      uid,
+      %{x: x, y: y, z: z},
+      System.os_time(:millisecond),
+      s
+    )
   end
 
   defp handle_player_update(nil, uid, pos, time, s) do
-    p = %{player: %Unit{id: uid, type: :head, position: pos}, last_update: time}
+    p = %{
+      player: %Unit{id: uid, type: :head, position: pos},
+      last_update: time
+    }
+
     update_and_broadcast(s, uid, p)
   end
 
@@ -245,7 +276,9 @@ defmodule Mutonex.Engine.GameSession do
     if can_update?(p, pos, time) do
       upd = %{p | player: %{p.player | position: pos}, last_update: time}
       update_and_broadcast(s, uid, upd)
-    else {:noreply, s} end
+    else
+      {:noreply, s}
+    end
   end
 
   defp can_update?(%{last_update: nil}, _pos, _time), do: true
@@ -302,39 +335,21 @@ defmodule Mutonex.Engine.GameSession do
     end)
   end
 
-  defp broadcast_state_update(sid, ps, items \\ nil, buildings \\ nil, fauna \\ nil) do
-    payload = %{players: players_to_list(ps)}
-    payload = if items, do: Map.put(payload, :items, items), else: payload
-    payload = if buildings, do: Map.put(payload, :buildings, buildings_to_list(buildings)), else: payload
-    payload = if fauna, do: Map.put(payload, :fauna, fauna_to_list(fauna)), else: payload
-    Endpoint.broadcast("game:#{sid}", "state_update", payload)
+  defp broadcast_state_update(sid, ps, itms \\ nil, blds \\ nil, fna \\ nil) do
+    pld = %{players: players_to_list(ps)}
+    pld = if itms, do: Map.put(pld, :items, itms), else: pld
+    pld = if blds, do: Map.put(pld, :buildings, buildings_to_list(blds)), else: pld
+    pld = if fna, do: Map.put(pld, :fauna, fauna_to_list(fna)), else: pld
+    Endpoint.broadcast("game:#{sid}", "state_update", pld)
   end
 
   defp add_player_if_missing(s, uid) do
     if s.players[uid] do
       s
     else
-      pos =
-        ConfigReader.get(__MODULE__, :default_spawn_position, %{
-          x: 0,
-          y: 1,
-          z: 0
-        })
-
-      p = %Unit{
-        id: uid,
-        type: :head,
-        position: pos
-      }
-
-      %{
-        s
-        | players:
-            Map.put(s.players, uid, %{
-              player: p,
-              last_update: nil
-            })
-      }
+      pos = ConfigReader.get(__MODULE__, :default_spawn_position, %{x: 0, y: 1, z: 0})
+      p = %Unit{id: uid, type: :head, position: pos}
+      %{s | players: Map.put(s.players, uid, %{player: p, last_update: nil})}
     end
   end
 
@@ -344,11 +359,7 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp message_token_enabled? do
-    Application.get_env(
-      :mutonex_server,
-      :webclient_message_token_enabled,
-      false
-    )
+    Application.get_env(:mutonex_server, :webclient_message_token_enabled, false)
   end
 
   defp sync_tokens(s, u, v) do
@@ -357,10 +368,14 @@ defmodule Mutonex.Engine.GameSession do
 
   defp update_tokens(s, u, v) do
     if p = s.players[u] do
-      u_upd = %{p.player |
-        expired_token_count: inc_if(p.player.expired_token_count, v == :expired),
-        invalid_token_count: inc_if(p.player.invalid_token_count, v == :invalid)
+      u_upd = %{
+        p.player
+        | expired_token_count:
+            inc_if(p.player.expired_token_count, v == :expired),
+          invalid_token_count:
+            inc_if(p.player.invalid_token_count, v == :invalid)
       }
+
       %{s | players: Map.put(s.players, u, %{p | player: u_upd})}
     else
       s
@@ -375,8 +390,7 @@ defmodule Mutonex.Engine.GameSession do
     MessageToken.verify(token, t[:current], t[:previous])
   end
 
-  defp schedule_token_rotation do
-    interval = ConfigReader.get(__MODULE__, :token_rotation_ms, 10_000)
+  defp schedule_token_rotation(interval) do
     Process.send_after(self(), :rotate_tokens, interval)
   end
 

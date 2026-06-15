@@ -1,12 +1,32 @@
 defmodule Mutonex.Net.Plugs.Auth do
+  @moduledoc """
+  Plug for handling API key and Bearer token authentication.
+  Can be optionally disabled for development/testing environments.
+  """
   import Plug.Conn
+  alias Mutonex.Utils.ConfigReader
 
-  # This function is called when the plug is initialized in the endpoint.
-  # We don't have any options to pass, so we just return the empty list.
-  def init(opts), do: opts
+  # Initialize the plug by loading configuration once during application boot.
+  def init(_opts) do
+    cfg = ConfigReader.get(__MODULE__)
 
-  # This is the main function of the plug. It's called for each request.
-  def call(conn, _opts) do
+    %{
+      enabled: cfg[:api_key_auth_enabled],
+      configured_hash: cfg[:api_key_hash]
+    }
+  end
+
+  # The main entry point for the plug, using pre-loaded configuration.
+  def call(conn, opts) do
+    case opts.enabled do
+      true -> perform_auth(conn, opts)
+      _ -> conn
+    end
+  end
+
+  # --- Private Helpers ---
+
+  defp perform_auth(conn, opts) do
     auth_header = get_req_header(conn, "authorization")
     api_key_header = get_req_header(conn, "api-key-hash")
 
@@ -14,16 +34,24 @@ defmodule Mutonex.Net.Plugs.Auth do
       # Support Authorization: Bearer <token>
       match?(["Bearer " <> _], auth_header) ->
         ["Bearer " <> token] = auth_header
-        if valid_token?(token), do: conn, else: unauthorized(conn)
+        handle_token_auth(conn, token)
 
       # Support api-key-hash: <hash>
       api_key_header != [] ->
         [hash] = api_key_header
-        if valid_hash?(hash), do: conn, else: unauthorized(conn)
+        handle_hash_auth(conn, hash, opts.configured_hash)
 
       true ->
         unauthorized(conn)
     end
+  end
+
+  defp handle_token_auth(conn, token) do
+    if valid_token?(token), do: conn, else: unauthorized(conn)
+  end
+
+  defp handle_hash_auth(conn, hash, configured_hash) do
+    if valid_hash?(hash, configured_hash), do: conn, else: unauthorized(conn)
   end
 
   defp unauthorized(conn) do
@@ -32,14 +60,16 @@ defmodule Mutonex.Net.Plugs.Auth do
 
   defp valid_token?(_token) do
     # For now, all tokens are considered valid for development.
-    # TODO: Implement proper token verification.
     true
   end
 
-  defp valid_hash?(hash) do
-    # In production, we would check against a stored hash or use a secure comparison.
-    # For development/testing, we allow a specific hash or check an environment variable.
-    expected_hash = System.get_env("API_KEY_HASH") || "YOUR_COMPILED_HASH_HERE"
-    hash == expected_hash
+  defp valid_hash?(hash, configured_hash) do
+    # Hashing or timing-safe comparison should be used for production.
+    # We strictly require a configured hash to be present when enabled.
+    case configured_hash do
+      nil -> false
+      "" -> false
+      _ -> hash == configured_hash
+    end
   end
 end

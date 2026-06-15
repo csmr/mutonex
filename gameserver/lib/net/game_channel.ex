@@ -6,17 +6,14 @@ defmodule Mutonex.Net.GameChannel do
   Handles a player joining a game sector channel.
   """
   def join("game:" <> sector_id, _payload, socket) do
-    # Find or start the GameSession process
+    uid = Map.get(socket.assigns, :user_id, "guest")
     {:ok, pid} = start_game_session(sector_id)
-
-    # Fetch initial state from the session
     initial_data = GameSession.get_initial_state(pid)
 
     # Send initial state push async after join
     send(self(), {:after_join, initial_data})
 
     # Notify GameSession that a player joined
-    uid = Map.get(socket.assigns, :user_id, "guest")
     GenServer.cast(pid, {:player_joined, uid, self()})
 
     {:ok, socket}
@@ -37,15 +34,9 @@ defmodule Mutonex.Net.GameChannel do
 
   @doc "Handles a move event from a client."
   def handle_in("avatar_update", payload, socket) do
-    sector_id = get_sector_id(socket)
     user_id = Map.get(socket.assigns, :user_id, "guest")
-    via = via_session(sector_id)
-
-    {token, inner_payload} =
-      case payload do
-        %{"session_message_token" => t, "payload" => p} -> {t, p}
-        _ -> {nil, payload}
-      end
+    via = via_session(get_sector_id(socket))
+    {token, inner_payload} = extract_token_and_payload(payload)
 
     GenServer.cast(
       via,
@@ -57,22 +48,29 @@ defmodule Mutonex.Net.GameChannel do
 
   def handle_in("player_action", payload, socket) do
     %{"action" => action, "target_id" => target_id} = payload
-    metadata = Map.get(payload, "metadata")
-
-    sector_id = get_sector_id(socket)
     user_id = Map.get(socket.assigns, :user_id, "guest")
+    via = via_session(get_sector_id(socket))
+    meta = Map.get(payload, "metadata")
 
-    via = via_session(sector_id)
-    GenServer.cast(via, {:player_action, user_id, action, target_id, metadata})
+    GenServer.cast(
+      via,
+      {:player_action, user_id, action, target_id, meta}
+    )
 
     {:noreply, socket}
   end
 
   # --- Private Helpers ---
 
+  defp extract_token_and_payload(payload) do
+    case payload do
+      %{"session_message_token" => t, "payload" => p} -> {t, p}
+      _ -> {nil, payload}
+    end
+  end
+
   defp via_session(sector_id) do
-    registry = Mutonex.GameRegistry
-    {:via, Registry, {registry, sector_id}}
+    {:via, Registry, {Mutonex.GameRegistry, sector_id}}
   end
 
   defp get_sector_id(socket) do
@@ -80,14 +78,12 @@ defmodule Mutonex.Net.GameChannel do
   end
 
   defp start_game_session(sector_id) do
-    registry = Mutonex.GameRegistry
-    via = {:via, Registry, {registry, sector_id}}
+    via = via_session(sector_id)
 
     case GenServer.whereis(via) do
       nil ->
         spec = {GameSession, sector_id}
-        sup = Mutonex.GameSessionSupervisor
-        DynamicSupervisor.start_child(sup, spec)
+        DynamicSupervisor.start_child(Mutonex.GameSessionSupervisor, spec)
 
       pid when is_pid(pid) ->
         {:ok, pid}
