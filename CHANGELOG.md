@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.26 - Optimization & Security Hardening
+- **Game Engine & Systems:** Decoupled Engine from Network layer with `Notifier` to fix circular dependencies, optimized `SparseOctree` with O(1) updates, reduced spatial query overhead by squared distance calc.
+- **Security, Network & Maintenance:** XSS mitigations in WebClient, hardened key verification with `secure_compare` to prevent side-channel attacks, added security framework document, SAST audit with `Sobelow`, dependency audit with `hex.audit`, codebase maintenance refactoring, created gameserver modular configuration.
+
 ## v0.2.25 - Item Interaction & Visual Refinement
 - **Gameplay:** Implemented 3D item interaction (Hover "Ghost Cards" and Click-to-pickup) with 15m range enforcement.
 - **Webclient Refactor:** Upgraded SphereView to a true Birdseye perspective with OrbitControls and optimized Action HUD state synchronization.

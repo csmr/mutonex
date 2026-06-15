@@ -44,3 +44,16 @@ Mutonex leverages declarative infrastructure-as-code:
   control planes.
 - **Hetzner**: Cost-effective self-managed stacks using
   `docker compose` on raw VMs.
+
+## Security Posture & Hardening
+
+Mutonex adheres to a defense-in-depth security philosophy:
+- **Modular Isolation**: The `Notifier` abstraction and domain
+  separation (Net, Engine, Simtellus) minimize the impact of a
+  single-component compromise.
+- **Environment Driven**: All sensitive parameters (salts, hashes,
+  database credentials) are externalized to the environment to
+  prevent source-code leaks.
+- **Static Analysis**: The codebase is designed for compatibility
+  with automated SAST tools like Sobelow to ensure standard web
+  vulnerabilities are mitigated early in the lifecycle.

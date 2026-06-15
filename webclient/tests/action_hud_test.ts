@@ -8,16 +8,7 @@ class MockElement {
     children: MockElement[] = [];
     textContent = "";
     className = "";
-    innerText = "";
-
-    set innerHTML(html: string) {
-        if (!html) {
-            this.children = [];
-            return;
-        }
-        this.children = createDOMTreeFromHTML(html);
-    }
-    get innerHTML() { return ""; }
+    style: Record<string, string> = {};
 
     onclick: ((e?: any) => void) | null = null;
     listeners: Record<string, ((e: any) => void)[]> = {};
@@ -31,9 +22,13 @@ class MockElement {
     }
 
     querySelector(selector: string): MockElement | null {
+        if (selector === ".card-value") {
+           return this.children.find(c => c.className === "card-value") || null;
+        }
         const parts = selector.trim().split(/\s+/);
-        let current: MockElement = this;
+        let current: MockElement | null = this;
         for (const part of parts) {
+            if (!current) return null;
             const found = current.querySelectorAll(part);
             if (found.length === 0) return null;
             current = found[0];
@@ -64,6 +59,16 @@ class MockElement {
         return "";
     }
 
+    setAttribute(name: string, value: string) {
+        if (name === "style") {
+            const parts = value.split(";");
+            parts.forEach(p => {
+                const [k, v] = p.split(":").map(s => s.trim());
+                if (k && v) this.style[k] = v;
+            });
+        }
+    }
+
     addEventListener(event: string, fn: (e: any) => void) {
         if (!this.listeners[event]) this.listeners[event] = [];
         this.listeners[event].push(fn);
@@ -87,33 +92,12 @@ function resetDom() {
     dom["hud-overlay"] = new MockElement("hud-overlay");
 }
 
-function createDOMTreeFromHTML(html: string): MockElement[] {
-    const root = new MockElement("hud-charm-card");
-    root.className = "action-card";
-
-    const title = new MockElement();
-    title.className = "card-title";
-    title.innerText = "CHARM";
-
-    const value = new MockElement();
-    value.className = "card-value";
-    value.innerText = "0";
-
-    root.appendChild(title);
-    root.appendChild(value);
-
-    // Naively return the root if the html string contains the id
-    // This perfectly mirrors our specific render payload for the test environment.
-    if (html.includes('id="hud-charm-card"')) return [root];
-    return [];
-}
-
 (globalThis as any).window = globalThis;
 (globalThis as any).document = {
     getElementById(id: string) {
         return dom[id] || null;
     },
-    createElement(_tag: string) {
+    createElement(tag: string) {
         return new MockElement();
     }
 };
@@ -139,7 +123,7 @@ Deno.test("ActionHUD: show renders the charm card correctly", () => {
     // Title and Value
     assertEquals(card.children.length, 2);
     assertEquals(card.children[0].className, "card-title");
-    assertEquals(card.children[0].innerText, "CHARM");
+    assertEquals(card.children[0].textContent, "CHARM");
     assertEquals(card.children[1].className, "card-value");
 });
 
@@ -149,9 +133,11 @@ Deno.test("ActionHUD: setCharmLevel updates the dom node", () => {
     hud.show();
 
     hud.setCharmLevel(42);
-    const cardValue = dom["hud-overlay"].querySelector(".card-value");
+    const overlay = dom["hud-overlay"];
+    const card = overlay.children[0];
+    const cardValue = card.querySelector(".card-value");
     assertExists(cardValue);
-    assertEquals(cardValue!.innerText, "42");
+    assertEquals(cardValue!.textContent, "42");
 });
 
 Deno.test("ActionHUD: onCharmClick callback responds to events", () => {

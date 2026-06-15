@@ -22,9 +22,10 @@ export class ActionHUD {
     }
 
     public setCharmLevel(level: number) {
-        if (this.charmValueEl && this.charmValueEl.innerText === level.toString()) return;
+        const val = level.toString();
+        if (this.charmValueEl && this.charmValueEl.textContent === val) return;
         if (this.charmValueEl) {
-            this.charmValueEl.innerText = level.toString();
+            this.charmValueEl.textContent = val;
         }
     }
 
@@ -59,59 +60,68 @@ export class ActionHUD {
     }
 
     public hide() {
-        this.container.innerHTML = "";
+        this.container.textContent = "";
+    }
+
+    private createCard(id: string, title: string, value: string, extraClasses: string = "", extraStyle: string = "") {
+        const card = document.createElement("div");
+        card.className = `action-card ${extraClasses}`.trim();
+        card.id = id;
+        if (extraStyle) card.setAttribute("style", extraStyle);
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "card-title";
+        titleEl.textContent = title;
+
+        const valueEl = document.createElement("div");
+        valueEl.className = "card-value";
+        valueEl.textContent = value;
+
+        card.appendChild(titleEl);
+        card.appendChild(valueEl);
+        return card;
     }
 
     private render() {
-        this.container.innerHTML = `
-            <div class="action-card" id="hud-charm-card">
-                <div class="card-title">CHARM</div>
-                <div class="card-value">0</div>
-            </div>
-            ${this.nearbyItem ? `
-            <div class="action-card" id="hud-pickup-card" style="margin-left: 10px; border-color: #ffd700;">
-                <div class="card-title">PICK UP</div>
-                <div class="card-value">${this.nearbyItem.name}</div>
-            </div>
-            ` : ""}
-            ${(this.hoveredItem && (!this.nearbyItem || this.hoveredItem.id !== this.nearbyItem.id)) ? `
-            <div class="action-card ghost" id="hud-hover-card">
-                <div class="card-title">PICK UP</div>
-                <div class="card-value">${this.hoveredItem.name}</div>
-            </div>
-            ` : ""}
-            ${this.inventory.map((itemId, i) => `
-            <div class="action-card hud-inventory-card" data-id="${itemId}" style="margin-left: 10px; border-color: #00ff00;">
-                <div class="card-title">ITEM</div>
-                <div class="card-value">${itemId.replace("item_", "")}</div>
-            </div>
-            `).join("")}
-        `;
+        this.container.textContent = "";
 
-        this.charmValueEl = this.container.querySelector("#hud-charm-card .card-value");
-        const charmCard = this.container.querySelector("#hud-charm-card");
-        const pickupCard = this.container.querySelector("#hud-pickup-card");
-        const inventoryCards = this.container.querySelectorAll(".hud-inventory-card");
-
-        charmCard?.addEventListener("click", () => {
+        // Charm Card
+        const charmCard = this.createCard("hud-charm-card", "CHARM", "0");
+        this.charmValueEl = charmCard.querySelector(".card-value") as HTMLElement;
+        charmCard.addEventListener("click", () => {
             if (this.onCharmClick) this.onCharmClick();
         });
+        this.container.appendChild(charmCard);
 
-        pickupCard?.addEventListener("click", () => {
-            if (this.onPickUpClick && this.nearbyItem) {
-                this.onPickUpClick(this.nearbyItem.id);
-            }
-        });
+        // Nearby Item Card
+        if (this.nearbyItem) {
+            const pickupCard = this.createCard("hud-pickup-card", "PICK UP", this.nearbyItem.name, "", "margin-left: 10px; border-color: #ffd700;");
+            pickupCard.addEventListener("click", () => {
+                if (this.onPickUpClick && this.nearbyItem) {
+                    this.onPickUpClick(this.nearbyItem.id);
+                }
+            });
+            this.container.appendChild(pickupCard);
+        }
 
-        inventoryCards.forEach((card) => {
-            const el = card as HTMLElement;
-            const itemId = el.getAttribute("data-id")!;
+        // Hovered Item Card
+        if (this.hoveredItem && (!this.nearbyItem || this.hoveredItem.id !== this.nearbyItem.id)) {
+            const hoverCard = this.createCard("hud-hover-card", "PICK UP", this.hoveredItem.name, "ghost");
+            this.container.appendChild(hoverCard);
+        }
+
+        // Inventory Cards
+        this.inventory.forEach((itemId) => {
+            const card = this.createCard("", "ITEM", itemId.replace("item_", ""), "hud-inventory-card", "margin-left: 10px; border-color: #00ff00;");
+            card.setAttribute("data-id", itemId);
             
-            el.addEventListener("mousedown", (e) => {
+            card.addEventListener("mousedown", (e) => {
+                const el = card as HTMLElement;
                 this.dragTarget = { id: itemId, startY: e.clientY, el };
                 el.style.transition = "none";
                 el.style.zIndex = "1000";
             });
+            this.container.appendChild(card);
         });
 
         if (!(window as any).hasGlobalHudListeners) {

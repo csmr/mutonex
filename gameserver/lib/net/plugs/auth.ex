@@ -64,12 +64,11 @@ defmodule Mutonex.Net.Plugs.Auth do
   end
 
   defp valid_hash?(hash, configured_hash) do
-    # Hashing or timing-safe comparison should be used for production.
-    # We strictly require a configured hash to be present when enabled.
+    # Use timing-safe comparison to prevent side-channel attacks.
     case configured_hash do
       nil -> false
       "" -> false
-      _ -> hash == configured_hash
+      _ -> Plug.Crypto.secure_compare(hash, configured_hash)
     end
   end
 end

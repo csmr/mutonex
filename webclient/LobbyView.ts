@@ -57,7 +57,7 @@ export class LobbyView {
 
   public renderSectorList(sectors: Sector[]): void {
     this.sectors = sectors;
-    this.sectorListContainer.innerHTML = "";
+    this.sectorListContainer.textContent = "";
 
     sectors.forEach((sector, index) => {
       const div = document.createElement("div");
@@ -76,19 +76,16 @@ export class LobbyView {
   }
 
   public updatePlayerQueue(players: PlayerTuple[]): void {
-    // Switch view mode if not already
     if (!this.isConnected) {
       this.isConnected = true;
       this.sectorContainer.style.display = "none";
       this.queueContainer.style.display = "block";
     }
 
-    this.playerListContainer.innerHTML = "";
+    this.playerListContainer.textContent = "";
     players.forEach((player) => {
-      // player is [id, x, y, z]
       const id = player[0];
       const div = document.createElement("div");
-      // Re-use list-item style for consistency
       div.className = "list-item";
       div.style.cursor = "default";
       div.textContent = `Player ${id}`;
@@ -105,10 +102,8 @@ export class LobbyView {
   private selectSector(index: number): void {
     if (index < 0 || index >= this.sectors.length) return;
     this.selectedIndex = index;
-    // Re-render to update selection style
     this.renderSectorList(this.sectors);
 
-    // If "Enter" or Click
     if (this.onSelectCallback) {
       const selected = this.sectors[this.selectedIndex];
       this.onSelectCallback(selected);
@@ -120,7 +115,6 @@ export class LobbyView {
       "hidden",
     );
     if (isHidden) return;
-    // Disable sector selection when in queue
     if (this.isConnected) return;
 
     if (e.key === "ArrowUp") {
