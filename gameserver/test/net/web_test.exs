@@ -1,6 +1,5 @@
 defmodule Mutonex.Net.WebTest do
   use ExUnit.Case
-  import Plug.Conn
   import Phoenix.ConnTest
 
   @endpoint Mutonex.Net.Endpoint

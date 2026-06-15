@@ -26,3 +26,6 @@ config :mutonex_server, Mutonex.Net.GameChannel,
 config :mutonex_server, Mutonex.Net.Plugs.Auth,
   api_key_auth_enabled: System.get_env("API_KEY_AUTH_ENABLE") == "true",
   api_key_hash: System.get_env("API_KEY_HASH")
+
+config :mutonex_server, Mutonex.Net.Notifier,
+  module: Mutonex.Net.PhoenixNotifier

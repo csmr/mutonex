@@ -6,7 +6,6 @@ defmodule Mutonex.Engine.Systems.FaunaSystem do
 
   alias Mutonex.Engine.FaunaBehavior
   alias Mutonex.Engine.SparseOctree
-  alias Mutonex.Net.Endpoint
   alias Mutonex.Utils.ConfigReader
 
   @doc """
@@ -115,7 +114,7 @@ defmodule Mutonex.Engine.Systems.FaunaSystem do
           )
         
         # Broadcast
-        broadcast_update(state.sector_id, updated_fauna)
+        broadcast_update(state.sector_id, updated_fauna, state)
         
         {updated_fauna, new_fauna_map, new_octree}
     end
@@ -249,7 +248,7 @@ defmodule Mutonex.Engine.Systems.FaunaSystem do
     Process.send_after(self(), {:tick_fauna, fauna_id}, delay)
   end
 
-  defp broadcast_update(sector_id, fauna) do
+  defp broadcast_update(sector_id, fauna, state) do
     fauna_list = [
       [
         fauna.id,
@@ -259,7 +258,9 @@ defmodule Mutonex.Engine.Systems.FaunaSystem do
       ]
     ]
 
-    Endpoint.broadcast(
+    notifier = state.cfg_cache.notifier
+
+    notifier.broadcast(
       "game:" <> sector_id,
       "fauna_update",
       %{fauna: fauna_list}

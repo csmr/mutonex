@@ -1,12 +1,11 @@
 defmodule Mutonex.Engine.GameSession do
   use GenServer
-  require Logger
   alias Mutonex.Engine.Entities.{Unit, GameState}
   alias Mutonex.Engine.Systems.{Environment, Actions}
   alias Mutonex.Utils.MessageToken
-  alias Mutonex.Net.Endpoint
   alias Mutonex.Engine.SimtellusClient
   alias Mutonex.Utils.ConfigReader
+  alias Mutonex.Net.Notifier
 
   @max_speed_ms Application.compile_env(
                   :mutonex_server,
@@ -35,13 +34,16 @@ defmodule Mutonex.Engine.GameSession do
     schedule_token_rotation(cfg[:token_rotation_ms] || 10_000)
     schedule_sector_tick(cfg[:sector_tick_ms] || 5000)
 
+    notifier = ConfigReader.get(Notifier)[:module]
+
     state =
       Environment.initial_state(sid)
       |> Map.put(:cfg_cache, %{
         maint: cfg[:building_maintenance_cost] || 3.0,
         depletion: cfg[:player_energy_depletion] || 0.5,
         tick_ms: cfg[:sector_tick_ms] || 5000,
-        rotation_ms: cfg[:token_rotation_ms] || 10_000
+        rotation_ms: cfg[:token_rotation_ms] || 10_000,
+        notifier: notifier
       })
 
     {:ok, state}
@@ -101,7 +103,6 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   def handle_info({:update_planet_state, data}, s) do
-    # Update sector energy from Simtellus data
     new_energy = Map.get(data, "energy", s.sector_energy)
     {:noreply, %{s | sector_energy: new_energy}}
   end
@@ -119,11 +120,18 @@ defmodule Mutonex.Engine.GameSession do
     maint = s.cfg_cache.maint
     depletion = s.cfg_cache.depletion
 
-    new_buildings = update_buildings_energy(s.buildings, s.sector_energy, maint)
+    new_buildings =
+      update_buildings_energy(s.buildings, s.sector_energy, maint)
+
     new_players = update_players_energy(s.players, depletion)
     ns = %{s | buildings: new_buildings, players: new_players}
 
-    broadcast_state_update(ns.sector_id, ns.players, ns.items, ns.buildings, ns.fauna)
+    broadcast_state_update(ns, %{
+      items: ns.items,
+      buildings: ns.buildings,
+      fauna: ns.fauna
+    })
+
     schedule_sector_tick(s.cfg_cache.tick_ms)
     {:noreply, ns}
   end
@@ -144,7 +152,12 @@ defmodule Mutonex.Engine.GameSession do
   defp update_players_energy(players, depletion) do
     Enum.into(players, %{}, fn {uid, p} ->
       new_unit = %{p.player | energy: max(0, p.player.energy - depletion)}
-      new_unit = if new_unit.energy <= 0, do: %{new_unit | status: :mummified}, else: new_unit
+
+      new_unit =
+        if new_unit.energy <= 0,
+          do: %{new_unit | status: :mummified},
+          else: new_unit
+
       {uid, %{p | player: new_unit}}
     end)
   end
@@ -160,7 +173,7 @@ defmodule Mutonex.Engine.GameSession do
       :lobby -> start_session(s)
       :booting -> {:noreply, %{s | pending_start: true}}
       :gamein ->
-        broadcast_state_update(s.sector_id, s.players)
+        broadcast_state_update(s)
         {:noreply, s}
 
       _ -> {:noreply, s}
@@ -200,7 +213,7 @@ defmodule Mutonex.Engine.GameSession do
   def pick_up(src, itm_id, _meta, s) do
     case Actions.pick_up(src, itm_id, s) do
       {:ok, ns} ->
-        broadcast_state_update(s.sector_id, ns.players, ns.items)
+        broadcast_state_update(ns, %{items: ns.items})
         {:noreply, ns}
 
       _ ->
@@ -211,7 +224,7 @@ defmodule Mutonex.Engine.GameSession do
   def drop(src, itm_id, meta, s) do
     case Actions.drop(src, itm_id, meta, s) do
       {:ok, ns} ->
-        broadcast_state_update(s.sector_id, ns.players, ns.items)
+        broadcast_state_update(ns, %{items: ns.items})
         {:noreply, ns}
 
       _ ->
@@ -223,8 +236,10 @@ defmodule Mutonex.Engine.GameSession do
 
   defp start_session(s) do
     s = Environment.build(s)
-    Endpoint.broadcast("game:#{s.sector_id}", "game_phase", %{phase: "gamein"})
-    Endpoint.broadcast("game:#{s.sector_id}", "game_state", build_payload(s))
+    n = s.cfg_cache.notifier
+    topic = "game:#{s.sector_id}"
+    n.broadcast(topic, "game_phase", %{phase: "gamein"})
+    n.broadcast(topic, "game_state", build_payload(s))
     {:noreply, s}
   end
 
@@ -233,7 +248,9 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp lobby(s) do
-    Endpoint.broadcast("game:#{s.sector_id}", "game_phase", %{phase: "lobby"})
+    n = s.cfg_cache.notifier
+    topic = "game:#{s.sector_id}"
+    n.broadcast(topic, "game_phase", %{phase: "lobby"})
     {:noreply, %{s | phase: :lobby}}
   end
 
@@ -241,9 +258,9 @@ defmodule Mutonex.Engine.GameSession do
     p = ns.players[tgt]
 
     if p && is_struct(p.player, Unit) do
-      broadcast_state_update(s.sector_id, ns.players)
+      broadcast_state_update(ns)
     else
-      Endpoint.broadcast(
+      s.cfg_cache.notifier.broadcast(
         "game:#{s.sector_id}",
         "fauna_update",
         %{fauna: fauna_to_list(ns.fauna)}
@@ -274,7 +291,12 @@ defmodule Mutonex.Engine.GameSession do
 
   defp handle_player_update(p, uid, pos, time, s) do
     if can_update?(p, pos, time) do
-      upd = %{p | player: %{p.player | position: pos}, last_update: time}
+      upd = %{
+        p
+        | player: %{p.player | position: pos},
+          last_update: time
+      }
+
       update_and_broadcast(s, uid, upd)
     else
       {:noreply, s}
@@ -290,8 +312,9 @@ defmodule Mutonex.Engine.GameSession do
 
   defp update_and_broadcast(s, uid, p) do
     ps = Map.put(s.players, uid, p)
-    broadcast_state_update(s.sector_id, ps)
-    {:noreply, %{s | players: ps}}
+    ns = %{s | players: ps}
+    broadcast_state_update(ns)
+    {:noreply, ns}
   end
 
   defp build_payload(s) do
@@ -325,29 +348,51 @@ defmodule Mutonex.Engine.GameSession do
 
   defp fauna_to_list(fs) do
     Enum.map(fs, fn {_, f} ->
-      [f.id, f.position.x, f.position.y, f.position.z, f.energy, f.status]
+      [
+        f.id, f.position.x, f.position.y, f.position.z,
+        f.energy, f.status
+      ]
     end)
   end
 
   defp buildings_to_list(bs) do
     Enum.map(bs, fn b ->
-      [b.id, b.position.x, b.position.y, b.position.z, b.type, b.energy, b.status]
+      [
+        b.id, b.position.x, b.position.y, b.position.z,
+        b.type, b.energy, b.status
+      ]
     end)
   end
 
-  defp broadcast_state_update(sid, ps, itms \\ nil, blds \\ nil, fna \\ nil) do
-    pld = %{players: players_to_list(ps)}
-    pld = if itms, do: Map.put(pld, :items, itms), else: pld
-    pld = if blds, do: Map.put(pld, :buildings, buildings_to_list(blds)), else: pld
-    pld = if fna, do: Map.put(pld, :fauna, fauna_to_list(fna)), else: pld
-    Endpoint.broadcast("game:#{sid}", "state_update", pld)
+  defp broadcast_state_update(s, extra \\ %{}) do
+    sid = s.sector_id
+    pld = %{players: players_to_list(s.players)}
+
+    pld =
+      if extra[:items], do: Map.put(pld, :items, extra.items), else: pld
+
+    pld =
+      if extra[:buildings],
+        do: Map.put(pld, :buildings, buildings_to_list(extra.buildings)),
+        else: pld
+
+    pld =
+      if extra[:fauna],
+        do: Map.put(pld, :fauna, fauna_to_list(extra.fauna)),
+        else: pld
+
+    s.cfg_cache.notifier.broadcast("game:#{sid}", "state_update", pld)
   end
 
   defp add_player_if_missing(s, uid) do
     if s.players[uid] do
       s
     else
-      pos = ConfigReader.get(__MODULE__, :default_spawn_position, %{x: 0, y: 1, z: 0})
+      spawn_pos = %{x: 0, y: 1, z: 0}
+
+      pos =
+        ConfigReader.get(__MODULE__, :default_spawn_position, spawn_pos)
+
       p = %Unit{id: uid, type: :head, position: pos}
       %{s | players: Map.put(s.players, uid, %{player: p, last_update: nil})}
     end
@@ -359,7 +404,8 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp message_token_enabled? do
-    Application.get_env(:mutonex_server, :webclient_message_token_enabled, false)
+    key = :webclient_message_token_enabled
+    Application.get_env(:mutonex_server, key, false)
   end
 
   defp sync_tokens(s, u, v) do
