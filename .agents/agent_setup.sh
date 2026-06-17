@@ -4,6 +4,7 @@
 # development environment and run tests.
 set -e # exit immediate if command return non-zero status
 INSTALLER=".agents/install_elixir.sh"
+source ./scripts/app.config.sh
 
 # 1. Install Elixir and Hex
 if ! command -v elixir &> /dev/null
@@ -17,6 +18,10 @@ fi
 # 2. Change to gameserver dir, install deps
 # - because mix commands must be run from the dir with mix.exs file
 (cd gameserver && mix local.hex --force && mix deps.get)
+
+# 2.5 Ensure static path and placeholder for tests
+mkdir -p "$WEB_PATH"
+touch "$WEB_PATH/index.html"
 
 # 3. Install Deno
 if ! command -v deno &> /dev/null
