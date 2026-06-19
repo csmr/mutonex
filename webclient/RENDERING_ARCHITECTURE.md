@@ -57,6 +57,14 @@ Globe-based rendering for planetary overview.
 - **GeoJSON**: Renders country outlines on a sphere using `THREE.Line`.
 - **Sectors/Units**: Placed on the globe surface via lon/lat conversion.
 
+## Planet Overview Data Pipeline
+
+The `GlobeView` requires geographic vector data to render Earth's country borders.
+
+1. **Source Data**: The source is `webclient/assets/countries.topo.json`, a TopoJSON file derived from the **Natural Earth / World Atlas** public domain dataset.
+2. **Build-Time Conversion**: To minimize client-side dependencies and CPU overhead, the `webclient/generate_geojson.ts` script converts TopoJSON into standard GeoJSON during the build process (`build-webclient.sh`).
+3. **Artifact**: The resulting `content/res/geometry/countries.geo.json` is bundled into the distribution as `dist/assets/countries.geo.json`, where it is fetched by the `GlobeView` at runtime.
+
 ## Data Flow
 
 1. **Server**: Sends `[id, x, y, z]` tuples via WebSocket (Phoenix channels).
