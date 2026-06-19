@@ -5,6 +5,7 @@ import { ViewManager } from "./ViewManager.ts";
 import { LidarView } from "./LidarView.ts";
 import { LidarStyles } from "./LidarStyles.ts";
 import { SphereView } from "./SphereView.ts";
+import { GlobeView } from "./GlobeView.ts";
 import { LobbyView, Sector } from "./LobbyView.ts";
 import { AvatarController } from "./AvatarController.ts";
 import { sampleTerrainHeight } from "./TerrainMesh.ts";
@@ -16,8 +17,9 @@ function initRenderPipeline(canvas: HTMLCanvasElement) {
   const viewManager = new ViewManager(canvas);
   const lidarView = new LidarView(canvas);
   const sphereView = new SphereView(canvas);
+  const globeView = new GlobeView({}, canvas);
   viewManager.setActiveView(lidarView);
-  return { viewManager, lidarView, sphereView };
+  return { viewManager, lidarView, sphereView, globeView };
 }
 
 function bindDebugConsole(viewManager: ViewManager, lidarView: LidarView) {
@@ -37,6 +39,7 @@ function bindDebugConsole(viewManager: ViewManager, lidarView: LidarView) {
   console.log("%c=======================================", "color: #00ff00; font-weight: bold;");
   console.log("W,A,S,D   : Move Avatar");
   console.log("Tab       : Toggle View (Lidar/Sphere)");
+  console.log("G         : Toggle GlobeView");
   console.log("L         : Toggle Lidar Mode (Horiz/Vert)");
   console.log("[ and ]   : Adjust Lidar Entropy (Noise)");
   console.log("=======================================");
@@ -110,7 +113,7 @@ function main() {
   const canvas = document.getElementById("main-canvas") as HTMLCanvasElement;
   if (!canvas) return;
 
-  const { viewManager, lidarView, sphereView } = initRenderPipeline(canvas);
+  const { viewManager, lidarView, sphereView, globeView } = initRenderPipeline(canvas);
   bindDebugConsole(viewManager, lidarView);
   
   let gameStateProvider: GameStateProvider | null = null;
@@ -234,10 +237,19 @@ function main() {
       if (e.key === "Tab") {
         e.preventDefault();
         const current = viewManager.getActiveView();
+        if (current === globeView) return;
         const next = current === lidarView ? sphereView : lidarView;
         viewManager.setActiveView(next);
         if (currentTerrain) next.updateTerrain(currentTerrain);
         updateEntitiesList();
+      }
+      if (e.key.toLowerCase() === "g") {
+        const current = viewManager.getActiveView();
+        if (current === globeView) {
+          viewManager.setActiveView(lidarView);
+        } else {
+          viewManager.setActiveView(globeView);
+        }
       }
       if (e.key.toLowerCase() === "l") {
         const styles = Object.keys(LidarStyles);

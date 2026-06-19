@@ -1,28 +1,19 @@
-# Feature Card: Globe View Earth Wireframe Map
+# Feature Card: Globe View Earth Wireframe Map (REFACTORED)
 
 ## Objective
-Revive the effort to draw Earth's country borders on the 3D globe view (`GlobeView.ts`), creating a classic retro "wireframe map" aesthetic that fits the Mutonex theme.
+Implement Earth's country borders on the 3D globe view (`GlobeView.ts`), creating a high-contrast "cyber-noir" wireframe map. This view is essential for both narrative consistency (determining unit ethnicity/tribe based on geography) and for the Weather Testing Facility.
 
 ## Status Context
-The geodata file `webclient/assets/countries.topo.json` contains high-resolution vectors for every country on Earth. It is currently unused. The previous implementation attempt failed due to a format mismatch.
+The geodata file `webclient/assets/countries.topo.json` is available but its TopoJSON format is not natively supported by our current `GlobeView` logic.
 
-## The Technical Problem
-The existing `#drawFeatures` method in `GlobeView.ts` expects **GeoJSON** arrays of `[longitude, latitude]` points. However, the `countries.topo.json` file is in **TopoJSON** format (using integer `arcs` to reference shared boundaries). `GlobeView.ts` cannot decode this format natively, which is why the map fails to render.
+## Requirements
+- **Geometry**: Country borders must be rendered as bright green vector outlines (#00ff00) on the 3D Earth sphere.
+- **Data Pipeline**: Pre-process `countries.topo.json` into a standard GeoJSON format during the build phase to minimize client-side overhead.
+- **Nomenclature**: Analytical and accessible.
+- **Visuals**: Cyber-noir aesthetic (bright green on black).
 
-## Implementation Plan
-
-To implement the Earth wireframe map, use one of the following approaches (Option B is recommended):
-
-### Option A: The Frontend Approach
-Import a TopoJSON parser directly into `GlobeView.ts` to decode the geometry before rendering.
-1. Add `topojson-client` dependency (e.g., via esm.sh or npm).
-2. Fetch `countries.topo.json` on client load.
-3. Parse: `const geoJson = topojson.feature(topoData, topoData.objects.countries);`
-4. Pass `geoJson.features` into `this.#drawFeatures()`.
-
-### Option B: The Build Approach (Recommended)
-Pre-process the file to avoid forcing the client to load and execute an extra mapping library for static data.
-1. Create a Deno script `webclient/generate_geojson.ts`.
-2. Use `topojson-client` in the script to load `countries.topo.json` and convert the `objects.countries` GeometryCollection into a standard GeoJSON FeatureCollection.
-3. Output the result to `content/res/geometry/countries.geo.json`.
-4. Update `GlobeView.ts` to fetch this new `.geo.json` file. Because it's standard GeoJSON, the existing `#drawFeatures` logic will parse it perfectly out of the box.
+## Implementation Itinerary
+- [ ] Create `webclient/generate_geojson.ts` to convert TopoJSON to GeoJSON using `topojson-client`.
+- [ ] Integrate GeoJSON generation into `webclient/build-webclient.sh`.
+- [ ] Update `GlobeView.ts` to fetch and render the outlines.
+- [ ] Ensure outlines are visible and follow the Earth sphere curvature accurately.

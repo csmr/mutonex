@@ -7,6 +7,7 @@ generate_content() {
   log "Generating content: keys, credits, and geometry."
   deno run -A ./generate-api-key.js
   deno run -A ./make-credits.js
+  deno run -A ./generate_geojson.ts
   
   if [ ! -d "$models_src" ]; then
     log "Entity geometry cache empty. Invoking procedural model pipeline and verifying fonts-unifont dependency."
@@ -31,6 +32,7 @@ assemble_assets() {
   [ -d "$models_src" ] && cp -a "$models_src/." "$dest_geometry/"
   
   cp ../content/res/img/favicon.ico "$RUNTIME_DIR/"
+  cp ../content/res/geometry/countries.geo.json "$RUNTIME_DIR/assets/"
   cp mutonex.html "$RUNTIME_DIR/index.html"
 }
 

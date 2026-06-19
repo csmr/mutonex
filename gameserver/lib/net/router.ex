@@ -15,6 +15,7 @@ defmodule Mutonex.Net.Router do
     get "/", PageController, :index
     get "/health", HealthController, :index
     get "/db-test", DiagController, :db_test
+    get "/weather-history", DiagController, :weather_history
     get "/.well-known/*path", PageController, :well_known
   end
 

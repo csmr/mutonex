@@ -36,6 +36,9 @@ Mutonex has established a solid architectural foundation (Phase I). Current effo
 
 ### B. Audio-Visual Feedback
 - [ ] **LIDAR Audio Pings**: Directional audio "echolocation" when the sensor beam hits charmable units. (Ref: `gameplay_07_lidar_audio_pings.md`)
+- [x] **GlobeView Earth Outlines**: Bright green country borders for geographic tribe/ethnicity determination. (Ref: `earth_map_wireframe_20260228.md`)
+- [x] **Weather Testing Facility**: Diagnostic GlobeView with 5-year meteo-table and insolation overlay. (Ref: `weather_testing_facility_20260617.md`)
+- [ ] **Keyboard Refactor**: Centralize shortcuts into data-driven config for binding and guides. (Ref: `webclient_shortcuts_refactor_20260619.md`)
 - [ ] **Voxel Model Audit**: Fix incomplete fauna models (e.g., floating heads). (Ref: `gameplay_08_incomplete_fauna_models.md`)
 
 ---
