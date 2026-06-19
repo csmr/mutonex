@@ -1,4 +1,9 @@
-// webclient/generate_geojson.ts
+/**
+ * @file webclient/generate_geojson.ts
+ * @description Build-time script to convert TopoJSON geographic data into GeoJSON.
+ * @source Original data: Natural Earth / World Atlas (Public Domain / CC0).
+ * @reason Minimizes client-side dependencies and CPU overhead for GlobeView rendering.
+ */
 import * as topojson from "https://esm.sh/topojson-client@3.1.0";
 
 async function main() {

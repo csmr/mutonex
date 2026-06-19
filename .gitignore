@@ -14,3 +14,6 @@
 .env
 *.log
 /gameserver/priv/static
+
+# Contvibe isolated environment state
+/.contvibe/
