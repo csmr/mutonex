@@ -13,6 +13,10 @@ export interface IView {
   onActivate(): void;
   onDeactivate(): void;
   getInteractableObjects(): any[]; // THREE.Object3D[]
+  raycastEnabled?: boolean;
+  isGlobeView?: boolean;
+  setDiagMode?(enabled: boolean): void;
+  rotate?(direction: string): void;
   dispose?(): void;
   preRender?(renderer: any): void; // THREE.WebGLRenderer
 }

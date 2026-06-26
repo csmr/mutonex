@@ -51,6 +51,7 @@ export class LidarView implements IView {
   private isRebuildingBuffer = false;
   private pendingStyleConfig: string | null = null;
   public terrainMesh: any | null = null;
+  public raycastEnabled = true;
 
   constructor(domElement: HTMLCanvasElement) {
     this.initMainScene(domElement);

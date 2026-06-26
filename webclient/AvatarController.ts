@@ -2,6 +2,7 @@ import "./global_types.ts";
 import { ViewManager } from "./ViewManager.ts";
 import { GameStateProvider } from "./GameStateProvider.ts";
 import { sampleTerrainHeight } from "./TerrainMesh.ts";
+import { KeyState, isActionActive } from "./ShortcutEngine.ts";
 
 /**
  * Handles avatar movement, input, and state synchronization.
@@ -9,18 +10,18 @@ import { sampleTerrainHeight } from "./TerrainMesh.ts";
 export class AvatarController {
   private viewManager: ViewManager;
   private stateProvider: () => GameStateProvider | null;
+  private getKeyState: () => KeyState;
 
   public position = new THREE.Vector3(10, 0, 10);
-  private lastSent = new THREE.Vector3();
-  private keys: { [key: string]: boolean } = {};
+  private lastSentPosition = new THREE.Vector3();
 
   // GC pre-allocations
-  private moveDir = new THREE.Vector3();
+  private moveDirection = new THREE.Vector3();
   private forward = new THREE.Vector3();
   private right = new THREE.Vector3();
-  private moveVec = new THREE.Vector3();
-  private tempV = new THREE.Vector3(0, 0, -1);
-  private tempR = new THREE.Vector3(1, 0, 0);
+  private moveVector = new THREE.Vector3();
+  private tempVector = new THREE.Vector3(0, 0, -1);
+  private tempRight = new THREE.Vector3(1, 0, 0);
 
   public speed = 20.0;
   public heightOffset = 1.7; // Typical eye level
@@ -28,36 +29,35 @@ export class AvatarController {
   constructor(
     viewManager: ViewManager,
     stateProvider: () => GameStateProvider | null,
+    getKeyState: () => KeyState,
   ) {
     this.viewManager = viewManager;
     this.stateProvider = stateProvider;
-
-    window.addEventListener(
-      "keydown",
-      (e) => (this.keys[e.key.toLowerCase()] = true),
-    );
-    window.addEventListener(
-      "keyup",
-      (e) => (this.keys[e.key.toLowerCase()] = false),
-    );
+    this.getKeyState = getKeyState;
   }
 
   public update(delta: number) {
     const provider = this.stateProvider();
+    const activeView = this.viewManager.getActiveView();
     if (!provider || provider.phase !== "gamein") return;
+    if ((activeView as any)?.isGlobeView) return; // Guard globe
 
     this.calculateDirection();
 
-    if (this.moveDir.lengthSq() > 0) {
-      this.moveDir.normalize();
-      this.moveVec.copy(this.moveDir).multiplyScalar(
-        this.speed * delta,
-      );
-
-      this.position.add(this.moveVec);
+    if (this.moveDirection.lengthSq() > 0) {
+      this.moveDirection.normalize();
+      this.moveVector.copy(this.moveDirection).multiplyScalar(this.speed * delta);
+      this.position.add(this.moveVector);
     }
 
-    // Always snap to terrain height if available
+    this.updateCamera();
+
+    if (this.moveDirection.lengthSq() > 0) {
+      this.syncState(provider);
+    }
+  }
+
+  private updateCamera() {
     const view = this.viewManager.getActiveView();
     if (view) {
       let terrainY = 0;
@@ -72,60 +72,41 @@ export class AvatarController {
       view.camera.position.copy(this.position);
       view.camera.position.y += this.heightOffset;
     }
-
-    if (this.moveDir.lengthSq() > 0) {
-      this.syncState(provider);
-    }
   }
 
   private calculateDirection() {
-    this.moveDir.set(0, 0, 0);
+    this.moveDirection.set(0, 0, 0);
     const view = this.viewManager.getActiveView();
     if (!view) return;
 
     const cam = view.camera;
-    this.forward.copy(this.tempV).applyQuaternion(
-      cam.quaternion,
-    );
+    this.forward.copy(this.tempVector).applyQuaternion(cam.quaternion);
     this.forward.y = 0;
     this.forward.normalize();
 
-    this.right.copy(this.tempR).applyQuaternion(
-      cam.quaternion,
-    );
+    this.right.copy(this.tempRight).applyQuaternion(cam.quaternion);
     this.right.y = 0;
     this.right.normalize();
 
-    if (this.keys["w"] || this.keys["arrowup"]) {
-      this.moveDir.add(this.forward);
-    }
-    if (this.keys["s"] || this.keys["arrowdown"]) {
-      this.moveDir.sub(this.forward);
-    }
-    if (this.keys["a"] || this.keys["arrowleft"]) {
-      this.moveDir.sub(this.right);
-    }
-    if (this.keys["d"] || this.keys["arrowright"]) {
-      this.moveDir.add(this.right);
-    }
+    const keyState = this.getKeyState();
+    if (isActionActive(keyState, "move_fwd")) this.moveDirection.add(this.forward);
+    if (isActionActive(keyState, "move_back")) this.moveDirection.sub(this.forward);
+    if (isActionActive(keyState, "move_left")) this.moveDirection.sub(this.right);
+    if (isActionActive(keyState, "move_right")) this.moveDirection.add(this.right);
   }
 
   private syncState(provider: GameStateProvider) {
-    if (this.position.distanceTo(this.lastSent) > 1.0) {
+    if (this.position.distanceTo(this.lastSentPosition) > 1.0) {
       provider.sendAvatarPosition([
         this.position.x,
         this.position.y,
         this.position.z,
       ]);
-      this.lastSent.copy(this.position);
+      this.lastSentPosition.copy(this.position);
     }
   }
 
   public getForwardVector(): THREE.Vector3 {
     return this.forward.clone();
-  }
-
-  public isPressed(key: string): boolean {
-    return !!this.keys[key.toLowerCase()];
   }
 }

@@ -18,6 +18,7 @@ export class SphereView implements IView {
   private entityRenderer: EntityRenderer;
   private boundResize: () => void;
   public terrainMesh: any | null = null;
+  public raycastEnabled = false;
 
   constructor(domElement: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
