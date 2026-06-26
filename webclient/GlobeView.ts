@@ -1,6 +1,7 @@
 // webclient/GlobeView.ts
 import { IView } from "./ViewManager.ts";
 import { GameState, Unit } from "./MockGameStateProvider.ts";
+import { EntityData, Terrain } from "./types.ts";
 
 const GLOBE_RADIUS = 5;
 const UNIT_RADIUS = 0.05;
@@ -15,9 +16,11 @@ declare const OrbitControls:
 export class GlobeView implements IView {
   public scene: THREE.Scene;
   public camera: THREE.PerspectiveCamera;
+  public isGlobeView = true; // Marker for guards
+  public raycastEnabled = false;
 
   private controls: THREE.OrbitControls;
-  private globe: THREE.Group;
+  private globeGroup: THREE.Group;
   private unitMeshes: Record<string, THREE.Mesh> = {};
   private sectorMeshes: Record<string, THREE.Mesh> = {};
   private playerColors: Record<string, THREE.Color> = {
@@ -26,7 +29,7 @@ export class GlobeView implements IView {
   };
 
   // Weather Diagnostic State
-  private diagEnabled: boolean = false;
+  public diagEnabled: boolean = false;
   private diagOverlay: HTMLElement | null = null;
   private currentLat: number = 60;
   private currentLon: number = 20;
@@ -55,14 +58,14 @@ export class GlobeView implements IView {
     this.controls.autoRotateSpeed = 0.2;
 
     // Group to hold the globe and its features
-    this.globe = new THREE.Group();
-    this.scene.add(this.globe);
+    this.globeGroup = new THREE.Group();
+    this.scene.add(this.globeGroup);
 
     // Create the base sphere
     const sphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32);
     const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    this.globe.add(sphere);
+    this.globeGroup.add(sphere);
 
     this.#loadOutlines();
     this.#drawGrid();
@@ -90,7 +93,8 @@ export class GlobeView implements IView {
 
   async #fetchWeatherData() {
     try {
-      const resp = await fetch(`/weather-history?lat=${this.currentLat}&lon=${this.currentLon}`);
+      const url = `/weather-history?lat=${this.currentLat}&lon=${this.currentLon}`;
+      const resp = await fetch(url);
       this.weatherData = await resp.json();
       this.#updateDiagUI();
     } catch (e) {
@@ -219,18 +223,37 @@ export class GlobeView implements IView {
 
   public onActivate(): void {
     window.addEventListener("resize", this.onWindowResize.bind(this));
-    window.addEventListener("keydown", this.onKeyDown.bind(this));
-    console.log("%c[GlobeView] Diagnostic Mode: Press 'D' to toggle Weather Facility", "color: #00ff00");
   }
 
   public onDeactivate(): void {
     window.removeEventListener("resize", this.onWindowResize.bind(this));
-    window.removeEventListener("keydown", this.onKeyDown.bind(this));
     this.#hideDiagOverlay();
   }
 
   public update(_deltaTime: number): void {
     this.controls.update();
+  }
+
+  public updateEntities(_entities: EntityData[], _localPlayerId?: string): void {
+    // GlobeView renders large-scale sectors and units separately
+    // from tactical entities. This satisfies IView.
+  }
+
+  public updateTerrain(_terrain: Terrain): void {
+    // Static globe for now.
+  }
+
+  public rotate(direction: "up" | "down" | "left" | "right"): void {
+    if (this.controls.autoRotate) {
+      this.controls.autoRotate = false;
+    }
+    const rotationSpeed = 0.05;
+    switch (direction) {
+      case "up": this.globeGroup.rotation.x -= rotationSpeed; break;
+      case "down": this.globeGroup.rotation.x += rotationSpeed; break;
+      case "left": this.globeGroup.rotation.y -= rotationSpeed; break;
+      case "right": this.globeGroup.rotation.y += rotationSpeed; break;
+    }
   }
 
   public updateGameState(state: GameState): void {
@@ -259,10 +282,10 @@ export class GlobeView implements IView {
         const mesh = new THREE.Mesh(geometry, material);
         const position = this.lonLatToVector3(lon, lat, GLOBE_RADIUS);
         mesh.position.copy(position);
-        mesh.lookAt(this.globe.position);
+        mesh.lookAt(this.globeGroup.position);
 
         this.sectorMeshes[sector.id] = mesh;
-        this.globe.add(mesh);
+        this.globeGroup.add(mesh);
       }
     });
   }
@@ -285,14 +308,14 @@ export class GlobeView implements IView {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.copy(position);
         this.unitMeshes[unit.id] = mesh;
-        this.globe.add(mesh);
+        this.globeGroup.add(mesh);
       }
     });
 
     Object.keys(this.unitMeshes).forEach((unitId) => {
       if (!currentUnitIds.has(unitId)) {
         const mesh = this.unitMeshes[unitId];
-        this.globe.remove(mesh);
+        this.globeGroup.remove(mesh);
         delete this.unitMeshes[unitId];
       }
     });
@@ -301,32 +324,6 @@ export class GlobeView implements IView {
   private onWindowResize(): void {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
-  }
-
-  private onKeyDown(event: KeyboardEvent): void {
-    if (this.controls.autoRotate) {
-      this.controls.autoRotate = false;
-    }
-
-    if (event.key.toLowerCase() === "d") {
-      this.setDiagMode(!this.diagEnabled);
-    }
-
-    const rotationSpeed = 0.05;
-    switch (event.key) {
-      case "ArrowUp":
-        this.globe.rotation.x -= rotationSpeed;
-        break;
-      case "ArrowDown":
-        this.globe.rotation.x += rotationSpeed;
-        break;
-      case "ArrowLeft":
-        this.globe.rotation.y -= rotationSpeed;
-        break;
-      case "ArrowRight":
-        this.globe.rotation.y += rotationSpeed;
-        break;
-    }
   }
 
   private lonLatToVector3(
@@ -363,7 +360,7 @@ export class GlobeView implements IView {
     );
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const line = new THREE.Line(geometry, material);
-    this.globe.add(line);
+    this.globeGroup.add(line);
   }
 
   #drawGrid(): void {
@@ -380,7 +377,7 @@ export class GlobeView implements IView {
       }
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const line = new THREE.Line(geometry, gridMaterial);
-      this.globe.add(line);
+      this.globeGroup.add(line);
     }
 
     for (let lon = -180; lon < 180; lon += 10) {
@@ -390,7 +387,7 @@ export class GlobeView implements IView {
       }
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const line = new THREE.Line(geometry, gridMaterial);
-      this.globe.add(line);
+      this.globeGroup.add(line);
     }
   }
 }

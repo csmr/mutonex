@@ -69,14 +69,6 @@ function resetDom() {
   }
 }
 
-// Track global keydown listeners so we can
-// dispatch synthetic events in tests.
-let keydownListeners: ((e: any) => void)[] = [];
-
-function resetListeners() {
-  keydownListeners = [];
-}
-
 // Inject globals before importing LobbyView.
 (globalThis as any).document = {
   getElementById(id: string) {
@@ -92,14 +84,7 @@ function resetListeners() {
 
 (globalThis as any).window = {
   ...(globalThis as any).window || {},
-  addEventListener(
-    event: string,
-    fn: (e: any) => void,
-  ) {
-    if (event === "keydown") {
-      keydownListeners.push(fn);
-    }
-  },
+  addEventListener() {},
   removeEventListener() {},
 };
 
@@ -108,14 +93,6 @@ const { LobbyView } = await import(
   "../LobbyView.ts"
 );
 
-// Helper to dispatch key event to all
-// registered keydown listeners.
-function pressKey(key: string) {
-  for (const fn of keydownListeners) {
-    fn({ key, preventDefault() {} });
-  }
-}
-
 // ── Tests ───────────────────────────────────
 
 Deno.test(
@@ -123,7 +100,6 @@ Deno.test(
     "elements",
   () => {
     resetDom();
-    resetListeners();
     const lv = new LobbyView();
     assertExists(lv);
   },
@@ -134,7 +110,6 @@ Deno.test(
     "container",
   () => {
     resetDom();
-    resetListeners();
     const lv = new LobbyView();
 
     const sectors = [
@@ -157,7 +132,6 @@ Deno.test(
   "LobbyView: show/hide toggles class",
   () => {
     resetDom();
-    resetListeners();
     const lv = new LobbyView();
 
     lv.hide();
@@ -181,7 +155,6 @@ Deno.test(
     "fires on click",
   () => {
     resetDom();
-    resetListeners();
     const lv = new LobbyView();
 
     const sectors = [
@@ -211,11 +184,10 @@ Deno.test(
 );
 
 Deno.test(
-  "LobbyView: keyboard navigation cycles " +
+  "LobbyView: navigation methods cycle " +
     "selection",
   () => {
     resetDom();
-    resetListeners();
     const lv = new LobbyView();
 
     const sectors = [
@@ -227,19 +199,19 @@ Deno.test(
     lv.show();
 
     // Initial selection is index 0.
-    // Press ArrowDown → index 1
-    pressKey("ArrowDown");
-    // ArrowDown again → index 2
-    pressKey("ArrowDown");
+    // navigate(1) → index 1
+    lv.navigate(1);
+    // navigate(1) → index 2
+    lv.navigate(1);
 
-    // Now Enter should select "C"
+    // Now confirmSelection should select "C"
     let selected: any = null;
     lv.onSectorSelect(
       (s: any) => {
         selected = s;
       },
     );
-    pressKey("Enter");
+    lv.confirmSelection();
     assertExists(selected);
     assertEquals(selected.id, "s3");
   },
@@ -250,7 +222,6 @@ Deno.test(
     "to queue view",
   () => {
     resetDom();
-    resetListeners();
     const lv = new LobbyView();
 
     lv.updatePlayerQueue([

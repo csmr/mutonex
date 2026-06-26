@@ -19,7 +19,7 @@ generate_content() {
 bundle_code() {
   log "Bundling TypeScript via esbuild..."
   deno cache npm:esbuild@^0.24.0
-  deno task bundle-client-esbuild-module
+  DEV_MODE_ENABLED=$(grep "DEV_MODE_ENABLED=" ../.env | cut -d'=' -f2) deno task bundle-client-esbuild-module
   [ -f "$RUNTIME_DIR/web.js" ] ||
     { log "FAIL: output artifact $RUNTIME_DIR/web.js not found, $0 exit 1"; exit 1; }
 }

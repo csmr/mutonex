@@ -1,11 +1,15 @@
 #!/bin/bash
 # Mutonex dev-env generator
-if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+if command -v podman >/dev/null 2>&1 && podman compose version >/dev/null 2>&1; then
+  DOCKER_CMD="podman compose"
+elif command -v podman-compose >/dev/null 2>&1; then
+  DOCKER_CMD="podman-compose"
+elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   DOCKER_CMD="docker compose"
 elif command -v docker-compose >/dev/null 2>&1; then
   DOCKER_CMD="docker-compose"
 else
-  echo "Docker Compose not found."
+  echo "Container Compose (Podman or Docker) not found."
 fi
 if [ -n "$DOCKER_CMD" ]; then
   echo "мμτοηεχ δεv εηv ιηιτ"

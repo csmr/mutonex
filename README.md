@@ -21,9 +21,11 @@ Modular monorepo for the Mutonex game project.
 
 ## Getting Started
 
-This project depends on bash, git, and docker-compose.
+This project depends on bash, git, and a container compose runtime
+(Podman or Docker).
 
-The basic idea is that devs can run containers where game instances run in isolation.
+The basic idea is that devs can run containers where game instances
+run in isolation.
 
 To start, clone the repo and execute `./devenv.sh`, follow the output.
 
@@ -31,9 +33,11 @@ To start, clone the repo and execute `./devenv.sh`, follow the output.
 The dev-env startup script `devenv.sh`:
 1. Tests dependencies.
 2. Sets up app environment and database credentials.
-3. Executes `docker compose up` to run services in `infra/compose.yaml` (find port numbers there).
+3. Executes the container compose runtime (Podman or Docker) to
+   run services in `infra/compose.yaml` (find port numbers there).
 
-Unless `devenv.sh` runs, no credentials exist in `.env` and `infra/data/.env.postgres`, so `docker compose` will fail.
+Unless `devenv.sh` runs, no credentials exist in `.env` and
+`infra/data/.env.postgres`, so the compose runtime will fail.
 
 ## .env file
 The `.env` file is created once, using `infra/data/.env.postgres`. If deleted, access to the database is lost.
@@ -58,5 +62,8 @@ Database access for servers depends on the credentials in `.env`.
 For LLM/agent automata, see the `.agents` directory, where the `AGENTS.md` guide and `agent_setup.sh` setup script can be found.
 
 ## Production Environment
-This is achieved via 'production' profile services in `infra/compose.yaml`. Install certificates (or certbot), and then you can start the production containers with:
-`$ docker compose -f infra/compose.yaml --profile production up`
+This is achieved via 'production' profile services in
+`infra/compose.yaml`. Install certificates (or certbot), and then
+you can start the production containers with:
+`$ podman compose -f infra/compose.yaml --profile production up`
+(or `$ docker compose ...`)

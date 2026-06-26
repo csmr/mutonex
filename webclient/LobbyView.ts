@@ -15,8 +15,8 @@ export class LobbyView {
 
   private sectors: Sector[] = [];
   private selectedIndex: number = 0;
-  private onSelectCallback: ((sector: Sector) => void) | null = null;
-  private boundInput: (e: KeyboardEvent) => void;
+  private onSelectCallback:
+    ((sector: Sector) => void) | null = null;
   private isConnected: boolean = false;
 
   constructor() {
@@ -26,25 +26,23 @@ export class LobbyView {
     this.sectorContainer = document.getElementById(
       "sector-selection",
     )!;
-    this.sectorListContainer = document.getElementById(
-      "sector-list-container",
-    )!;
+    this.sectorListContainer =
+      document.getElementById(
+        "sector-list-container",
+      )!;
     this.queueContainer = document.getElementById(
       "lobby-queue",
     )!;
-    this.playerListContainer = document.getElementById(
-      "player-list-container",
-    )!;
+    this.playerListContainer =
+      document.getElementById(
+        "player-list-container",
+      )!;
 
     if (!this.container) {
-      throw new Error("Lobby view container not found");
+      throw new Error(
+        "Lobby view container not found",
+      );
     }
-
-    this.boundInput = this.handleInput.bind(this);
-    window.addEventListener(
-      "keydown",
-      this.boundInput,
-    );
   }
 
   public show(): void {
@@ -99,35 +97,30 @@ export class LobbyView {
     this.onSelectCallback = callback;
   }
 
+  public navigate(delta: number): void {
+    if (this.isConnected) return;
+    const len = this.sectors.length;
+    if (len === 0) return;
+    this.selectedIndex =
+      (this.selectedIndex + delta + len) % len;
+    this.renderSectorList(this.sectors);
+  }
+
+  public confirmSelection(): void {
+    if (this.isConnected) return;
+    this.selectSector(this.selectedIndex);
+  }
+
   private selectSector(index: number): void {
-    if (index < 0 || index >= this.sectors.length) return;
+    const len = this.sectors.length;
+    if (index < 0 || index >= len) return;
     this.selectedIndex = index;
     this.renderSectorList(this.sectors);
 
     if (this.onSelectCallback) {
-      const selected = this.sectors[this.selectedIndex];
+      const selected =
+        this.sectors[this.selectedIndex];
       this.onSelectCallback(selected);
-    }
-  }
-
-  private handleInput(e: KeyboardEvent): void {
-    const isHidden = this.container.classList.contains(
-      "hidden",
-    );
-    if (isHidden) return;
-    if (this.isConnected) return;
-
-    if (e.key === "ArrowUp") {
-      const len = this.sectors.length;
-      this.selectedIndex = (this.selectedIndex - 1 + len) %
-        len;
-      this.renderSectorList(this.sectors);
-    } else if (e.key === "ArrowDown") {
-      const len = this.sectors.length;
-      this.selectedIndex = (this.selectedIndex + 1) % len;
-      this.renderSectorList(this.sectors);
-    } else if (e.key === "Enter") {
-      this.selectSector(this.selectedIndex);
     }
   }
 }

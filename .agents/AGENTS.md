@@ -84,9 +84,11 @@ Never add or commit `.env` files into repository. Never remove `.env` files from
 
 ## Git branch naming convention
 
-- Name git branches with a prefix: feat-|bugfix-|mainteinance-
-- name branch with a date-time postfix: -YYYYMMDDHHMM
-
+- Always name git branches in format prefix-kebab-case-YYYYMMDDHHMM format name:
+  - prefix describing branch purpose: [feat-|bugfix-|mainteinance-]
+  - accurate name, in kebab-case
+  - 12 character date-time postfix: [-YYYYMMDDHHMM]
+  - no long random number strings!
 
 ## Merge strategy for Google Jules
 
