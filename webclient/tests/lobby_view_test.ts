@@ -90,7 +90,7 @@ function resetDom() {
 
 // ── Import after globals ────────────────────
 const { LobbyView } = await import(
-  "../LobbyView.ts"
+  "../view/LobbyView.ts"
 );
 
 // ── Tests ───────────────────────────────────

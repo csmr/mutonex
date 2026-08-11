@@ -1,7 +1,10 @@
-// webclient/GlobeView.ts
-import { IView } from "./ViewManager.ts";
-import { GameState, Unit } from "./MockGameStateProvider.ts";
-import { EntityData, Terrain } from "./types.ts";
+// webclient/view/GlobeView.ts
+import { IView } from "../core/ViewManager.ts";
+import {
+  GameState,
+  Unit,
+} from "../mocks/MockGameStateProvider.ts";
+import { EntityData, Terrain } from "../core/types.ts";
 
 const GLOBE_RADIUS = 5;
 const UNIT_RADIUS = 0.05;

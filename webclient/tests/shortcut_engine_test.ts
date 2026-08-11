@@ -2,7 +2,7 @@
 import {
     assertEquals
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import * as Engine from "../ShortcutEngine.ts";
+import * as Engine from "../input/ShortcutEngine.ts";
 
 // Minimal DOM stub for ShortcutEngine
 (globalThis as any).document = {

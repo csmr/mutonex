@@ -1,19 +1,21 @@
-// webclient/main.ts
+// webclient/core/main.ts
 import "./global_types.ts";
 import { GameStateProvider } from "./GameStateProvider.ts";
 import { ViewManager, IView } from "./ViewManager.ts";
-import { LidarView } from "./LidarView.ts";
-import { LidarStyles } from "./LidarStyles.ts";
-import { SphereView } from "./SphereView.ts";
-import { GlobeView } from "./GlobeView.ts";
-import { LobbyView, Sector } from "./LobbyView.ts";
-import { AvatarController } from "./AvatarController.ts";
-import { sampleTerrainHeight } from "./TerrainMesh.ts";
+import { LidarView } from "../view/LidarView.ts";
+import { LidarStyles } from "../render/LidarStyles.ts";
+import { SphereView } from "../view/SphereView.ts";
+import { GlobeView } from "../view/GlobeView.ts";
+import { LobbyView, Sector } from "../view/LobbyView.ts";
+import { AvatarController } from "../input/AvatarController.ts";
+import { sampleTerrainHeight } from "../render/TerrainMesh.ts";
 import { EntityData, EntityType, Terrain } from "./types.ts";
-import type { PlayerTuple } from "./MockGameStateProvider.ts";
-import { ActionHUD } from "./ActionHUD.ts";
-import * as Engine from "./ShortcutEngine.ts";
-import { DEV_MODE_ENABLED } from "./env-config.ts";
+import type {
+  PlayerTuple,
+} from "../mocks/MockGameStateProvider.ts";
+import { ActionHUD } from "../view/ActionHUD.ts";
+import * as Engine from "../input/ShortcutEngine.ts";
+import { DEV_MODE_ENABLED } from "../env-config.ts";
 
 type ViewSet = {
   viewManager: ViewManager, lidarView: LidarView,

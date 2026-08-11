@@ -1,14 +1,14 @@
-import "./global_types.ts";
-import { IView } from "./ViewManager.ts";
+import "../core/global_types.ts";
+import { IView } from "../core/ViewManager.ts";
 import {
   FirstPersonControls
-} from "./FirstPersonControls.ts";
-import { EntityRenderer } from "./EntityRenderer.ts";
-import { createTerrainMesh } from "./TerrainMesh.ts";
+} from "../input/FirstPersonControls.ts";
+import { EntityRenderer } from "../render/EntityRenderer.ts";
+import { createTerrainMesh } from "../render/TerrainMesh.ts";
 import {
   EntityData,
   Terrain
-} from "./types.ts";
+} from "../core/types.ts";
 
 export class SphereView implements IView {
   public scene: any;

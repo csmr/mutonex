@@ -102,7 +102,7 @@ function resetDom() {
     }
 };
 
-const { ActionHUD } = await import("../ActionHUD.ts");
+const { ActionHUD } = await import("../view/ActionHUD.ts");
 
 Deno.test("ActionHUD: constructor initializes without error", () => {
     resetDom();

@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.2.27 - Webclient Refactoring
+- **Directory Reorganization:** From flat webclient/-dir to separate subdirs by-concerns.
+
 ## v0.2.26 - Optimization & Security Hardening
 - **Keyboard Shortcut Engine:** Synthesized a premium stateful shortcut engine with modular set-driven keydown tracking, OS/browser repeat blocking, context synchronization, fuzzy WASD matching, and custom rot/toggle handlers.
 - **Fauna Movement Tuning:** Re-integrated decoupled fauna path interpolation and throttled random wiggling speed and range by 4x to match symbolic game graphics.

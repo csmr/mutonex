@@ -17,7 +17,6 @@ if [ -n "$DOCKER_CMD" ]; then
   ./scripts/init-database-env.sh
   ./scripts/init-dotenv.sh
   mkdir -p "$RUNTIME_DIR" "$WEB_PATH"
-  git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
   touch "$WEB_PATH/index.html"
   cd infra && $DOCKER_CMD --env-file "$DOTENV_PATH" up
 fi

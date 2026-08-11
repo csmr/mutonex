@@ -1,4 +1,4 @@
-import "./global_types.ts";
+import "../core/global_types.ts";
 
 /**
  * Drag-to-look FPV controller.

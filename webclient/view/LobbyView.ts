@@ -1,4 +1,6 @@
-import type { PlayerTuple } from "./MockGameStateProvider.ts";
+import type {
+  PlayerTuple,
+} from "../mocks/MockGameStateProvider.ts";
 
 export interface Sector {
   id: string;

@@ -5,6 +5,8 @@ models_src="../content/res/entity_geometry"
 
 generate_content() {
   log "Generating content: keys, credits, and geometry."
+  mkdir -p "$RUNTIME_DIR"
+  git shortlog -n -s > "$RUNTIME_DIR/CONTRIBS"
   deno run -A ./generate-api-key.js
   deno run -A ./make-credits.js
   deno run -A ./generate_geojson.ts
@@ -39,7 +41,7 @@ assemble_assets() {
 distribute_build() {
   local distribution_target="../../dist"
   local gameserver_static="../gameserver/priv/static"
-  local entry_file="main.ts"
+  local entry_file="core/main.ts"
   
   log "Symlinking bundle dir $distribution_target to ${gameserver_static}"
   
