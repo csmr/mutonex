@@ -1,7 +1,15 @@
 # Changelog
 
-## v0.2.27 - Webclient Refactoring
+## v0.2.27 - Webclient Refactoring & Security Hardening
 - **Directory Reorganization:** From flat webclient/-dir to separate subdirs by-concerns.
+- **Dependency Upgrades**: Upgraded Ecto/Postgrex (`ecto_sql` to
+  `~> 3.14`, `postgrex` to `~> 0.22`) to resolve high-severity SQL
+  injection and transitive DoS vulnerabilities in `decimal`.
+- **Runtime Optimization**: Enforced Elixir version `~> 1.17` in
+  `mix.exs` to guarantee modern compile-time type-safety checks.
+- **Code Cleanups**: Fixed struct-update compiler warnings in
+  `sparse_octree.ex`, token verification in `auth.ex`, and unused
+  logger requires in `faction_resolver.ex`.
 
 ## v0.2.26 - Optimization & Security Hardening
 - **Keyboard Shortcut Engine:** Synthesized a premium stateful shortcut engine with modular set-driven keydown tracking, OS/browser repeat blocking, context synchronization, fuzzy WASD matching, and custom rot/toggle handlers.
