@@ -3,7 +3,6 @@ defmodule Mutonex.Engine.Systems.FactionResolver do
   Resolves flavor (element) and ethnicity (faction) based on regional data 
   and geological resources.
   """
-  require Logger
 
   @regions_path "../../../../res/regions.yaml"
   @elements_path "../../../../res/elements.yml"

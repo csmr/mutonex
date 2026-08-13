@@ -5,7 +5,7 @@ defmodule Mutonex.Game.MixProject do
     [
       app: :mutonex_server,
       version: "0.2.19",
-      elixir: "~> 1.14",
+      elixir: "~> 1.17",
       target: :node,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -47,8 +47,8 @@ defmodule Mutonex.Game.MixProject do
       {:tesla, "~> 1.4"},
       {:mox, "~> 1.0", only: :test},
       {:yaml_elixir, "~> 2.8.0"},
-      {:ecto_sql, "~> 3.10"},
-      {:postgrex, "~> 0.17.0"}
+      {:ecto_sql, "~> 3.14"},
+      {:postgrex, "~> 0.22"}
     ]
   end
 end

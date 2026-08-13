@@ -58,9 +58,9 @@ defmodule Mutonex.Net.Plugs.Auth do
     send_resp(conn, 401, "Unauthorized") |> halt()
   end
 
-  defp valid_token?(_token) do
-    # For now, all tokens are considered valid for development.
-    true
+  defp valid_token?(token) do
+    # Verify token is a valid string for development.
+    is_binary(token)
   end
 
   defp valid_hash?(hash, configured_hash) do

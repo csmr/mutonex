@@ -30,7 +30,7 @@ defmodule Mutonex.Engine.SparseOctree do
     end
   end
 
-  defp maybe_subdivide_and_insert(node, entity) do
+  defp maybe_subdivide_and_insert(%Octree{} = node, entity) do
     if length(node.entities) < node.capacity or
          node.depth >= @max_depth do
       %Octree{node | entities: [entity | node.entities]}
@@ -42,8 +42,8 @@ defmodule Mutonex.Engine.SparseOctree do
     end
   end
 
-  defp move_entities_to_children(node) do
-    new_node =
+  defp move_entities_to_children(%Octree{} = node) do
+    %Octree{} = new_node =
       Enum.reduce(node.entities, node, fn e, acc ->
         insert_into_child(acc, e)
       end)
@@ -51,7 +51,7 @@ defmodule Mutonex.Engine.SparseOctree do
     %Octree{new_node | entities: []}
   end
 
-  defp insert_into_child(node, entity) do
+  defp insert_into_child(%Octree{} = node, entity) do
     idx = get_octant_index(node.bounds, entity)
     upd = update_child_at(node.children, idx, entity)
     %Octree{node | children: upd}
@@ -118,7 +118,7 @@ defmodule Mutonex.Engine.SparseOctree do
     remove_recursive(node, entity_id)
   end
 
-  defp remove_recursive(node, eid) do
+  defp remove_recursive(%Octree{} = node, eid) do
     if is_nil(node.children) do
       upd = Enum.reject(node.entities, fn e -> e.id == eid end)
       %Octree{node | entities: upd}
