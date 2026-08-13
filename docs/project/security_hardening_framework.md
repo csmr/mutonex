@@ -35,6 +35,7 @@ generic defensive categories and industry-standard best practices.
   public internet.
 
 ## 4. Maintenance Itinerary (Recommended)
+- [x] Audit/upgrade vulnerable dependencies (`ecto_sql`, `postgrex`).
 - [ ] Establish automated SAST scanning with Sobelow.
 - [ ] Conduct a formal review of the Authentication module against
   OWASP Top 10 standards.
