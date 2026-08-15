@@ -1,6 +1,6 @@
 # Mutonex Project Master Tracking Document
 
-**Date:** 2026-06-17
+**Date:** 2026-08-13
 **Status:** Phase II - Tactical Engine Development
 
 ## 1. Executive Summary
@@ -9,7 +9,9 @@ Current efforts are focused on the "Tactical Engine" (Phase II),
 transitioning from a real-time sandbox to a "chess-like"
 casual strategy game. Recent refactoring (v0.2.26) has optimized
 core spatial queries and decoupled the engine from the network
-layer.
+layer. v0.2.27 has refactored the webclient architecture and
+resolved all gameserver dependency vulnerabilities and compiler
+warnings.
 
 ---
 
@@ -18,7 +20,8 @@ layer.
 ### A. Turn Gating & Pacing
 - [ ] **Turn-Based Gating**: Transition `GameSession` from 5s
   real-time ticks to authoritative 20-30s turns. (Ref:
-  `project_sync_20260306.md`, `gameplay_06_lidar_refresh_pacing.md`)
+  `project_sync_20260306.md`,
+  `gameplay_06_lidar_refresh_pacing.md`)
 - [ ] **LIDAR Refresh Rates**: Throttle client-side rendering
   to "sweeping bursts" synchronized with turn pacing.
 
@@ -61,20 +64,20 @@ layer.
   `gameplay_07_lidar_audio_pings.md`)
 - [x] **GlobeView Earth Outlines**: Bright green country borders
   for geographic tribe/ethnicity determination. (Ref:
-  `earth_map_wireframe_20260228.md`)
+  `archive/earth_map_wireframe_20260228.md`)
 - [ ] **GlobeView Earth Outlines Part 2**: Align styling with game
   graphics style (thicker map border outlines) and improve the view
   functionality for weather testing.
 - [x] **Weather Testing Facility**: Diagnostic GlobeView with
   5-year meteo-table and insolation overlay. (Ref:
-  `weather_testing_facility_20260617.md`)
+  `archive/weather_testing_facility_20260617.md`)
 - [ ] **Weather Testing Facility Part 2**: Refine controls, add
   actual weather testing, and implement a way to indicate weather
   data (temperature/pressure) of each sector overlayed on the
   GlobeView Earth representation.
 - [x] **Keyboard Refactor**: Centralize shortcuts into data-driven
   config for binding and guides. (Ref:
-  `webclient_shortcuts_refactor_20260619.md`)
+  `archive/webclient_shortcuts_refactor_20260619.md`)
 - [ ] **Voxel Model Audit**: Fix incomplete fauna models (e.g.,
   floating heads). (Ref: `gameplay_08_incomplete_fauna_models.md`)
 
@@ -99,12 +102,16 @@ layer.
 ---
 
 ## 5. Completed & Archived Milestones (Recent)
-- [x] **v0.2.27 - Webclient Refactoring**:
+- [x] **v0.2.27 - Webclient Refactoring & Runtime Upgrades**:
   - **Directory Reorganization**: Reorganized webclient codebase
     from a flat folder into concern-specific subdirectories
     (`core/`, `render/`, `view/`, `input/`, `mocks/`).
-  - [Upcoming] Language runtime + its dependencies + vulnerability
-    upgrades.
+  - **Dependencies & Vulnerabilities**: Upgraded direct
+    dependencies (`ecto_sql`, `postgrex`) to resolve security
+    advisories; updated Elixir runtime constraint to `~> 1.17`.
+  - **Compiler Warning Cleanups**: Resolved Elixir 1.17 type
+    warnings across gameserver modules (`sparse_octree.ex`,
+    `auth.ex`, `faction_resolver.ex`).
 - [x] **v0.2.26 - Optimization & Security Hardening**:
   - **Keyboard Shortcut Engine**: Synthesized a premium stateful
     shortcut engine with modular set-driven keydown tracking,
@@ -119,10 +126,10 @@ layer.
     overhead by squared distance calc.
   - **Security, Network & Maintenance**: XSS mitigations in
     WebClient, hardened key verification with secure_compare to
-    prevent side-channel attacks, added security framework document,
-    SAST audit with Sobelow, dependency audit with hex.audit,
-    codebase maintenance refactoring, created gameserver modular
-    configuration.
+    prevent side-channel attacks, added security framework
+    document, SAST audit with Sobelow, dependency audit with
+    hex.audit, codebase maintenance refactoring, created
+    gameserver modular configuration.
   - **Local Bootstrap**: Unified `devenv.sh` and
     `.agents/agent_setup.sh` bootstrapping via `app.config.sh`
     to ensure `priv/static` placeholder existence.
