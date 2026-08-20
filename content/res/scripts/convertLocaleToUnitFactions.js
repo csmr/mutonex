@@ -16,7 +16,7 @@ const language_transforms = {
   "Brazilian Portuguese": "Pardo",
   "British English": "British",
   "Canadian English": "Canuck",
-  "Canadian French": "Tabernacleatian",
+  "Canadian French": "Tabarnakeurs",
   "European Spanish": "Andalucian",
   "European Portuguese": "Madeiran",
   "Interlingua": "Gaulois",
