@@ -1,22 +1,17 @@
 #!/bin/bash
 # Mutonex dev-env generator
-if command -v podman >/dev/null 2>&1 && podman compose version >/dev/null 2>&1; then
-  DOCKER_CMD="podman compose"
-elif command -v podman-compose >/dev/null 2>&1; then
-  DOCKER_CMD="podman-compose"
-elif command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-  DOCKER_CMD="docker compose"
-elif command -v docker-compose >/dev/null 2>&1; then
-  DOCKER_CMD="docker-compose"
-else
-  echo "Container Compose (Podman or Docker) not found."
-fi
-if [ -n "$DOCKER_CMD" ]; then
-  echo "мμτοηεχ δεv εηv ιηιτ"
-  source ./scripts/app.config.sh
-  ./scripts/init-database-env.sh
-  ./scripts/init-dotenv.sh
-  mkdir -p "$RUNTIME_DIR" "$WEB_PATH"
-  touch "$WEB_PATH/index.html"
-  cd infra && $DOCKER_CMD --env-file "$DOTENV_PATH" up
-fi
+
+# runtimes in preference order.
+for c in "podman compose" podman-compose "docker compose" docker-compose; do
+  $c version >/dev/null 2>&1 && { COMPOSE=($c); break; }
+done
+
+[ -n "$COMPOSE" ] || { echo "Podman or Docker not found, exit."; exit 0; }
+
+echo "мμτοηεχ δεv εηv ιηιτ"
+source ./scripts/app.config.sh
+./scripts/init-database-env.sh
+./scripts/init-dotenv.sh
+mkdir -p "$RUNTIME_DIR" "$WEB_PATH"
+touch "$WEB_PATH/index.html"
+cd infra && "${COMPOSE[@]}" --env-file "$DOTENV_PATH" up

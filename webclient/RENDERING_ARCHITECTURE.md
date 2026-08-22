@@ -61,9 +61,14 @@ Globe-based rendering for planetary overview.
 
 The `GlobeView` requires geographic vector data to render Earth's country borders.
 
-1. **Source Data**: The source is `webclient/assets/countries.topo.json`, a TopoJSON file derived from the **Natural Earth / World Atlas** public domain dataset.
-2. **Build-Time Conversion**: To minimize client-side dependencies and CPU overhead, the `webclient/generate_geojson.ts` script converts TopoJSON into standard GeoJSON during the build process (`build-webclient.sh`).
-3. **Artifact**: The resulting `content/res/geometry/countries.geo.json` is bundled into the distribution as `dist/assets/countries.geo.json`, where it is fetched by the `GlobeView` at runtime.
+1. **Source Data**: The source is `webclient/assets/countries.topo.json`, a TopoJSON
+   file derived from the **Natural Earth / World Atlas** public domain dataset.
+3. **Build-Time Conversion**: To minimize client-side dependencies and CPU overhead,
+   the `webclient/generate_geojson.ts` script converts TopoJSON into standard GeoJSON
+   during the build process (`build-webclient.sh`).
+5. **Artifact**: The resulting `content/res/geometry/countries.geo.json` is bundled
+   into the distribution as `dist/assets/countries.geo.json`, where it is fetched by
+   the `GlobeView` at runtime.
 
 ## Data Flow
 
@@ -73,9 +78,10 @@ The `GlobeView` requires geographic vector data to render Earth's country border
    - Aggregates entities into `EntityData[]`.
    - Calls `activeView.updateEntities()`.
 3. **Input**:
-   - `Tab`: Toggles Active View.
-   - `L`: Toggles Lidar Scan Mode.
-   - `[` / `]`: Adjusts Lidar entropy.
+   - Key-event handling in `webclient/input/ShortcutEngine.ts`.
+     - supports modal keyshorts, event handlers, repeating, keyup events, form detection.
+   - Key-events configured in `webclient/input/ShortcutConfig.ts`.
+     - keyshort params are *key, modifiers, action, description, scope, repeat ev, hold to keyup*.
 
 ## Environment Constraints
 
