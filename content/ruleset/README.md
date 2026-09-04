@@ -60,4 +60,4 @@ The game flows through three distinct phases:
 - **Persistence:** Unit history can be saved as part of a relic.
 
 ---
-**Note:** Each section from this document should eventually be merged into `ruleset/rule-calculator.rb` so that there is output for each calculation.
+**Note:** Each section from this document should eventually be merged into `rule-calculator.rb` so that there is output for each calculation.

@@ -86,6 +86,6 @@ The `GlobeView` requires geographic vector data to render Earth's country border
 ## Environment Constraints
 
 - **Globals**: `THREE` and `OrbitControls` are accessed via `window` (declared
-  in `global_types.ts`) to avoid complex bundler configuration for CDN scripts.
-- **Build**: `esbuild` bundles the TypeScript; `mutonex.html` provides runtime
+  in `webclient/core/global_types.ts`) to avoid complex bundler configuration for CDN scripts.
+- **Build**: `esbuild` bundles the TypeScript; `webclient/mutonex.html` provides runtime
   dependencies.

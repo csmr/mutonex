@@ -14,8 +14,8 @@ infra
 
 ## Persistence
 
-The `data/` dir contains postgres configuration and data. On postgres
-container startup, `data/.env.postgres` with credentials and `data/postgres/`
+The `infra/data/` dir contains postgres configuration and data. On postgres
+container startup, `infra/data/.env.postgres` with credentials and `infra/data/postgres/`
 are created.
 
 Note: if `data/` is wiped, dot-env credential accounts, user, game and sim 

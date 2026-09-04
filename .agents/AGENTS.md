@@ -18,7 +18,9 @@ Mutonex is implemented with a functional style where possible, using Elixir and 
 
 Working with this project has two avenues:
 1. For testing and agentic development, tests are executed standalone in local scope (deno, elixir interpreter).
-2. For development and hosting purposes, each Mutonex component runs in a container defined in `compose.yaml`, and `.env` files must be generated.
+2. For development and hosting purposes, each Mutonex
+component runs in a container defined in `infra/compose.yaml`,
+and `.env` files must be generated.
 
 First read `devenv.sh` script, to see how `.env` and `infra/data/.env.postgres` files are generated.
 
