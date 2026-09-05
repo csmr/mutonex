@@ -1,18 +1,10 @@
 defmodule Mutonex.Engine.TerrainGenerator do
   alias Mutonex.Engine.Entities.Terrain
 
-  @doc """
-  Generates a procedural heightmap for a game sector.
-
-  The process involves:
-  1. Creating a grid of random floating-point values.
-  2. Applying a smoothing filter (box blur) multiple times to create contours.
-  3. Quantizing the smoothed values into a fixed number of discrete levels.
-  4. Normalizing the levels so the median is 0.
-  """
+  @doc "Generates procedural heightmap for sector."
   def generate_heightmap(width, height) do
     noise_grid = generate_noise(width, height)
-    smoothed_grid = apply_smoothing(noise_grid, 3) # Apply 3 passes of smoothing
+    smoothed_grid = apply_smoothing(noise_grid, 3)
     quantized_grid = quantize(smoothed_grid, 9)
     normalized_grid = normalize_to_median_zero(quantized_grid)
 
@@ -20,6 +12,25 @@ defmodule Mutonex.Engine.TerrainGenerator do
       size: %{width: width, height: height},
       data: normalized_grid
     }
+  end
+
+  @doc "Samples terrain surface elevation Y at world X, Z."
+  def sample_elevation(nil, _x, _z), do: 0.0
+
+  def sample_elevation(%Terrain{size: s, data: grid}, x, z) do
+    w = s.width
+    h = s.height
+    gx = clamp(floor(x + w / 2.0), 0, w - 1)
+    gz = clamp(floor(z + h / 2.0), 0, h - 1)
+
+    case Enum.at(grid, gz) do
+      nil -> 0.0
+      row -> (Enum.at(row, gx) || 0) * 1.0
+    end
+  end
+
+  defp clamp(val, low, high) do
+    max(low, min(high, val))
   end
 
   defp generate_noise(width, height) do
@@ -52,10 +63,11 @@ defmodule Mutonex.Engine.TerrainGenerator do
       for dy <- -1..1, dx <- -1..1 do
         nx = x + dx
         ny = y + dy
+
         if nx >= 0 && nx < width && ny >= 0 && ny < height do
           get_value(grid, nx, ny)
         else
-          nil # Will be filtered out
+          nil
         end
       end
       |> Enum.reject(&is_nil/1)
@@ -73,16 +85,16 @@ defmodule Mutonex.Engine.TerrainGenerator do
         if range == 0 do
           0
         else
-          normalized_val = (val - min_val) / range
-          floor(normalized_val * (levels - 1))
+          norm = (val - min_val) / range
+          floor(norm * (levels - 1))
         end
       end
     end
   end
 
   defp normalize_to_median_zero(grid) do
-    flat_list = Enum.flat_map(grid, & &1)
-    sorted = Enum.sort(flat_list)
+    flat = Enum.flat_map(grid, & &1)
+    sorted = Enum.sort(flat)
     median = Enum.at(sorted, div(length(sorted), 2))
     offset = 0 - median
 
