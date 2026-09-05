@@ -14,7 +14,7 @@ export const LidarVertexShader = `
     varying vec2 vUv;
     varying vec3 vWorldPos;
 
-    // MeshDepthMaterial(BasicDepthPacking) writes linear 
+    // MeshDepthMaterial(BasicDepthPacking) writes linear
     // depth: d = z_view / far.
     // z_view is positive camera-space depth (-Z axis).
     // Reconstruct world position from UV and depth.
@@ -70,11 +70,11 @@ export const LidarVertexShader = `
             // Emulated contour rays are distributed evenly in screen-space.
             // Therefore, the screen-space distance between them is CONSTANT regardless of depth!
             // We just provide enough gl_PointSize headroom to draw the elongated dash.
-            gl_PointSize = dotRadiusMax * 1.5; 
+            gl_PointSize = dotRadiusMax * 1.5;
         } else { // scanMode >= 0.5
             if (dotType > 0.5) {
                 // Horizontal (default) scan mode - interpolate dot size based on distance
-                float distT = clamp(vDist / 30.0, 0.0, 1.0); 
+                float distT = clamp(vDist / 30.0, 0.0, 1.0);
                 float currentRadius = mix(dotRadiusMax, dotRadiusMin, distT);
                 gl_PointSize = max(1.0, currentRadius * 2.0);
             } else {
@@ -136,7 +136,7 @@ export const LidarFragmentShader = `
                 shapeAlpha = 1.0 - smoothstep(0.1, 0.5, distFromCenter);
 
                 if (shapeAlpha < 0.01) discard;
-                
+
             } else {
                 // --- LEGACY SQUARE/PIXEL MODE ---
                 if (mod(gl_FragCoord.y, 12.0) > 2.0) discard;
@@ -144,39 +144,39 @@ export const LidarFragmentShader = `
         } else {
             // --- EMULATED SCANNING LIDAR (Contours) ---
             vec2 pt = gl_PointCoord - vec2(0.5);
-            
+
             // 1. Calculate screen-space depth gradient
             vec2 texel = 1.0 / resolution;
-            
+
             // Sample neighboring geometry to determine surface slope
             float dX = texture2D(tDepth, vUv + vec2(texel.x * 2.0, 0.0)).a - texture2D(tDepth, vUv - vec2(texel.x * 2.0, 0.0)).a;
             float dY = texture2D(tDepth, vUv + vec2(0.0, texel.y * 2.0)).a - texture2D(tDepth, vUv - vec2(0.0, texel.y * 2.0)).a;
-            
+
             vec2 grad = vec2(dX, dY);
             float gradLen = length(grad);
-            
+
             // 2. Determine contour flow direction
             vec2 dir = vec2(0.0, 1.0); // default vertical line if flat
             if (gradLen > 0.00001) {
                 vec2 gNorm = grad / gradLen;
                 dir = vec2(-gNorm.y, gNorm.x);
             }
-            
+
             // 3. 2D Rotation Matrix
             mat2 rot = mat2(
                 dir.x, -dir.y,
                 dir.y,  dir.x
             );
-            
+
             // 4. Transform point coordinates
             vec2 rotatedPt = rot * pt;
-            
+
             // 5. Elongate into a dash
-            rotatedPt.x /= 5.0; 
-            
+            rotatedPt.x /= 5.0;
+
             float dist = length(rotatedPt);
             shapeAlpha = 1.0 - smoothstep(0.05, 0.5, dist);
-            
+
             if (shapeAlpha < 0.01) discard;
         }
 
@@ -219,7 +219,7 @@ export const ProceduralMeshVertexShader = `
 
     void main() {
         vec4 vPos = modelViewMatrix * vec4(position, 1.0);
-        vViewZ = -vPos.z; 
+        vViewZ = -vPos.z;
         vViewPosition = vPos.xyz;
         vNormal = normalize(normalMatrix * normal);
 
@@ -241,7 +241,7 @@ export const ProceduralMeshFragmentShader = `
     uniform vec3 uColor;
     uniform float uProceduralMode;
     uniform float time;
-    
+
     varying float vViewZ;
     varying vec3 vViewPosition;
     varying vec3 vNormal;
@@ -289,30 +289,30 @@ export const ProceduralMeshFragmentShader = `
             // Mode 1: Camera-Space Procedural Projection
             float depth = clamp(vViewZ, 1.0, far);
             float yawAngle = vLidarTexCoord.x;
-            
+
             float stripeSpacing = 0.017;
             float stripeWidth = 0.002;
-            
+
             float slice = mod(yawAngle, stripeSpacing);
             float isStripe = step(slice, stripeWidth);
 
             vec3 viewDirection = normalize(vViewPosition);
             vec3 nNormal = normalize(vNormal);
             float lambert = max(0.0, dot(nNormal, -viewDirection));
-            
+
             float normalizedDepth = clamp(depth / 80.0, 0.0, 1.0);
-            
+
             vec3 nearColor = vec3(1.0, 0.77, 0.54);
             vec3 farColor  = vec3(0.4, 0.1, 0.0);
-            
+
             vec3 paletteColor = mix(nearColor, farColor, normalizedDepth);
-            
+
             // Mix the elevation-aware color into the procedural Lidar palette
             vec3 stripeColor = mix(paletteColor, finalBaseColor, 0.25);
-            
+
             float illumination = lambert * 0.9 + 0.1;
             float distanceFade = 1.0 - normalizedDepth;
-            distanceFade = pow(distanceFade, 3.0); 
+            distanceFade = pow(distanceFade, 3.0);
 
             if (isStripe < 0.5) {
                 gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);

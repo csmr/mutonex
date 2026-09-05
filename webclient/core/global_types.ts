@@ -7,6 +7,7 @@
 declare global {
   const THREE: any;
   const OrbitControls: any;
+  const __DEV_MODE_ENABLED__: string;
 
   // We can also augment the window object
   interface Window {

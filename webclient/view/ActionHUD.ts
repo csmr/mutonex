@@ -114,7 +114,7 @@ export class ActionHUD {
         this.inventory.forEach((itemId) => {
             const card = this.createCard("", "ITEM", itemId.replace("item_", ""), "hud-inventory-card", "margin-left: 10px; border-color: #00ff00;");
             card.setAttribute("data-id", itemId);
-            
+
             card.addEventListener("mousedown", (e) => {
                 const el = card as HTMLElement;
                 this.dragTarget = { id: itemId, startY: e.clientY, el };
@@ -137,11 +137,11 @@ export class ActionHUD {
                 if (!this.dragTarget) return;
                 const dy = e.clientY - this.dragTarget.startY;
                 const cardHeight = this.dragTarget.el.offsetHeight || 64;
-                
+
                 if (dy < -2 * cardHeight) {
                     if (this.onDropClick) this.onDropClick(this.dragTarget.id);
                 }
-                
+
                 this.dragTarget.el.style.transition = "transform 0.2s ease-out";
                 this.dragTarget.el.style.transform = "translateY(0)";
                 this.dragTarget.el.style.zIndex = "";

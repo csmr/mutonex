@@ -6,6 +6,21 @@
     ]
   },
   "dependencies": {},
+  "fmt": {
+    "options": {
+      "semi": true,
+      "singleQuote": true,
+      "trailingComma": "es5",
+      "printWidth": 68,
+      "useTabs": false
+    },
+    "exclude": ["**/*.js", "deno.*"]
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
   "tasks": {
     "dev": "deno run --watch server/app.ts",
     "bundle-client": "esbuild core/main.ts --bundle --outfile=../dist/web.js",

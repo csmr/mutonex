@@ -1,4 +1,4 @@
-// webclient/ShortcutEngine.ts
+// webclient/input/ShortcutEngine.ts
 import {
     SHORTCUTS,
     ShortcutEntry,
@@ -13,9 +13,6 @@ export type ActionHandler = (
 ) => void;
 export type HandlerMap = Map<string, ActionHandler>;
 
-/**
- * Normalizes a key and modifiers into a consistent representation.
- */
 export const normalizeKey = (
     key: string,
     mods: ShortcutModifiers = {}
@@ -27,8 +24,8 @@ export const normalizeKey = (
         mods.meta && key !== "Meta" && "Meta"
     ];
     const modPrefix = parts.filter(Boolean).join("+");
-    const normalizedChar = key.length === 1 ? key.toLowerCase() : key;
-    return modPrefix ? `${modPrefix}+${normalizedChar}` : normalizedChar;
+    const normalized = key.length === 1 ? key.toLowerCase() : key;
+    return modPrefix ? `${modPrefix}+${normalized}` : normalized;
 };
 
 const isInputFocused = (): boolean => {
@@ -40,10 +37,7 @@ const isInputFocused = (): boolean => {
     );
 };
 
-// Cooldown to prevent multi-firing across context switches
 let lastTapTime = 0;
-
-// Track physically pressed keys to prevent repeat/bounce issues
 const pressedKeys = new Set<string>();
 
 const isRepeatOrCooldown = (
@@ -55,59 +49,84 @@ const isRepeatOrCooldown = (
     return false;
 };
 
+export const handleKeyEvent = (
+    entry: ShortcutEntry,
+    event: KeyboardEvent,
+    handlers: HandlerMap
+): void => {
+    const { action, eventType } = entry;
+    const handler = handlers.get(action);
+    if (!handler) return;
+    if (eventType === "both" || event.type === eventType) {
+        handler(entry, event);
+    }
+};
+
+function handleKeyDown(
+    keyMap: Map<string, ShortcutEntry>,
+    handlers: HandlerMap,
+    e: KeyboardEvent
+) {
+    if (isInputFocused()) return;
+    const mods = {
+        shift: e.shiftKey, ctrl: e.ctrlKey,
+        alt: e.altKey, meta: e.metaKey
+    };
+    const key = e.key;
+    if (pressedKeys.has(key)) return;
+    const match = keyMap.get(normalizeKey(key, mods));
+    if (!match || (e.repeat && !match.repeat)) return;
+    if (isRepeatOrCooldown(match, Date.now())) return;
+    pressedKeys.add(key);
+    e.preventDefault();
+    handleKeyEvent(match, e, handlers);
+}
+
+function handleKeyUp(
+    keyMap: Map<string, ShortcutEntry>,
+    handlers: HandlerMap,
+    e: KeyboardEvent
+) {
+    const key = e.key;
+    pressedKeys.delete(key);
+    const mods = {
+        shift: e.shiftKey, ctrl: e.ctrlKey,
+        alt: e.altKey, meta: e.metaKey
+    };
+    const match = keyMap.get(normalizeKey(key, mods));
+    if (match) handleKeyEvent(match, e, handlers);
+}
+
+function buildKeyMap(
+    scope: ShortcutScope
+): Map<string, ShortcutEntry> {
+    const active = SHORTCUTS.filter(
+        e => e.scope === "global" || e.scope === scope
+    );
+    return new Map<string, ShortcutEntry>(
+        active.map(e => [normalizeKey(e.key, e.modifiers), e])
+    );
+}
+
 export const activateContext = (
     scope: ShortcutScope,
     handlers: HandlerMap
 ): AbortController => {
     const controller = new AbortController();
-    const activeShortcuts = SHORTCUTS.filter(
-        e => e.scope === "global" || e.scope === scope
+    const keyMap = buildKeyMap(scope);
+    window.addEventListener(
+        "keydown",
+        (e: KeyboardEvent) => handleKeyDown(keyMap, handlers, e),
+        { signal: controller.signal }
     );
-
-    const keyMap = new Map<string, ShortcutEntry>(
-        activeShortcuts.map(e => [
-            normalizeKey(e.key, e.modifiers), e
-        ])
+    window.addEventListener(
+        "keyup",
+        (e: KeyboardEvent) => handleKeyUp(keyMap, handlers, e),
+        { signal: controller.signal }
     );
-
-    window.addEventListener("keydown", (e: KeyboardEvent) => {
-        if (isInputFocused()) return;
-        const mods = {
-            shift: e.shiftKey, ctrl: e.ctrlKey,
-            alt: e.altKey, meta: e.metaKey
-        };
-        const key = e.key;
-        if (pressedKeys.has(key)) return;
-
-        const match = keyMap.get(normalizeKey(key, mods));
-        if (!match) return;
-        if (e.repeat && !match.repeat) return;
-
-        const now = Date.now();
-        if (isRepeatOrCooldown(match, now)) return;
-
-        pressedKeys.add(key);
-        e.preventDefault();
-        handlers.get(match.action)?.(match, e);
-    }, { signal: controller.signal });
-
-    // Keyup only propagates for current context's 'hold' actions.
-    window.addEventListener("keyup", (e: KeyboardEvent) => {
-        const key = e.key;
-        pressedKeys.delete(key);
-
-        const mods = {
-            shift: e.shiftKey, ctrl: e.ctrlKey,
-            alt: e.altKey, meta: e.metaKey
-        };
-        const match = keyMap.get(normalizeKey(key, mods));
-        if (match?.hold) handlers.get(match.action)?.(match, e);
-    }, { signal: controller.signal });
-
     window.addEventListener("blur", () => {
         pressedKeys.clear();
     }, { signal: controller.signal });
-
     return controller;
 };
 
@@ -130,7 +149,7 @@ export const printHelp = () => {
         "global", "lobby", "game", "globe"
     ];
     scopes.forEach(scope => {
-        const list = SHORTCUTS.filter(entry => entry.scope === scope);
+        const list = SHORTCUTS.filter(e => e.scope === scope);
         if (list.length === 0) return;
         console.group(`%c${scope.toUpperCase()}`, headerStyle);
         list.forEach(entry => {
