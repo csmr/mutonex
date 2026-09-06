@@ -116,3 +116,37 @@ Deno.test(
     );
   },
 );
+
+Deno.test(
+  'InputManager: movement handler ignores keypress events',
+  () => {
+    const vm = new MockViewManager();
+    const viewSet = { viewManager: vm } as any;
+    const inputMgr = new InputManager(
+      viewSet,
+      () => null,
+      {} as any,
+      {} as any,
+      () => {},
+    );
+
+    const handler = inputMgr.handlers.get('move_fwd');
+    assertExists(handler);
+
+    // Keydown adds action
+    handler({} as any, { type: 'keydown' } as KeyboardEvent);
+    assertEquals(inputMgr.isActionPressed('move_fwd'), true);
+
+    // Keypress must NOT remove action
+    handler({} as any, { type: 'keypress' } as KeyboardEvent);
+    assertEquals(
+      inputMgr.isActionPressed('move_fwd'),
+      true,
+      'keypress should not delete action',
+    );
+
+    // Keyup removes action
+    handler({} as any, { type: 'keyup' } as KeyboardEvent);
+    assertEquals(inputMgr.isActionPressed('move_fwd'), false);
+  },
+);

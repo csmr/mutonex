@@ -242,8 +242,11 @@ export class InputManager {
     ];
     moves.forEach((act) => {
       h = ShortcutEngine.registerHandler(h, act, (_, ev) => {
-        if (ev.type === 'keydown') this.pressedActions.add(act);
-        else this.pressedActions.delete(act);
+        if (ev.type === 'keydown') {
+          this.pressedActions.add(act);
+        } else if (ev.type === 'keyup') {
+          this.pressedActions.delete(act);
+        }
       });
     });
     return h;

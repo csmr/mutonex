@@ -8,6 +8,7 @@ import {
   assertExists,
 } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
+(globalThis as any).__DEV_MODE_ENABLED__ = 'true';
 (globalThis as any).window = {
   ...(globalThis as any).window || {},
   addEventListener() {},
