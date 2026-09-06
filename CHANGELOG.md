@@ -1,7 +1,12 @@
 # Changelog
 
 ## v0.2.27 - Webclient Refactoring & Security Hardening
-- **Directory Reorganization:** From flat webclient/-dir to separate subdirs by-concerns.
+- **Directory Reorganization:** From flat webclient/-dir to subdirs
+  by-concerns.
+- **Core Refactor:** By-concerns split of `core/main.ts` to manager
+  classes, syntax and perf improvements.
+- **Test Reports & Formating Util**: Reports from `test_e2e.sh`
+  Playwright-runner, and `format_doc.sh` report & format utility .
 - **Dependency Upgrades**: Upgraded Ecto/Postgrex (`ecto_sql` to
   `~> 3.14`, `postgrex` to `~> 0.22`) to resolve high-severity SQL
   injection and transitive DoS vulnerabilities in `decimal`.
