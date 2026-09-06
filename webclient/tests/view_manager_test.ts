@@ -6,8 +6,9 @@
 import {
   assertEquals,
   assertExists,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
+(globalThis as any).__DEV_MODE_ENABLED__ = 'true';
 (globalThis as any).window = {
   ...(globalThis as any).window || {},
   addEventListener() {},
@@ -31,7 +32,7 @@ import {
 };
 
 const { ViewManager } = await import(
-  "../core/ViewManager.ts"
+  '../core/ViewManager.ts'
 );
 
 class MockView {
@@ -69,42 +70,42 @@ class MockHUD {
 }
 
 Deno.test(
-  "ViewManager: constructor initializes renderer",
+  'ViewManager: constructor initializes renderer',
   () => {
     const canvas = {} as HTMLCanvasElement;
     const vm = new ViewManager(canvas);
     assertExists(vm);
-  }
+  },
 );
 
 Deno.test(
-  "ViewManager: getScope returns lobby when empty",
+  'ViewManager: getScope returns lobby when empty',
   () => {
     const canvas = {} as HTMLCanvasElement;
     const vm = new ViewManager(canvas);
-    assertEquals(vm.getScope("lobby"), "lobby");
-    assertEquals(vm.getScope("gamein"), "lobby");
-  }
+    assertEquals(vm.getScope('lobby'), 'lobby');
+    assertEquals(vm.getScope('gamein'), 'lobby');
+  },
 );
 
 Deno.test(
-  "ViewManager: getScope resolves local and globe scopes",
+  'ViewManager: getScope resolves local and globe scopes',
   () => {
     const canvas = {} as HTMLCanvasElement;
     const vm = new ViewManager(canvas);
     const view = new MockView();
     vm.setActiveView(view as any);
 
-    assertEquals(vm.getScope("lobby"), "lobby");
-    assertEquals(vm.getScope("gamein"), "game");
+    assertEquals(vm.getScope('lobby'), 'lobby');
+    assertEquals(vm.getScope('gamein'), 'game');
 
     view.isGlobeView = true;
-    assertEquals(vm.getScope("gamein"), "globe");
-  }
+    assertEquals(vm.getScope('gamein'), 'globe');
+  },
 );
 
 Deno.test(
-  "ViewManager: updateHUDVisibility updates UI state",
+  'ViewManager: updateHUDVisibility updates UI state',
   () => {
     const canvas = {} as HTMLCanvasElement;
     const vm = new ViewManager(canvas);
@@ -114,17 +115,17 @@ Deno.test(
 
     vm.setActiveView(view as any);
 
-    vm.updateHUDVisibility("lobby", lobby, hud);
+    vm.updateHUDVisibility('lobby', lobby, hud);
     assertEquals(lobby.visible, true);
     assertEquals(hud.visible, false);
 
-    vm.updateHUDVisibility("gamein", lobby, hud);
+    vm.updateHUDVisibility('gamein', lobby, hud);
     assertEquals(lobby.visible, false);
     assertEquals(hud.visible, true);
 
     view.isGlobeView = true;
-    vm.updateHUDVisibility("gamein", lobby, hud);
+    vm.updateHUDVisibility('gamein', lobby, hud);
     assertEquals(lobby.visible, false);
     assertEquals(hud.visible, false);
-  }
+  },
 );

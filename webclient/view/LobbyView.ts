@@ -1,6 +1,6 @@
 import type {
   PlayerTuple,
-} from "../mocks/MockGameStateProvider.ts";
+} from '../mocks/MockGameStateProvider.ts';
 
 export interface Sector {
   id: string;
@@ -17,53 +17,53 @@ export class LobbyView {
 
   private sectors: Sector[] = [];
   private selectedIndex: number = 0;
-  private onSelectCallback:
-    ((sector: Sector) => void) | null = null;
+  private onSelectCallback: ((sector: Sector) => void) | null =
+    null;
   private isConnected: boolean = false;
 
   constructor() {
     this.container = document.getElementById(
-      "lobby-view",
+      'lobby-view',
     )!;
     this.sectorContainer = document.getElementById(
-      "sector-selection",
+      'sector-selection',
     )!;
-    this.sectorListContainer =
-      document.getElementById(
-        "sector-list-container",
-      )!;
+    this.sectorListContainer = document.getElementById(
+      'sector-list-container',
+    )!;
     this.queueContainer = document.getElementById(
-      "lobby-queue",
+      'lobby-queue',
     )!;
-    this.playerListContainer =
-      document.getElementById(
-        "player-list-container",
-      )!;
+    this.playerListContainer = document.getElementById(
+      'player-list-container',
+    )!;
 
     if (!this.container) {
       throw new Error(
-        "Lobby view container not found",
+        'Lobby view container not found',
       );
     }
   }
 
   public show(): void {
-    this.container.classList.remove("hidden");
+    this.container.classList.remove('hidden');
   }
 
   public hide(): void {
-    this.container.classList.add("hidden");
+    this.container.classList.add('hidden');
   }
 
   public renderSectorList(sectors: Sector[]): void {
     this.sectors = sectors;
-    this.sectorListContainer.textContent = "";
+    this.sectorListContainer.textContent = '';
 
     sectors.forEach((sector, index) => {
-      const div = document.createElement("div");
+      const div = document.createElement('div');
       const isSelected = index === this.selectedIndex;
-      const baseClass = "list-item";
-      div.className = isSelected ? `${baseClass} selected` : baseClass;
+      const baseClass = 'list-item';
+      div.className = isSelected
+        ? `${baseClass} selected`
+        : baseClass;
 
       let text = sector.name;
       if (sector.players_count !== undefined) {
@@ -78,16 +78,16 @@ export class LobbyView {
   public updatePlayerQueue(players: PlayerTuple[]): void {
     if (!this.isConnected) {
       this.isConnected = true;
-      this.sectorContainer.style.display = "none";
-      this.queueContainer.style.display = "block";
+      this.sectorContainer.style.display = 'none';
+      this.queueContainer.style.display = 'block';
     }
 
-    this.playerListContainer.textContent = "";
+    this.playerListContainer.textContent = '';
     players.forEach((player) => {
       const id = player[0];
-      const div = document.createElement("div");
-      div.className = "list-item";
-      div.style.cursor = "default";
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.style.cursor = 'default';
       div.textContent = `Player ${id}`;
       this.playerListContainer.appendChild(div);
     });
@@ -103,8 +103,7 @@ export class LobbyView {
     if (this.isConnected) return;
     const len = this.sectors.length;
     if (len === 0) return;
-    this.selectedIndex =
-      (this.selectedIndex + delta + len) % len;
+    this.selectedIndex = (this.selectedIndex + delta + len) % len;
     this.renderSectorList(this.sectors);
   }
 
@@ -120,8 +119,7 @@ export class LobbyView {
     this.renderSectorList(this.sectors);
 
     if (this.onSelectCallback) {
-      const selected =
-        this.sectors[this.selectedIndex];
+      const selected = this.sectors[this.selectedIndex];
       this.onSelectCallback(selected);
     }
   }

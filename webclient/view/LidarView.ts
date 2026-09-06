@@ -1,32 +1,29 @@
-import "../core/global_types.ts";
-import { IView } from "../core/ViewManager.ts";
+import '../core/global_types.ts';
+import { IView } from '../core/ViewManager.ts';
 import {
-  FirstPersonControls
-} from "../input/FirstPersonControls.ts";
-import { EntityRenderer } from "../render/EntityRenderer.ts";
-import { createTerrainMesh } from "../render/TerrainMesh.ts";
-import {
-  EntityData,
-  Terrain
-} from "../core/types.ts";
+  FirstPersonControls,
+} from '../input/FirstPersonControls.ts';
+import { EntityRenderer } from '../render/EntityRenderer.ts';
+import { createTerrainMesh } from '../render/TerrainMesh.ts';
+import { EntityData, Terrain } from '../core/types.ts';
 import {
   LidarFragmentShader,
   LidarVertexShader,
+  ProceduralMeshFragmentShader,
   ProceduralMeshVertexShader,
-  ProceduralMeshFragmentShader
-} from "../render/LidarShaders.ts";
+} from '../render/LidarShaders.ts';
 
 import {
   LidarStyleConfig,
   LidarStyles,
-} from "../render/LidarStyles.ts";
+} from '../render/LidarStyles.ts';
 
 export class LidarView implements IView {
   public scene: any; // THREE.Scene
   public camera: any; // THREE.PerspectiveCamera
 
   // Dot Rendering Parameters
-  public currentStyleName: string = "pointCloud";
+  public currentStyleName: string = 'pointCloud';
   public dotRadiusMin = 1.0; // Radius for objects far away (vDist >= 30.0)
   public dotRadiusMax = 4.0; // Radius for objects very close (vDist == 0.0)
   public dotType = 1.0; // 0.0 = square, 1.0 = circular
@@ -131,7 +128,7 @@ export class LidarView implements IView {
           far: { value: this.camera.far },
           uColor: { value: new THREE.Color(colorHex) },
           uProceduralMode: { value: 0.0 },
-          time: { value: 0.0 }
+          time: { value: 0.0 },
         },
         vertexShader: ProceduralMeshVertexShader,
         fragmentShader: ProceduralMeshFragmentShader,
@@ -156,8 +153,10 @@ export class LidarView implements IView {
     if (this.lidarMaterial) {
       this.lidarMaterial.uniforms.scanMode.value = config.scanMode;
       this.lidarMaterial.uniforms.dotType.value = this.dotType;
-      this.lidarMaterial.uniforms.dotRadiusMin.value = this.dotRadiusMin;
-      this.lidarMaterial.uniforms.dotRadiusMax.value = this.dotRadiusMax;
+      this.lidarMaterial.uniforms.dotRadiusMin.value =
+        this.dotRadiusMin;
+      this.lidarMaterial.uniforms.dotRadiusMax.value =
+        this.dotRadiusMax;
     }
 
     const isProcedural = styleName === 'proceduralLidar';
@@ -188,7 +187,10 @@ export class LidarView implements IView {
     this.pendingStyleConfig = null;
 
     // Execute chunk generator across frames
-    const gen = this.chunkedGeometryGenerator(config.samplesH, config.samplesV);
+    const gen = this.chunkedGeometryGenerator(
+      config.samplesH,
+      config.samplesV,
+    );
     const processChunk = () => {
       const result = gen.next();
       if (!result.done) {
@@ -242,10 +244,16 @@ export class LidarView implements IView {
       }
     }
 
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(positions, 3),
+    );
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
-    const newGeometryGroup = new THREE.Points(geometry, this.lidarMaterial);
+    const newGeometryGroup = new THREE.Points(
+      geometry,
+      this.lidarMaterial,
+    );
     newGeometryGroup.frustumCulled = false;
 
     return newGeometryGroup;
@@ -267,7 +275,9 @@ export class LidarView implements IView {
       },
       resolution: { value: resolution },
       time: { value: 0 },
-      scanMode: { value: LidarStyles[this.currentStyleName]?.scanMode ?? 1.0 },
+      scanMode: {
+        value: LidarStyles[this.currentStyleName]?.scanMode ?? 1.0,
+      },
       entropy: { value: this.entropy },
       // diagMode: 0.0 = normal rendering, 1.0 = diagnostic (red=elevated, blue=ground).
       // Toggle from browser console: lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
@@ -300,8 +310,13 @@ export class LidarView implements IView {
     this.virtualScene.add(this.terrainMesh);
   }
 
-  public updateEntities(entities: EntityData[], localPlayerId?: string) {
-    const filtered = localPlayerId ? entities.filter(e => e.id !== localPlayerId) : entities;
+  public updateEntities(
+    entities: EntityData[],
+    localPlayerId?: string,
+  ) {
+    const filtered = localPlayerId
+      ? entities.filter((e) => e.id !== localPlayerId)
+      : entities;
     this.entityRenderer.update(filtered);
   }
 
@@ -320,7 +335,7 @@ export class LidarView implements IView {
 
   public onActivate(): void {
     window.addEventListener(
-      "resize",
+      'resize',
       this.boundResize,
     );
     if (this.controls) {
@@ -328,7 +343,7 @@ export class LidarView implements IView {
     }
   }
 
-  public onDeactivate(): void { }
+  public onDeactivate(): void {}
 
   public getInteractableObjects(): any[] {
     return this.virtualScene.children;
@@ -336,7 +351,7 @@ export class LidarView implements IView {
 
   public dispose(): void {
     window.removeEventListener(
-      "resize",
+      'resize',
       this.boundResize,
     );
     if (this.controls) {

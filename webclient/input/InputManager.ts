@@ -1,12 +1,12 @@
 // webclient/input/InputManager.ts
-import "../core/global_types.ts";
-import { GameStateProvider } from "../core/GameStateProvider.ts";
-import { ViewSet, ViewManager } from "../core/ViewManager.ts";
-import { LobbyView } from "../view/LobbyView.ts";
-import { ActionHUD } from "../view/ActionHUD.ts";
-import { AvatarController } from "./AvatarController.ts";
-import * as ShortcutEngine from "./ShortcutEngine.ts";
-import { ShortcutEntry, ShortcutScope } from "./ShortcutConfig.ts";
+import '../core/global_types.ts';
+import { GameStateProvider } from '../core/GameStateProvider.ts';
+import { ViewManager, ViewSet } from '../core/ViewManager.ts';
+import { LobbyView } from '../view/LobbyView.ts';
+import { ActionHUD } from '../view/ActionHUD.ts';
+import { AvatarController } from './AvatarController.ts';
+import * as ShortcutEngine from './ShortcutEngine.ts';
+import { ShortcutEntry, ShortcutScope } from './ShortcutConfig.ts';
 
 export class InputManager {
   public pressedActions = new Set<string>();
@@ -15,36 +15,48 @@ export class InputManager {
   private cleanup: {
     controller: AbortController | null;
   } = { controller: null };
+  private activeScope: ShortcutScope | null = null;
 
   constructor(
     private viewSet: ViewSet,
     private getProvider: () => GameStateProvider | null,
     private lobby: LobbyView,
     private hud: ActionHUD,
-    private sync: () => void
+    private sync: () => void,
   ) {
     this.setupShortcuts();
   }
 
-  public activateShortcuts(scope: ShortcutScope): void {
+  private isScopeActive(scope: ShortcutScope): boolean {
+    return (
+      this.activeScope === scope &&
+      !!this.cleanup.controller
+    );
+  }
+
+  public activateShortcuts(
+    scope: ShortcutScope,
+    force = false,
+  ): void {
+    if (!force && this.isScopeActive(scope)) return;
+    this.activeScope = scope;
     this.pressedActions.clear();
-    if (this.cleanup.controller) {
-      this.cleanup.controller.abort();
-    }
+    this.cleanup.controller?.abort();
     this.cleanup.controller = ShortcutEngine.activateContext(
-      scope, this.handlers
+      scope,
+      this.handlers,
     );
   }
 
   public syncUI(
     viewManager: ViewManager,
-    provider: GameStateProvider | null
+    provider: GameStateProvider | null,
   ): string {
-    const phase = provider?.phase || "lobby";
+    const phase = provider?.phase || 'lobby';
     const scope = viewManager.getScope(phase);
     this.activateShortcuts(scope);
     viewManager.updateHUDVisibility(phase, this.lobby, this.hud);
-    const contextType = scope === "globe" ? "globe" : "local";
+    const contextType = scope === 'globe' ? 'globe' : 'local';
     return `${phase}:${contextType}`;
   }
 
@@ -64,10 +76,10 @@ export class InputManager {
   private handleEvent(
     event: KeyboardEvent,
     entry: ShortcutEntry,
-    callback: () => void
+    callback: () => void,
   ): void {
     if (
-      entry.eventType === "both" ||
+      entry.eventType === 'both' ||
       event.type === entry.eventType
     ) {
       callback();
@@ -75,109 +87,166 @@ export class InputManager {
   }
 
   private registerDiscrete(
-    hMap: ShortcutEngine.HandlerMap
+    hMap: ShortcutEngine.HandlerMap,
   ): ShortcutEngine.HandlerMap {
     let h = hMap;
     const vm = this.viewSet.viewManager;
     const { lidarView, sphereView, globeView } = this.viewSet;
     h = ShortcutEngine.registerHandler(
-      h, "toggle_view", (e, ev) =>
+      h,
+      'toggle_view',
+      (e, ev) =>
         this.handleEvent(
-          ev, e, () => {
+          ev,
+          e,
+          () => {
             vm.toggleView(lidarView, sphereView, globeView);
             this.sync();
-          }
-        )
+          },
+        ),
     );
     h = ShortcutEngine.registerHandler(
-      h, "toggle_globe", (e, ev) =>
+      h,
+      'toggle_globe',
+      (e, ev) =>
         this.handleEvent(
-          ev, e, () => {
+          ev,
+          e,
+          () => {
             vm.toggleGlobe(lidarView, globeView);
             this.sync();
-          }
-        )
+          },
+        ),
     );
-    h = ShortcutEngine.registerHandler(h, "cycle_style", (e, ev) =>
-      this.handleEvent(
-        ev, e, () => vm.cycleStyle(lidarView)
-      )
+    h = ShortcutEngine.registerHandler(
+      h,
+      'cycle_style',
+      (e, ev) =>
+        this.handleEvent(
+          ev,
+          e,
+          () => vm.cycleStyle(lidarView),
+        ),
     );
-    h = ShortcutEngine.registerHandler(h, "dec_entropy", (e, ev) =>
-      this.handleEvent(
-        ev, e, () => vm.adjustEntropy(lidarView, -0.1)
-      )
+    h = ShortcutEngine.registerHandler(
+      h,
+      'dec_entropy',
+      (e, ev) =>
+        this.handleEvent(
+          ev,
+          e,
+          () => vm.adjustEntropy(lidarView, -0.1),
+        ),
     );
-    h = ShortcutEngine.registerHandler(h, "inc_entropy", (e, ev) =>
-      this.handleEvent(
-        ev, e, () => vm.adjustEntropy(lidarView, 0.1)
-      )
+    h = ShortcutEngine.registerHandler(
+      h,
+      'inc_entropy',
+      (e, ev) =>
+        this.handleEvent(
+          ev,
+          e,
+          () => vm.adjustEntropy(lidarView, 0.1),
+        ),
     );
     return h;
   }
 
-  private handleLobbyAction(act: "prev" | "next" | "join"): void {
+  private handleLobbyAction(act: 'prev' | 'next' | 'join'): void {
     const provider = this.getProvider();
-    if (act === "prev" && provider?.phase === "lobby") {
+    if (act === 'prev' && provider?.phase === 'lobby') {
       this.lobby.navigate(-1);
-    } else if (act === "next" && provider?.phase === "lobby") {
+    } else if (act === 'next' && provider?.phase === 'lobby') {
       this.lobby.navigate(1);
     } else if (
-      act === "join" && (!provider || provider.phase === "lobby")
+      act === 'join' && (!provider || provider.phase === 'lobby')
     ) {
       this.lobby.confirmSelection();
     }
   }
 
   private registerNavAndDiag(
-    hMap: ShortcutEngine.HandlerMap
+    hMap: ShortcutEngine.HandlerMap,
   ): ShortcutEngine.HandlerMap {
     let h = hMap;
     const vm = this.viewSet.viewManager;
-    h = ShortcutEngine.registerHandler(h, "lobby_prev", (e, ev) =>
-      this.handleEvent(ev, e, () => this.handleLobbyAction("prev"))
+    h = ShortcutEngine.registerHandler(
+      h,
+      'lobby_prev',
+      (e, ev) =>
+        this.handleEvent(
+          ev,
+          e,
+          () => this.handleLobbyAction('prev'),
+        ),
     );
-    h = ShortcutEngine.registerHandler(h, "lobby_next", (e, ev) =>
-      this.handleEvent(ev, e, () => this.handleLobbyAction("next"))
+    h = ShortcutEngine.registerHandler(
+      h,
+      'lobby_next',
+      (e, ev) =>
+        this.handleEvent(
+          ev,
+          e,
+          () => this.handleLobbyAction('next'),
+        ),
     );
-    h = ShortcutEngine.registerHandler(h, "lobby_join", (e, ev) =>
-      this.handleEvent(ev, e, () => this.handleLobbyAction("join"))
+    h = ShortcutEngine.registerHandler(
+      h,
+      'lobby_join',
+      (e, ev) =>
+        this.handleEvent(
+          ev,
+          e,
+          () => this.handleLobbyAction('join'),
+        ),
     );
-    h = ShortcutEngine.registerHandler(h, "toggle_diag", (e, ev) =>
-      this.handleEvent(ev, e, () => vm.toggleDiag())
+    h = ShortcutEngine.registerHandler(
+      h,
+      'toggle_diag',
+      (e, ev) => this.handleEvent(ev, e, () => vm.toggleDiag()),
     );
     return h;
   }
 
   private registerRotation(
-    hMap: ShortcutEngine.HandlerMap
+    hMap: ShortcutEngine.HandlerMap,
   ): ShortcutEngine.HandlerMap {
     let h = hMap;
     const vm = this.viewSet.viewManager;
-    const dirs: Array<"up" | "down" | "left" | "right"> = [
-      "up", "down", "left", "right"
+    const dirs: Array<'up' | 'down' | 'left' | 'right'> = [
+      'up',
+      'down',
+      'left',
+      'right',
     ];
     dirs.forEach((dir) => {
       h = ShortcutEngine.registerHandler(
-        h, `rot_${dir}`, (_e, ev) => {
-          if (ev.type === "keydown") vm.rotate(dir);
-        }
+        h,
+        `rot_${dir}`,
+        (_e, ev) => {
+          if (ev.type === 'keydown') vm.rotate(dir);
+        },
       );
     });
     return h;
   }
 
   private registerMove(
-    hMap: ShortcutEngine.HandlerMap
+    hMap: ShortcutEngine.HandlerMap,
   ): ShortcutEngine.HandlerMap {
     let h = hMap;
     const moves = [
-      "move_fwd", "move_back", "move_left", "move_right"
+      'move_fwd',
+      'move_back',
+      'move_left',
+      'move_right',
     ];
     moves.forEach((act) => {
       h = ShortcutEngine.registerHandler(h, act, (_, ev) => {
-        if (ev.type === "keydown") this.pressedActions.add(act);
-        else this.pressedActions.delete(act);
+        if (ev.type === 'keydown') {
+          this.pressedActions.add(act);
+        } else if (ev.type === 'keyup') {
+          this.pressedActions.delete(act);
+        }
       });
     });
     return h;
@@ -185,14 +254,15 @@ export class InputManager {
 
   public bindMouseEvents(
     canvas: HTMLCanvasElement,
-    avatar: AvatarController
+    avatar: AvatarController,
   ): void {
-    window.addEventListener("mousemove", (e) => {
+    window.addEventListener('mousemove', (e) => {
       this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
       this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
     });
-    canvas.addEventListener("click", () =>
-      this.handleCanvasClick(avatar)
+    canvas.addEventListener(
+      'click',
+      () => this.handleCanvasClick(avatar),
     );
   }
 
@@ -203,15 +273,16 @@ export class InputManager {
     const rc = new THREE.Raycaster();
     rc.setFromCamera(this.mouse, cur.camera);
     const hits = rc.intersectObjects(
-      cur.getInteractableObjects(), true
+      cur.getInteractableObjects(),
+      true,
     );
     for (const h of hits) {
       const d = h.object.userData;
       const isItem = d?.entityId &&
-        (d.entityType as string).startsWith("item");
+        (d.entityType as string).startsWith('item');
       if (isItem) {
         if (avatar.position.distanceTo(h.point) <= 15.0) {
-          provider.sendPlayerAction("pick_up", d.entityId);
+          provider.sendPlayerAction('pick_up', d.entityId);
         }
         break;
       }

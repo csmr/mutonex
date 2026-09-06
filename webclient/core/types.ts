@@ -1,15 +1,15 @@
-import "./global_types.ts";
+import './global_types.ts';
 
 export type EntityType =
-  | "player"
-  | "fauna"
-  | "unit"
-  | "building"
-  | "society"
-  | "item"
-  | "item_gem"
-  | "item_video_phone"
-  | "mineral";
+  | 'player'
+  | 'fauna'
+  | 'unit'
+  | 'building'
+  | 'society'
+  | 'item'
+  | 'item_gem'
+  | 'item_video_phone'
+  | 'mineral';
 
 export interface EntityData {
   id: string;
@@ -17,12 +17,12 @@ export interface EntityData {
   pos: any; // THREE.Vector3
   char: string; // The emoticon/character (optional for SphereView but kept for consistency)
   isStationary?: boolean;
-  facing?: "front" | "side" | "top";
+  facing?: 'front' | 'side' | 'top';
   charm?: number;
 }
 
 export interface Terrain {
-  type: "heightmap";
+  type: 'heightmap';
   size: {
     width: number;
     height: number;

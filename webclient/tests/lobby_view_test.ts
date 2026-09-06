@@ -9,7 +9,7 @@
 import {
   assertEquals,
   assertExists,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 // ── Minimal DOM stub ────────────────────────
 // LobbyView queries five elements by ID and
@@ -19,9 +19,9 @@ import {
 class MockElement {
   id: string;
   children: MockElement[] = [];
-  innerHTML = "";
-  textContent = "";
-  className = "";
+  innerHTML = '';
+  textContent = '';
+  className = '';
   style: Record<string, string> = {};
   listeners: Record<
     string,
@@ -41,7 +41,7 @@ class MockElement {
   };
   onclick: ((e?: any) => void) | null = null;
 
-  constructor(id = "") {
+  constructor(id = '') {
     this.id = id;
   }
 
@@ -58,11 +58,11 @@ function resetDom() {
     delete dom[key];
   }
   const ids = [
-    "lobby-view",
-    "sector-selection",
-    "sector-list-container",
-    "lobby-queue",
-    "player-list-container",
+    'lobby-view',
+    'sector-selection',
+    'sector-list-container',
+    'lobby-queue',
+    'player-list-container',
   ];
   for (const id of ids) {
     dom[id] = new MockElement(id);
@@ -90,14 +90,14 @@ function resetDom() {
 
 // ── Import after globals ────────────────────
 const { LobbyView } = await import(
-  "../view/LobbyView.ts"
+  '../view/LobbyView.ts'
 );
 
 // ── Tests ───────────────────────────────────
 
 Deno.test(
-  "LobbyView: constructor finds DOM " +
-    "elements",
+  'LobbyView: constructor finds DOM ' +
+    'elements',
   () => {
     resetDom();
     const lv = new LobbyView();
@@ -106,20 +106,20 @@ Deno.test(
 );
 
 Deno.test(
-  "LobbyView: renderSectorList populates " +
-    "container",
+  'LobbyView: renderSectorList populates ' +
+    'container',
   () => {
     resetDom();
     const lv = new LobbyView();
 
     const sectors = [
-      { id: "s1", name: "Alpha" },
-      { id: "s2", name: "Beta" },
+      { id: 's1', name: 'Alpha' },
+      { id: 's2', name: 'Beta' },
     ];
     lv.renderSectorList(sectors);
 
     const container = dom[
-      "sector-list-container"
+      'sector-list-container'
     ];
     assertEquals(
       container.children.length,
@@ -129,37 +129,37 @@ Deno.test(
 );
 
 Deno.test(
-  "LobbyView: show/hide toggles class",
+  'LobbyView: show/hide toggles class',
   () => {
     resetDom();
     const lv = new LobbyView();
 
     lv.hide();
     assertEquals(
-      dom["lobby-view"].classList
-        .contains("hidden"),
+      dom['lobby-view'].classList
+        .contains('hidden'),
       true,
     );
 
     lv.show();
     assertEquals(
-      dom["lobby-view"].classList
-        .contains("hidden"),
+      dom['lobby-view'].classList
+        .contains('hidden'),
       false,
     );
   },
 );
 
 Deno.test(
-  "LobbyView: onSectorSelect callback " +
-    "fires on click",
+  'LobbyView: onSectorSelect callback ' +
+    'fires on click',
   () => {
     resetDom();
     const lv = new LobbyView();
 
     const sectors = [
-      { id: "s1", name: "Alpha" },
-      { id: "s2", name: "Beta" },
+      { id: 's1', name: 'Alpha' },
+      { id: 's2', name: 'Beta' },
     ];
     lv.renderSectorList(sectors);
 
@@ -172,28 +172,28 @@ Deno.test(
 
     // Simulate click on second sector.
     const item = dom[
-      "sector-list-container"
+      'sector-list-container'
     ].children[1];
     assertExists(item.onclick);
     item.onclick!();
 
     assertExists(selected);
-    assertEquals(selected.id, "s2");
-    assertEquals(selected.name, "Beta");
+    assertEquals(selected.id, 's2');
+    assertEquals(selected.name, 'Beta');
   },
 );
 
 Deno.test(
-  "LobbyView: navigation methods cycle " +
-    "selection",
+  'LobbyView: navigation methods cycle ' +
+    'selection',
   () => {
     resetDom();
     const lv = new LobbyView();
 
     const sectors = [
-      { id: "s1", name: "A" },
-      { id: "s2", name: "B" },
-      { id: "s3", name: "C" },
+      { id: 's1', name: 'A' },
+      { id: 's2', name: 'B' },
+      { id: 's3', name: 'C' },
     ];
     lv.renderSectorList(sectors);
     lv.show();
@@ -213,36 +213,36 @@ Deno.test(
     );
     lv.confirmSelection();
     assertExists(selected);
-    assertEquals(selected.id, "s3");
+    assertEquals(selected.id, 's3');
   },
 );
 
 Deno.test(
-  "LobbyView: updatePlayerQueue switches " +
-    "to queue view",
+  'LobbyView: updatePlayerQueue switches ' +
+    'to queue view',
   () => {
     resetDom();
     const lv = new LobbyView();
 
     lv.updatePlayerQueue([
-      ["p1", 0, 0, 0],
-      ["p2", 1, 0, 1],
+      ['p1', 0, 0, 0],
+      ['p2', 1, 0, 1],
     ]);
 
     const playerList = dom[
-      "player-list-container"
+      'player-list-container'
     ];
     assertEquals(
       playerList.children.length,
       2,
     );
     assertEquals(
-      dom["sector-selection"].style.display,
-      "none",
+      dom['sector-selection'].style.display,
+      'none',
     );
     assertEquals(
-      dom["lobby-queue"].style.display,
-      "block",
+      dom['lobby-queue'].style.display,
+      'block',
     );
   },
 );

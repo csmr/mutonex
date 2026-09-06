@@ -1,7 +1,7 @@
 // Declare THREE as a global variable to access it from the <script> tag
 declare const THREE: any;
 
-import type { Terrain } from "../core/types.ts";
+import type { Terrain } from '../core/types.ts';
 
 export function createTerrainMesh(
   terrain: Terrain,
@@ -43,7 +43,10 @@ export function createTerrainMesh(
     wireframe: false,
   });
 
-  const mesh = new THREE.Mesh(geometry, material || defaultMaterial);
+  const mesh = new THREE.Mesh(
+    geometry,
+    material || defaultMaterial,
+  );
 
   // Store terrain data for height sampling
   mesh.userData.terrainData = terrain.data;
@@ -80,7 +83,9 @@ export function sampleTerrainHeight(
   const ix = Math.floor(gx);
   const iz = Math.floor(gz);
 
-  if (ix < 0 || ix >= width - 1 || iz < 0 || iz >= height - 1) return 0;
+  if (ix < 0 || ix >= width - 1 || iz < 0 || iz >= height - 1) {
+    return 0;
+  }
 
   const fx = gx - ix;
   const fz = gz - iz;

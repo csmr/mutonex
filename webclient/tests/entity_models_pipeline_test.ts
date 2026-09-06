@@ -10,17 +10,17 @@
 import {
   assertEquals,
   assertExists,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 import {
   convertOpentypePathToThreeShapes,
-} from "../../content/res/scripts/build_entity_models.ts";
+} from '../../content/res/scripts/build_entity_models.ts';
 
 // ── Tests ───────────────────────────────────
 
 Deno.test(
-  "convertOpentypePathToThreeShapes: " +
-    "empty path returns no shapes",
+  'convertOpentypePathToThreeShapes: ' +
+    'empty path returns no shapes',
   () => {
     const path = { commands: [] };
     const shapes = convertOpentypePathToThreeShapes(path);
@@ -29,15 +29,15 @@ Deno.test(
 );
 
 Deno.test(
-  "convertOpentypePathToThreeShapes: " +
-    "single closed triangle returns 1 shape",
+  'convertOpentypePathToThreeShapes: ' +
+    'single closed triangle returns 1 shape',
   () => {
     const path = {
       commands: [
-        { type: "M", x: 0, y: 0 },
-        { type: "L", x: 1, y: 0 },
-        { type: "L", x: 0.5, y: 1 },
-        { type: "Z" },
+        { type: 'M', x: 0, y: 0 },
+        { type: 'L', x: 1, y: 0 },
+        { type: 'L', x: 0.5, y: 1 },
+        { type: 'Z' },
       ],
     };
     const shapes = convertOpentypePathToThreeShapes(path);
@@ -47,22 +47,22 @@ Deno.test(
 );
 
 Deno.test(
-  "convertOpentypePathToThreeShapes: " +
-    "two closed subpaths return 2 shapes",
+  'convertOpentypePathToThreeShapes: ' +
+    'two closed subpaths return 2 shapes',
   () => {
     const path = {
       commands: [
         // First subpath (square)
-        { type: "M", x: 0, y: 0 },
-        { type: "L", x: 1, y: 0 },
-        { type: "L", x: 1, y: 1 },
-        { type: "L", x: 0, y: 1 },
-        { type: "Z" },
+        { type: 'M', x: 0, y: 0 },
+        { type: 'L', x: 1, y: 0 },
+        { type: 'L', x: 1, y: 1 },
+        { type: 'L', x: 0, y: 1 },
+        { type: 'Z' },
         // Second subpath (triangle)
-        { type: "M", x: 2, y: 0 },
-        { type: "L", x: 3, y: 0 },
-        { type: "L", x: 2.5, y: 1 },
-        { type: "Z" },
+        { type: 'M', x: 2, y: 0 },
+        { type: 'L', x: 3, y: 0 },
+        { type: 'L', x: 2.5, y: 1 },
+        { type: 'Z' },
       ],
     };
     const shapes = convertOpentypePathToThreeShapes(path);
@@ -71,21 +71,21 @@ Deno.test(
 );
 
 Deno.test(
-  "convertOpentypePathToThreeShapes: " +
-    "quadratic curves produce a shape",
+  'convertOpentypePathToThreeShapes: ' +
+    'quadratic curves produce a shape',
   () => {
     const path = {
       commands: [
-        { type: "M", x: 0, y: 0 },
+        { type: 'M', x: 0, y: 0 },
         {
-          type: "Q",
+          type: 'Q',
           x1: 0.5,
           y1: 1,
           x: 1,
           y: 0,
         },
-        { type: "L", x: 0.5, y: -0.5 },
-        { type: "Z" },
+        { type: 'L', x: 0.5, y: -0.5 },
+        { type: 'Z' },
       ],
     };
     const shapes = convertOpentypePathToThreeShapes(path);
@@ -94,14 +94,14 @@ Deno.test(
 );
 
 Deno.test(
-  "convertOpentypePathToThreeShapes: " +
-    "cubic bezier curves produce a shape",
+  'convertOpentypePathToThreeShapes: ' +
+    'cubic bezier curves produce a shape',
   () => {
     const path = {
       commands: [
-        { type: "M", x: 0, y: 0 },
+        { type: 'M', x: 0, y: 0 },
         {
-          type: "C",
+          type: 'C',
           x1: 0.25,
           y1: 1,
           x2: 0.75,
@@ -109,8 +109,8 @@ Deno.test(
           x: 1,
           y: 0,
         },
-        { type: "L", x: 0.5, y: -0.5 },
-        { type: "Z" },
+        { type: 'L', x: 0.5, y: -0.5 },
+        { type: 'Z' },
       ],
     };
     const shapes = convertOpentypePathToThreeShapes(path);
@@ -119,15 +119,15 @@ Deno.test(
 );
 
 Deno.test(
-  "convertOpentypePathToThreeShapes: " +
-    "unclosed path returns shapes via ShapePath",
+  'convertOpentypePathToThreeShapes: ' +
+    'unclosed path returns shapes via ShapePath',
   () => {
     // THREE.ShapePath.toShapes(true) implicitly closes paths
     const path = {
       commands: [
-        { type: "M", x: 0, y: 0 },
-        { type: "L", x: 1, y: 0 },
-        { type: "L", x: 0.5, y: 1 },
+        { type: 'M', x: 0, y: 0 },
+        { type: 'L', x: 1, y: 0 },
+        { type: 'L', x: 0.5, y: 1 },
       ],
     };
     const shapes = convertOpentypePathToThreeShapes(path);
