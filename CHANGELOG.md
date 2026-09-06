@@ -1,5 +1,11 @@
 # Changelog
 
+## v02.2.28 - Gameplay Dynamics & Unit Distribution
+- **Spatial Distribution Algo**: `Mutonex.Engine.Stippling` implementing
+customized Bridson's Poisson disk, integrate stippling into FaunaBehavior
+and Mineral spawning logic for uniformity, add documentation.
+- **Code Cleanups**: succinctify `AGENTS.md`.
+
 ## v0.2.27 - Webclient Refactoring & Security Hardening
 - **Directory Reorganization:** From flat webclient/-dir to subdirs
   by-concerns.
