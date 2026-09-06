@@ -11,7 +11,7 @@
       "semi": true,
       "singleQuote": true,
       "trailingComma": "es5",
-      "printWidth": 100,
+      "printWidth": 68,
       "useTabs": false
     },
     "exclude": ["**/*.js", "deno.*"]

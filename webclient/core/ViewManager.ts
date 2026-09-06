@@ -45,9 +45,10 @@ export class ViewManager {
   private renderer: any;
   private activeView: IView | null = null;
   private clock = new THREE.Clock();
-  public lidarView: IView | null = null;
-  public sphereView: IView | null = null;
-  public globeView: IView | null = null;
+  private _lidarView: IView | null = null;
+  private _sphereView: IView | null = null;
+  private _globeView: IView | null = null;
+  private resizeListener = () => this.onWindowResize();
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -57,20 +58,36 @@ export class ViewManager {
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    window.addEventListener("resize", () => this.onWindowResize());
+    window.addEventListener("resize", this.resizeListener);
+  }
+
+  public get lidarView(): IView | null {
+    return this._lidarView;
+  }
+
+  public get sphereView(): IView | null {
+    return this._sphereView;
+  }
+
+  public get globeView(): IView | null {
+    return this._globeView;
+  }
+
+  public dispose(): void {
+    window.removeEventListener("resize", this.resizeListener);
+    this.renderer.dispose();
   }
 
   public initPipeline(): ViewSet {
-    this.lidarView = new LidarView(this.canvas);
-    this.sphereView = new SphereView(this.canvas);
-    this.globeView = new GlobeView({}, this.canvas);
-    this.setActiveView(this.lidarView);
-    const { lidarView, sphereView, globeView } = this;
+    this._lidarView = new LidarView(this.canvas);
+    this._sphereView = new SphereView(this.canvas);
+    this._globeView = new GlobeView({}, this.canvas);
+    this.setActiveView(this._lidarView);
     return {
       viewManager: this,
-      lidarView: lidarView!,
-      sphereView: sphereView!,
-      globeView: globeView!
+      lidarView: this._lidarView!,
+      sphereView: this._sphereView!,
+      globeView: this._globeView!
     };
   }
 
@@ -190,18 +207,22 @@ export class ViewManager {
     }
   }
 
+  private renderFrame(view: IView): void {
+    const delta = this.clock.getDelta();
+    view.update(delta);
+    if (view.preRender) {
+      view.preRender(this.renderer);
+    }
+    this.renderer.render(
+      view.scene,
+      view.camera
+    );
+  }
+
   public animate(): void {
     requestAnimationFrame(() => this.animate());
     if (this.activeView) {
-      const delta = this.clock.getDelta();
-      this.activeView.update(delta);
-      if (this.activeView.preRender) {
-        this.activeView.preRender(this.renderer);
-      }
-      this.renderer.render(
-        this.activeView.scene,
-        this.activeView.camera
-      );
+      this.renderFrame(this.activeView);
     }
   }
 

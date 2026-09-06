@@ -143,3 +143,33 @@ implementation of each item.
   - Built webclient bundle via `esbuild`.
   - Executed Playwright click verification on Chromium.
   - Verified zero regressions across view switches and inputs.
+
+## Appendix: E2E Verification & Performance Profile
+
+### Playwright E2E Validation Results
+- **Lobby & Session Flow**: Successfully loaded sector list,
+  handled sector selection ("Sector Alpha"), auto-hid lobby UI,
+  and initialized in-game rendering pipeline.
+- **Avatar & View Manipulation**: WASD movements registered;
+  shortcut `'p'` toggled LidarView/SphereView; shortcut `'y'`
+  switched to GlobeView.
+- **Console Errors**:
+  - Uncaught Page Errors: 0
+  - Runtime JS Exceptions: 0
+
+### Gameplay Performance & Memory Profile
+```json
+{
+  "memory": {
+    "totalJSHeapSizeMB": "34.16 MB",
+    "usedJSHeapSizeMB": "20.56 MB",
+    "jsHeapSizeLimitMB": "2144.00 MB"
+  },
+  "navTiming": {
+    "domCompleteMs": "413.20 ms",
+    "loadEventEndMs": "413.20 ms"
+  },
+  "screenResolution": "1280x720",
+  "devicePixelRatio": 1
+}
+```
