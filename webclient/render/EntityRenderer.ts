@@ -1,5 +1,5 @@
-import "../core/global_types.ts";
-import { EntityData, EntityType } from "../core/types.ts";
+import '../core/global_types.ts';
+import { EntityData, EntityType } from '../core/types.ts';
 
 /**
  * Manages 3D representation of game entities.
@@ -12,27 +12,54 @@ export class EntityRenderer {
   private matFactory: (color: number) => any;
 
   private charMap: { [key in EntityType]: string[] } = {
-    "player": ["🧙", "𐇑", "𐇒", "👷", "🧕"],
-    "fauna": ["🐀", "🐂", "🐆", "🐈", "🐊", "🐦", "🐜", "🐝", "🦗", "🐢", "🐕", "🕊", "🦔"],
-    "unit": ["🤖", "✈"],
-    "building": ["🏛"],
-    "society": ["🎪", "🏘", "🏙", "🏰", "🗿", "💩"],
-    "mineral": ["⭓", "⬠", "💎", "🌱", "🌲", "🌳", "🌴", "🌵", "🌾", "🍄", "🌺", "🌻"],
-    "item": ["💎", "📟", "🧴", "🤺"],
-    "item_gem": ["💎"],
-    "item_video_phone": ["📟"],
+    'player': ['🧙', '𐇑', '𐇒', '👷', '🧕'],
+    'fauna': [
+      '🐀',
+      '🐂',
+      '🐆',
+      '🐈',
+      '🐊',
+      '🐦',
+      '🐜',
+      '🐝',
+      '🦗',
+      '🐢',
+      '🐕',
+      '🕊',
+      '🦔',
+    ],
+    'unit': ['🤖', '✈'],
+    'building': ['🏛'],
+    'society': ['🎪', '🏘', '🏙', '🏰', '🗿', '💩'],
+    'mineral': [
+      '⭓',
+      '⬠',
+      '💎',
+      '🌱',
+      '🌲',
+      '🌳',
+      '🌴',
+      '🌵',
+      '🌾',
+      '🍄',
+      '🌺',
+      '🌻',
+    ],
+    'item': ['💎', '📟', '🧴', '🤺'],
+    'item_gem': ['💎'],
+    'item_video_phone': ['📟'],
   };
 
   private colorMap: { [key in string]: number } = {
-    "player": 0x1E90FF,
-    "fauna": 0x228B22,
-    "unit": 0xFFA500,
-    "building": 0x8B4513,
-    "society": 0x00CED1,
-    "mineral": 0x800080,
-    "item": 0xFFFF00,
-    "item_gem": 0xFFFF00,
-    "item_video_phone": 0x00FF00,
+    'player': 0x1E90FF,
+    'fauna': 0x228B22,
+    'unit': 0xFFA500,
+    'building': 0x8B4513,
+    'society': 0x00CED1,
+    'mineral': 0x800080,
+    'item': 0xFFFF00,
+    'item_gem': 0xFFFF00,
+    'item_video_phone': 0x00FF00,
   };
 
   constructor(
@@ -63,7 +90,7 @@ export class EntityRenderer {
   }
 
   private getChar(entity: EntityData): string {
-    const chars = this.charMap[entity.type] || ["?"];
+    const chars = this.charMap[entity.type] || ['?'];
     const idLen = entity.id.length;
     const charIdx = entity.id.charCodeAt(idLen - 1);
     return chars[charIdx % chars.length];
@@ -77,7 +104,8 @@ export class EntityRenderer {
     let mesh = this.getOrCreate(ent, char, color);
     if (mesh) {
       // Avoid wobbling logic overriding the anchor if it's stationary in the metadata
-      const isStationary = mesh.geometry?.userData?.metadata?.isStationary;
+      const isStationary = mesh.geometry?.userData?.metadata
+        ?.isStationary;
 
       // We only apply the continuous interpolated 'ent.pos' updates if it mathematically moves.
       if (isStationary) {
@@ -114,7 +142,7 @@ export class EntityRenderer {
     }
 
     const cached = this.geoCache.get(hex);
-    const isBox = mesh.geometry.type === "BoxGeometry";
+    const isBox = mesh.geometry.type === 'BoxGeometry';
     if (cached && !(cached instanceof Promise) && isBox) {
       return this.replaceGeo(ent, cached);
     }
@@ -125,20 +153,22 @@ export class EntityRenderer {
     if (this.geoCache.has(hex)) return;
 
     const url = `assets/entity_geometry/${hex}.json`;
-    this.geoCache.set(hex, new Promise(() => { }));
+    this.geoCache.set(hex, new Promise(() => {}));
 
     fetch(url)
       .then((res) => (res.ok ? res.json() : null))
       .then((json) => {
         if (!json) {
-          console.warn("Failed to fetch model:", hex);
+          console.warn('Failed to fetch model:', hex);
           return;
         }
         const geo = this.loader.parse(json);
         // Apply pre-compiled JSON physical orientations and caching metadata
         if (json.mutonex_entity_metadata) {
           geo.userData.metadata = json.mutonex_entity_metadata;
-          const matrix = new THREE.Matrix4().fromArray(json.mutonex_entity_metadata.transform.matrix);
+          const matrix = new THREE.Matrix4().fromArray(
+            json.mutonex_entity_metadata.transform.matrix,
+          );
           geo.applyMatrix4(matrix);
         }
 
@@ -148,7 +178,7 @@ export class EntityRenderer {
         // For immediate loading:
         // this.replaceGeo(ent, geo); // Deferred to prevent losing metadata sync
       })
-      .catch((e) => console.error("Geo fetch fail", hex, e));
+      .catch((e) => console.error('Geo fetch fail', hex, e));
   }
 
   private replaceGeo(ent: EntityData, geo: any): any {

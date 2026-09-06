@@ -6,7 +6,7 @@
 import {
   assertEquals,
   assertExists,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 (globalThis as any).window = {
   ...(globalThis as any).window || {},
@@ -34,15 +34,15 @@ import {
 };
 
 const { InputManager } = await import(
-  "../input/InputManager.ts"
+  '../input/InputManager.ts'
 );
 
 class MockViewManager {
-  activeScope = "lobby";
-  updatedPhase = "";
+  activeScope = 'lobby';
+  updatedPhase = '';
 
   getScope(phase: string) {
-    return phase === "gamein" ? "game" : "lobby";
+    return phase === 'gamein' ? 'game' : 'lobby';
   }
 
   updateHUDVisibility(phase: string) {
@@ -51,19 +51,23 @@ class MockViewManager {
 }
 
 Deno.test(
-  "InputManager: constructor initializes handlers",
+  'InputManager: constructor initializes handlers',
   () => {
     const vm = new MockViewManager();
     const viewSet = { viewManager: vm } as any;
     const inputMgr = new InputManager(
-      viewSet, () => null, {} as any, {} as any, () => {}
+      viewSet,
+      () => null,
+      {} as any,
+      {} as any,
+      () => {},
     );
     assertExists(inputMgr);
-  }
+  },
 );
 
 Deno.test(
-  "InputManager: syncUI updates context key and UI",
+  'InputManager: syncUI updates context key and UI',
   () => {
     const vm = new MockViewManager();
     const viewSet = { viewManager: vm } as any;
@@ -71,11 +75,44 @@ Deno.test(
     const hud = {} as any;
 
     const inputMgr = new InputManager(
-      viewSet, () => null, lobby, hud, () => {}
+      viewSet,
+      () => null,
+      lobby,
+      hud,
+      () => {},
     );
 
     const key = inputMgr.syncUI(vm as any, null);
-    assertEquals(key, "lobby:local");
-    assertEquals(vm.updatedPhase, "lobby");
-  }
+    assertEquals(key, 'lobby:local');
+    assertEquals(vm.updatedPhase, 'lobby');
+  },
+);
+
+Deno.test(
+  'InputManager: syncUI preserves pressedActions when scope stays same',
+  () => {
+    const vm = new MockViewManager();
+    const viewSet = { viewManager: vm } as any;
+    const provider = { phase: 'gamein' } as any;
+
+    const inputMgr = new InputManager(
+      viewSet,
+      () => provider,
+      {} as any,
+      {} as any,
+      () => {},
+    );
+
+    inputMgr.syncUI(vm as any, provider);
+    inputMgr.pressedActions.add('move_fwd');
+    assertEquals(inputMgr.isActionPressed('move_fwd'), true);
+
+    // Re-sync UI without scope change
+    inputMgr.syncUI(vm as any, provider);
+    assertEquals(
+      inputMgr.isActionPressed('move_fwd'),
+      true,
+      'pressedActions should persist across syncUI',
+    );
+  },
 );

@@ -1,4 +1,4 @@
-import "../core/global_types.ts";
+import '../core/global_types.ts';
 
 /**
  * Drag-to-look FPV controller.
@@ -21,9 +21,9 @@ export class FirstPersonControls {
     this.camera = camera;
     this.domElement = domElement;
 
-    this.domElement.addEventListener("mousedown", this.onDown);
-    window.addEventListener("mouseup", this.onUp);
-    window.addEventListener("mousemove", this.onMove);
+    this.domElement.addEventListener('mousedown', this.onDown);
+    window.addEventListener('mouseup', this.onUp);
+    window.addEventListener('mousemove', this.onMove);
 
     this.yaw = this.camera.rotation.y;
     this.pitch = this.camera.rotation.x;
@@ -38,7 +38,7 @@ export class FirstPersonControls {
     const limit = Math.PI / 2 - 0.05;
     this.pitch = Math.max(-limit, Math.min(limit, this.pitch));
 
-    this.camera.rotation.order = "YXZ";
+    this.camera.rotation.order = 'YXZ';
     this.camera.rotation.y = this.yaw;
     this.camera.rotation.x = this.pitch;
   }
@@ -47,10 +47,10 @@ export class FirstPersonControls {
 
   public dispose() {
     this.domElement.removeEventListener(
-      "mousedown",
+      'mousedown',
       this.onDown,
     );
-    window.removeEventListener("mouseup", this.onUp);
-    window.removeEventListener("mousemove", this.onMove);
+    window.removeEventListener('mouseup', this.onUp);
+    window.removeEventListener('mousemove', this.onMove);
   }
 }

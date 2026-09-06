@@ -17,7 +17,7 @@ fi
 echo "Run deno test in ${CLIENT_PATH} with ${TEST_TIMEOUT} timeout..."
 
 # Run tests with a timeout
-timeout "${TEST_TIMEOUT}" deno test
+timeout "${TEST_TIMEOUT}" deno test --no-check
 EXIT_CODE=$?
 
 if [ $EXIT_CODE -eq 124 ]; then

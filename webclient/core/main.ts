@@ -1,22 +1,22 @@
 // webclient/core/main.ts
-import "./global_types.ts";
-import { GameStateProvider } from "./GameStateProvider.ts";
-import { ViewManager, ViewSet } from "./ViewManager.ts";
-import { LidarStyles } from "../render/LidarStyles.ts";
-import { LobbyView } from "../view/LobbyView.ts";
-import { AvatarController } from "../input/AvatarController.ts";
-import { ActionHUD } from "../view/ActionHUD.ts";
-import * as ShortcutEngine from "../input/ShortcutEngine.ts";
-import { GameStateManager } from "./GameStateManager.ts";
-import { InputManager } from "../input/InputManager.ts";
+import './global_types.ts';
+import { GameStateProvider } from './GameStateProvider.ts';
+import { ViewManager, ViewSet } from './ViewManager.ts';
+import { LidarStyles } from '../render/LidarStyles.ts';
+import { LobbyView } from '../view/LobbyView.ts';
+import { AvatarController } from '../input/AvatarController.ts';
+import { ActionHUD } from '../view/ActionHUD.ts';
+import * as ShortcutEngine from '../input/ShortcutEngine.ts';
+import { GameStateManager } from './GameStateManager.ts';
+import { InputManager } from '../input/InputManager.ts';
 import type {
-  PlayerTuple
-} from "../mocks/MockGameStateProvider.ts";
+  PlayerTuple,
+} from '../mocks/MockGameStateProvider.ts';
 
 const AUTO_JOIN_DELAY_MS = 2000;
 const LOBBY_SECTORS = [
-  { id: "game:sector_alpha", name: "Sector Alpha (Dev)" },
-  { id: "game:sector_beta", name: "Sector Beta (Test)" }
+  { id: 'game:sector_alpha', name: 'Sector Alpha (Dev)' },
+  { id: 'game:sector_beta', name: 'Sector Beta (Test)' },
 ];
 
 interface GameInitData {
@@ -44,11 +44,12 @@ function bindDebugConsole(viewSet: ViewSet) {
   const { lidarView, viewManager } = viewSet;
   const win = window as MutonexWindow;
   win.__mutonex = {
-    lidarView, viewManager,
-    renderer: (viewManager as any).renderer
+    lidarView,
+    viewManager,
+    renderer: (viewManager as any).renderer,
   };
   win.__mutonex.lidarView.setStyle = (
-    styleName: string
+    styleName: string,
   ) => {
     if (LidarStyles[styleName]) lidarView.setLidarStyle(styleName);
   };
@@ -57,13 +58,13 @@ function bindDebugConsole(viewSet: ViewSet) {
 
 function startLobbyAutoJoin(
   lobby: LobbyView,
-  getProvider: () => GameStateProvider | null
+  getProvider: () => GameStateProvider | null,
 ) {
   const params = new URLSearchParams(window.location.search);
-  if (params.get("join") !== "false") {
+  if (params.get('join') !== 'false') {
     setTimeout(
       () => !getProvider() && lobby.confirmSelection(),
-      AUTO_JOIN_DELAY_MS
+      AUTO_JOIN_DELAY_MS,
     );
   }
 }
@@ -75,7 +76,7 @@ function handleInit(
   hud: ActionHUD,
   provider: GameStateProvider | null,
   lobby: LobbyView,
-  performSync: () => void
+  performSync: () => void,
 ): void {
   ShortcutEngine.printHelp();
   gsm.handleInitState({ fauna, terrain, minerals }, viewSet);
@@ -85,7 +86,8 @@ function handleInit(
   }
   performSync();
   gsm.updateEntitiesList(
-    viewSet.viewManager.getActiveView(), provider
+    viewSet.viewManager.getActiveView(),
+    provider,
   );
 }
 
@@ -94,12 +96,12 @@ function handleUpdate(
   gsm: GameStateManager,
   hud: ActionHUD,
   provider: GameStateProvider | null,
-  lobby: LobbyView
+  lobby: LobbyView,
 ): void {
   if (!provider) return;
   if (players?.length) {
     gsm.syncPlayers(players, hud, provider);
-    if (provider.phase === "lobby") {
+    if (provider.phase === 'lobby') {
       lobby.updatePlayerQueue(players);
     }
   }
@@ -116,12 +118,14 @@ function runLoopTick(
   hud: ActionHUD,
   inputMgr: InputManager,
   provider: GameStateProvider | null,
-  dt: number
+  dt: number,
 ): void {
   const interp = gsm.updateFauna(dt);
   const active = viewSet.viewManager.getActiveView();
   const { nearbyItem, hoveredItem } = gsm.getHUDData(
-    avatar, inputMgr.mouse, active
+    avatar,
+    inputMgr.mouse,
+    active,
   );
   hud.setNearbyItem(nearbyItem);
   hud.setHoveredItem(hoveredItem);
@@ -135,19 +139,25 @@ function runLoop(
   avatar: AvatarController,
   hud: ActionHUD,
   inputMgr: InputManager,
-  getProvider: () => GameStateProvider | null
+  getProvider: () => GameStateProvider | null,
 ): void {
   let lastTime = performance.now();
   viewSet.viewManager.animate();
   const tick = () => {
     requestAnimationFrame(tick);
     const p = getProvider();
-    if (p?.phase === "lobby") return;
+    if (p?.phase === 'lobby') return;
     const now = performance.now();
     const dt = (now - lastTime) / 1000;
     lastTime = now;
     runLoopTick(
-      viewSet, gsm, avatar, hud, inputMgr, p, dt
+      viewSet,
+      gsm,
+      avatar,
+      hud,
+      inputMgr,
+      p,
+      dt,
     );
   };
   tick();
@@ -162,19 +172,28 @@ function bindSectorSelect(
   avatar: AvatarController,
   performSync: () => void,
   getProvider: () => GameStateProvider | null,
-  setProvider: (p: GameStateProvider) => void
+  setProvider: (p: GameStateProvider) => void,
 ): void {
   lobby.onSectorSelect((sector) => {
     if (getProvider()) return;
-    const onInit = (gs: GameInitData) => handleInit(
-      gs, viewSet, gsm, hud, getProvider(), lobby, performSync
-    );
+    const onInit = (gs: GameInitData) =>
+      handleInit(
+        gs,
+        viewSet,
+        gsm,
+        hud,
+        getProvider(),
+        lobby,
+        performSync,
+      );
     const onUpdate = (update: GameUpdateData) => {
       handleUpdate(update, gsm, hud, getProvider(), lobby);
       performSync();
     };
     const provider = new GameStateProvider(
-      sector.id, onInit, onUpdate
+      sector.id,
+      onInit,
+      onUpdate,
     );
     provider.start();
     setProvider(provider);
@@ -184,7 +203,7 @@ function bindSectorSelect(
 
 function main() {
   const canvas = document.getElementById(
-    "main-canvas"
+    'main-canvas',
   ) as HTMLCanvasElement;
   if (!canvas) return;
   const viewSet = initRenderPipeline(canvas);
@@ -200,11 +219,16 @@ function main() {
   };
 
   const inputMgr = new InputManager(
-    viewSet, () => provider, lobby, hud, performSync
+    viewSet,
+    () => provider,
+    lobby,
+    hud,
+    performSync,
   );
   const avatar = new AvatarController(
-    viewSet.viewManager, () => provider,
-    (act) => inputMgr.isActionPressed(act)
+    viewSet.viewManager,
+    () => provider,
+    (act) => inputMgr.isActionPressed(act),
   );
 
   lobby.renderSectorList(LOBBY_SECTORS);
@@ -212,12 +236,21 @@ function main() {
   performSync();
 
   bindSectorSelect(
-    lobby, viewSet, gameStateManager, hud, inputMgr,
-    avatar, performSync, () => provider, (p) => { provider = p; }
+    lobby,
+    viewSet,
+    gameStateManager,
+    hud,
+    inputMgr,
+    avatar,
+    performSync,
+    () => provider,
+    (p) => {
+      provider = p;
+    },
   );
 
   startLobbyAutoJoin(lobby, () => provider);
   inputMgr.bindMouseEvents(canvas, avatar);
 }
 
-window.addEventListener("DOMContentLoaded", main);
+window.addEventListener('DOMContentLoaded', main);

@@ -1,7 +1,7 @@
-import "../core/global_types.ts";
-import { ViewManager } from "../core/ViewManager.ts";
-import { GameStateProvider } from "../core/GameStateProvider.ts";
-import { sampleTerrainHeight } from "../render/TerrainMesh.ts";
+import '../core/global_types.ts';
+import { ViewManager } from '../core/ViewManager.ts';
+import { GameStateProvider } from '../core/GameStateProvider.ts';
+import { sampleTerrainHeight } from '../render/TerrainMesh.ts';
 
 /**
  * Handles avatar movement, input, and state synchronization.
@@ -38,14 +38,16 @@ export class AvatarController {
   public update(delta: number) {
     const provider = this.stateProvider();
     const activeView = this.viewManager.getActiveView();
-    if (!provider || provider.phase !== "gamein") return;
+    if (!provider || provider.phase !== 'gamein') return;
     if (activeView?.isGlobeView) return; // Guard globe
 
     this.calculateDirection();
 
     if (this.moveDirection.lengthSq() > 0) {
       this.moveDirection.normalize();
-      this.moveVector.copy(this.moveDirection).multiplyScalar(this.speed * delta);
+      this.moveVector.copy(this.moveDirection).multiplyScalar(
+        this.speed * delta,
+      );
       this.position.add(this.moveVector);
     }
 
@@ -79,7 +81,9 @@ export class AvatarController {
     if (!view) return;
 
     const cam = view.camera;
-    this.forward.copy(this.tempVector).applyQuaternion(cam.quaternion);
+    this.forward.copy(this.tempVector).applyQuaternion(
+      cam.quaternion,
+    );
     this.forward.y = 0;
     this.forward.normalize();
 
@@ -87,10 +91,18 @@ export class AvatarController {
     this.right.y = 0;
     this.right.normalize();
 
-    if (this.isActionPressed("move_fwd")) this.moveDirection.add(this.forward);
-    if (this.isActionPressed("move_back")) this.moveDirection.sub(this.forward);
-    if (this.isActionPressed("move_left")) this.moveDirection.sub(this.right);
-    if (this.isActionPressed("move_right")) this.moveDirection.add(this.right);
+    if (this.isActionPressed('move_fwd')) {
+      this.moveDirection.add(this.forward);
+    }
+    if (this.isActionPressed('move_back')) {
+      this.moveDirection.sub(this.forward);
+    }
+    if (this.isActionPressed('move_left')) {
+      this.moveDirection.sub(this.right);
+    }
+    if (this.isActionPressed('move_right')) {
+      this.moveDirection.add(this.right);
+    }
   }
 
   private syncState(provider: GameStateProvider) {

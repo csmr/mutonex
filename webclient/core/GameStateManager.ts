@@ -1,11 +1,11 @@
 // webclient/core/GameStateManager.ts
-import "./global_types.ts";
-import { GameStateProvider } from "./GameStateProvider.ts";
-import { EntityData, EntityType, Terrain } from "./types.ts";
-import { sampleTerrainHeight } from "../render/TerrainMesh.ts";
+import './global_types.ts';
+import { GameStateProvider } from './GameStateProvider.ts';
+import { EntityData, EntityType, Terrain } from './types.ts';
+import { sampleTerrainHeight } from '../render/TerrainMesh.ts';
 import type {
-  PlayerTuple
-} from "../mocks/MockGameStateProvider.ts";
+  PlayerTuple,
+} from '../mocks/MockGameStateProvider.ts';
 
 const FAUNA_WIGGLE_THRESHOLD = 5.0;
 const FAUNA_CULL_DISTANCE = 100.0;
@@ -49,20 +49,20 @@ export class GameStateManager {
   private stepFaunaVector(
     anch: THREE.Vector3,
     t: THREE.Vector3,
-    dt: number
+    dt: number,
   ): THREE.Vector3 {
     return t.add(
       new THREE.Vector3()
         .subVectors(anch, t)
         .normalize()
-        .multiplyScalar(0.5 * dt)
+        .multiplyScalar(0.5 * dt),
     );
   }
 
   private stepFauna(
     anch: THREE.Vector3,
     t: THREE.Vector3,
-    dt: number
+    dt: number,
   ): THREE.Vector3 {
     if (t.distanceTo(anch) > FAUNA_WIGGLE_THRESHOLD) {
       return this.stepFaunaVector(anch, t, dt);
@@ -74,7 +74,7 @@ export class GameStateManager {
 
   private getEntityPos(
     terrain: Terrain | null,
-    pos: THREE.Vector3
+    pos: THREE.Vector3,
   ) {
     const cloned = pos.clone();
     if (terrain) {
@@ -88,26 +88,26 @@ export class GameStateManager {
     type: EntityType,
     pos: THREE.Vector3,
     terrain: Terrain | null,
-    charm = 0
+    charm = 0,
   ): void {
     this.entities.push({
       id,
       type,
       pos: this.getEntityPos(terrain, pos),
-      char: "",
-      charm
+      char: '',
+      charm,
     });
   }
 
   private findCharmTargets(
     avatar: any,
-    provider: GameStateProvider
+    provider: GameStateProvider,
   ) {
     return this.entities
       .filter((ent) => ent.id !== provider.playerId)
       .map((ent) => ({
         id: ent.id,
-        dist: avatar.position.distanceTo(ent.pos)
+        dist: avatar.position.distanceTo(ent.pos),
       }))
       .filter((t) => t.dist <= CHARM_MAX_DISTANCE)
       .sort((a, b) => a.dist - b.dist);
@@ -115,36 +115,38 @@ export class GameStateManager {
 
   public triggerCharmAction(
     avatar: any,
-    provider: GameStateProvider | null
+    provider: GameStateProvider | null,
   ): void {
-    if (!provider || provider.phase !== "gamein") return;
+    if (!provider || provider.phase !== 'gamein') return;
     const targets = this.findCharmTargets(avatar, provider);
     if (targets.length > 0) {
-      provider.sendPlayerAction("charm", targets[0].id);
+      provider.sendPlayerAction('charm', targets[0].id);
     }
   }
 
   private handleDropItem(
     id: string,
     avatar: any,
-    provider: GameStateProvider | null
+    provider: GameStateProvider | null,
   ): void {
     const fwd = avatar.getForwardVector();
-    provider?.sendPlayerAction("drop_item", id, {
-      x: fwd.x, y: fwd.y, z: fwd.z
+    provider?.sendPlayerAction('drop_item', id, {
+      x: fwd.x,
+      y: fwd.y,
+      z: fwd.z,
     });
   }
 
   public bindActionHUD(
     hud: any,
     avatar: any,
-    getProvider: () => GameStateProvider | null
+    getProvider: () => GameStateProvider | null,
   ): void {
     hud.setOnCharmClick(() =>
       this.triggerCharmAction(avatar, getProvider())
     );
     hud.setOnPickUpClick((id: string) =>
-      getProvider()?.sendPlayerAction("pick_up", id)
+      getProvider()?.sendPlayerAction('pick_up', id)
     );
     hud.setOnDropClick((id: string) =>
       this.handleDropItem(id, avatar, getProvider())
@@ -153,18 +155,18 @@ export class GameStateManager {
 
   private isFaunaCulled(
     anch: THREE.Vector3,
-    avatarPos?: THREE.Vector3
+    avatarPos?: THREE.Vector3,
   ): boolean {
     return Boolean(
       avatarPos && (
         anch.distanceTo(avatarPos) > FAUNA_CULL_DISTANCE
-      )
+      ),
     );
   }
 
   public updateFauna(
     dt: number,
-    avatarPos?: THREE.Vector3
+    avatarPos?: THREE.Vector3,
   ): Map<string, THREE.Vector3> {
     this.interpMap.clear();
     this.faunaAnchors.forEach((anch, id) => {
@@ -181,23 +183,26 @@ export class GameStateManager {
 
   public computeEntities(
     terrain: Terrain | null,
-    interpolation?: Map<string, THREE.Vector3>
+    interpolation?: Map<string, THREE.Vector3>,
   ): EntityData[] {
     this.entities.length = 0;
     this.playerAnchors.forEach((p, id) => {
       const charm = this.playerCharm.get(id) || 0;
-      this.pushEntity(id, "player", p, terrain, charm);
+      this.pushEntity(id, 'player', p, terrain, charm);
     });
     this.faunaAnchors.forEach((p, id) => {
       const pos = interpolation?.get(id) || p;
-      this.pushEntity(id, "fauna", pos, terrain);
+      this.pushEntity(id, 'fauna', pos, terrain);
     });
     this.mineralAnchors.forEach((p, id) =>
-      this.pushEntity(id, "mineral", p, terrain)
+      this.pushEntity(id, 'mineral', p, terrain)
     );
     this.itemAnchors.forEach((d, id) =>
       this.pushEntity(
-        id, `item_${d.type}` as EntityType, d.pos, terrain
+        id,
+        `item_${d.type}` as EntityType,
+        d.pos,
+        terrain,
       )
     );
     return this.entities;
@@ -206,20 +211,22 @@ export class GameStateManager {
   public updateEntitiesList(
     activeView: any,
     provider: GameStateProvider | null,
-    interp?: Map<string, THREE.Vector3>
+    interp?: Map<string, THREE.Vector3>,
   ): void {
     const ents = this.computeEntities(
-      activeView?.terrainMesh, interp
+      activeView?.terrainMesh,
+      interp,
     );
     activeView?.updateEntities(
-      ents, provider?.playerId || undefined
+      ents,
+      provider?.playerId || undefined,
     );
   }
 
   public syncPlayers(
     players: PlayerTuple[],
     hud: any,
-    provider: GameStateProvider | null
+    provider: GameStateProvider | null,
   ) {
     players.forEach(([id, x, _y, z, charm, inv]) => {
       this.playerAnchors.set(id, new THREE.Vector3(x, 1, z));
@@ -254,7 +261,9 @@ export class GameStateManager {
     this.itemAnchors.clear();
     items.forEach((item: any) => {
       const p = new THREE.Vector3(
-        item.position.x, 1, item.position.z
+        item.position.x,
+        1,
+        item.position.z,
       );
       this.itemAnchors.set(item.id, { pos: p, type: item.type });
     });
@@ -264,7 +273,7 @@ export class GameStateManager {
     return Array.from(this.itemAnchors.entries())
       .map(([id, data]) => ({
         id,
-        dist: avatar.position.distanceTo(data.pos)
+        dist: avatar.position.distanceTo(data.pos),
       }))
       .filter((i) => i.dist <= PICKUP_MAX_DISTANCE)
       .sort((a, b) => a.dist - b.dist);
@@ -273,7 +282,7 @@ export class GameStateManager {
   public getHUDData(
     avatar: any,
     mouse: THREE.Vector2,
-    activeView: any
+    activeView: any,
   ) {
     const now = performance.now();
     if (
@@ -288,7 +297,7 @@ export class GameStateManager {
     const nearbyItem = nearby.length > 0
       ? {
         id: nearby[0].id,
-        name: nearby[0].id.replace("item_", "")
+        name: nearby[0].id.replace('item_', ''),
       }
       : null;
 
@@ -297,16 +306,17 @@ export class GameStateManager {
       const rc = new THREE.Raycaster();
       rc.setFromCamera(mouse, activeView.camera);
       const hits = rc.intersectObjects(
-        activeView.getInteractableObjects(), true
+        activeView.getInteractableObjects(),
+        true,
       );
       for (const h of hits) {
         const d = h.object.userData;
         const isItem = d?.entityId &&
-          (d.entityType as string).startsWith("item");
+          (d.entityType as string).startsWith('item');
         if (isItem) {
           hoveredItem = {
             id: d.entityId,
-            name: d.entityId.replace("item_", "")
+            name: d.entityId.replace('item_', ''),
           };
           break;
         }
