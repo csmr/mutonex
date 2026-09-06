@@ -1,17 +1,20 @@
 // webclient/input/InputManager.ts
 import "../core/global_types.ts";
 import { GameStateProvider } from "../core/GameStateProvider.ts";
-import { ViewSet } from "../core/ViewManager.ts";
+import { ViewSet, ViewManager } from "../core/ViewManager.ts";
 import { LobbyView } from "../view/LobbyView.ts";
 import { ActionHUD } from "../view/ActionHUD.ts";
 import { AvatarController } from "./AvatarController.ts";
 import * as ShortcutEngine from "./ShortcutEngine.ts";
-import { ShortcutEntry } from "./ShortcutConfig.ts";
+import { ShortcutEntry, ShortcutScope } from "./ShortcutConfig.ts";
 
 export class InputManager {
   public pressedActions = new Set<string>();
   public handlers: ShortcutEngine.HandlerMap = new Map();
   public mouse = new THREE.Vector2();
+  private cleanup: {
+    controller: AbortController | null;
+  } = { controller: null };
 
   constructor(
     private viewSet: ViewSet,
@@ -21,6 +24,28 @@ export class InputManager {
     private sync: () => void
   ) {
     this.setupShortcuts();
+  }
+
+  public activateShortcuts(scope: ShortcutScope): void {
+    this.pressedActions.clear();
+    if (this.cleanup.controller) {
+      this.cleanup.controller.abort();
+    }
+    this.cleanup.controller = ShortcutEngine.activateContext(
+      scope, this.handlers
+    );
+  }
+
+  public syncUI(
+    viewManager: ViewManager,
+    provider: GameStateProvider | null
+  ): string {
+    const phase = provider?.phase || "lobby";
+    const scope = viewManager.getScope(phase);
+    this.activateShortcuts(scope);
+    viewManager.updateHUDVisibility(phase, this.lobby, this.hud);
+    const contextType = scope === "globe" ? "globe" : "local";
+    return `${phase}:${contextType}`;
   }
 
   public isActionPressed(act: string): boolean {
