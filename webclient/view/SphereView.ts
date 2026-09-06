@@ -1,14 +1,11 @@
-import "../core/global_types.ts";
-import { IView } from "../core/ViewManager.ts";
+import '../core/global_types.ts';
+import { IView } from '../core/ViewManager.ts';
 import {
-  FirstPersonControls
-} from "../input/FirstPersonControls.ts";
-import { EntityRenderer } from "../render/EntityRenderer.ts";
-import { createTerrainMesh } from "../render/TerrainMesh.ts";
-import {
-  EntityData,
-  Terrain
-} from "../core/types.ts";
+  FirstPersonControls,
+} from '../input/FirstPersonControls.ts';
+import { EntityRenderer } from '../render/EntityRenderer.ts';
+import { createTerrainMesh } from '../render/TerrainMesh.ts';
+import { EntityData, Terrain } from '../core/types.ts';
 
 export class SphereView implements IView {
   public scene: any;
@@ -69,7 +66,10 @@ export class SphereView implements IView {
     this.scene.add(this.terrainMesh);
   }
 
-  public updateEntities(entities: EntityData[], _localPlayerId?: string): void {
+  public updateEntities(
+    entities: EntityData[],
+    _localPlayerId?: string,
+  ): void {
     this.entityRenderer.update(entities);
   }
 
@@ -79,7 +79,7 @@ export class SphereView implements IView {
 
   public onActivate(): void {
     window.addEventListener(
-      "resize",
+      'resize',
       this.boundResize,
     );
     if (this.controls) {
@@ -89,7 +89,7 @@ export class SphereView implements IView {
 
   public onDeactivate(): void {
     window.removeEventListener(
-      "resize",
+      'resize',
       this.boundResize,
     );
     if (this.controls) {

@@ -6,13 +6,13 @@ export interface LidarStyleConfig {
   samplesV: number;
   dotRadiusMin: number;
   dotRadiusMax: number;
-  geometryMode?: "Points" | "LineSegments";
+  geometryMode?: 'Points' | 'LineSegments';
 }
 
 export const LidarStyles: Record<string, LidarStyleConfig> = {
   pointCloud: {
-    name: "pointCloud",
-    geometryMode: "Points",
+    name: 'pointCloud',
+    geometryMode: 'Points',
     scanMode: 1.0,
     dotType: 1.0,
     samplesH: 480,
@@ -21,8 +21,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotRadiusMax: 4.0,
   },
   lineLidar: {
-    name: "lineLidar",
-    geometryMode: "Points",
+    name: 'lineLidar',
+    geometryMode: 'Points',
     scanMode: 0.0,
     dotType: 1.0,
     samplesH: 400,
@@ -31,8 +31,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotRadiusMax: 5.0,
   },
   legacy: {
-    name: "legacy",
-    geometryMode: "Points",
+    name: 'legacy',
+    geometryMode: 'Points',
     scanMode: 1.0,
     dotType: 0.0,
     samplesH: 400,
@@ -41,8 +41,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotRadiusMax: 4.0,
   },
   densePointGridVertical: {
-    name: "densePointGridVertical",
-    geometryMode: "Points",
+    name: 'densePointGridVertical',
+    geometryMode: 'Points',
     scanMode: 0.0,
     dotType: 1.0,
     samplesH: 800,
@@ -51,8 +51,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotRadiusMax: 6.0,
   },
   densePointGridHorizontal: {
-    name: "densePointGridHorizontal",
-    geometryMode: "Points",
+    name: 'densePointGridHorizontal',
+    geometryMode: 'Points',
     scanMode: 1.0,
     dotType: 1.0,
     samplesH: 480,
@@ -61,8 +61,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotRadiusMax: 4.0,
   },
   proceduralLidar: {
-    name: "proceduralLidar",
-    geometryMode: "Points",
+    name: 'proceduralLidar',
+    geometryMode: 'Points',
     scanMode: 0.0,
     dotType: 0.0,
     samplesH: 10,

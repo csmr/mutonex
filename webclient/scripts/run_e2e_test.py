@@ -68,7 +68,10 @@ def run():
                 items.nth(0).click()
                 page.wait_for_timeout(1000)
 
-            for key in ["w", "a", "s", "d"]:
+            page.keyboard.down("w")
+            page.wait_for_timeout(300)
+            page.keyboard.up("w")
+            for key in ["a", "s", "d"]:
                 page.keyboard.press(key)
                 page.wait_for_timeout(100)
 

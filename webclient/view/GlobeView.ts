@@ -1,17 +1,14 @@
 // webclient/view/GlobeView.ts
-import { IView } from "../core/ViewManager.ts";
-import {
-  GameState,
-  Unit,
-} from "../mocks/MockGameStateProvider.ts";
-import { EntityData, Terrain } from "../core/types.ts";
+import { IView } from '../core/ViewManager.ts';
+import { GameState, Unit } from '../mocks/MockGameStateProvider.ts';
+import { EntityData, Terrain } from '../core/types.ts';
 
 const GLOBE_RADIUS = 5;
 const UNIT_RADIUS = 0.05;
 
-declare const THREE: typeof import("three");
+declare const THREE: typeof import('three');
 declare const OrbitControls:
-  typeof import("three/examples/jsm/controls/OrbitControls");
+  typeof import('three/examples/jsm/controls/OrbitControls');
 
 /**
  * Manages the 3D globe view and its diagnostic weather interactions.
@@ -27,8 +24,8 @@ export class GlobeView implements IView {
   private unitMeshes: Record<string, THREE.Mesh> = {};
   private sectorMeshes: Record<string, THREE.Mesh> = {};
   private playerColors: Record<string, THREE.Color> = {
-    "Player1": new THREE.Color(0x00ff00), // Green
-    "Player2": new THREE.Color(0xff00ff), // Magenta
+    'Player1': new THREE.Color(0x00ff00), // Green
+    'Player2': new THREE.Color(0xff00ff), // Magenta
   };
 
   // Weather Diagnostic State
@@ -51,7 +48,10 @@ export class GlobeView implements IView {
     this.camera.position.z = 15;
 
     // Controls
-    this.controls = new THREE.OrbitControls(this.camera, domElement);
+    this.controls = new THREE.OrbitControls(
+      this.camera,
+      domElement,
+    );
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.enablePan = false;
@@ -65,8 +65,14 @@ export class GlobeView implements IView {
     this.scene.add(this.globeGroup);
 
     // Create the base sphere
-    const sphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32);
-    const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
+    const sphereGeometry = new THREE.SphereGeometry(
+      GLOBE_RADIUS,
+      32,
+      32,
+    );
+    const sphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x0a0a0a,
+    });
     const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
     this.globeGroup.add(sphere);
 
@@ -86,42 +92,47 @@ export class GlobeView implements IView {
 
   async #loadOutlines() {
     try {
-      const resp = await fetch("/assets/countries.geo.json");
+      const resp = await fetch('/assets/countries.geo.json');
       const data = await resp.json();
       this.#drawFeatures(data.features);
     } catch (e) {
-      console.error("[GlobeView] Failed to load country outlines", e);
+      console.error(
+        '[GlobeView] Failed to load country outlines',
+        e,
+      );
     }
   }
 
   async #fetchWeatherData() {
     try {
-      const url = `/weather-history?lat=${this.currentLat}&lon=${this.currentLon}`;
+      const url =
+        `/weather-history?lat=${this.currentLat}&lon=${this.currentLon}`;
       const resp = await fetch(url);
       this.weatherData = await resp.json();
       this.#updateDiagUI();
     } catch (e) {
-      console.error("[GlobeView] Failed to fetch weather data", e);
+      console.error('[GlobeView] Failed to fetch weather data', e);
     }
   }
 
   #showDiagOverlay() {
     if (this.diagOverlay) return;
-    this.diagOverlay = document.createElement("div");
-    this.diagOverlay.id = "globe-diag-overlay";
-    this.diagOverlay.style.position = "absolute";
-    this.diagOverlay.style.top = "0";
-    this.diagOverlay.style.left = "0";
-    this.diagOverlay.style.width = "25%";
-    this.diagOverlay.style.height = "100%";
-    this.diagOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-    this.diagOverlay.style.color = "#00ff00";
-    this.diagOverlay.style.fontFamily = "'Courier New', Courier, monospace";
-    this.diagOverlay.style.fontSize = "16px";
-    this.diagOverlay.style.padding = "20px";
-    this.diagOverlay.style.overflowY = "auto";
-    this.diagOverlay.style.textShadow = "2px 2px #000000";
-    this.diagOverlay.style.zIndex = "1000";
+    this.diagOverlay = document.createElement('div');
+    this.diagOverlay.id = 'globe-diag-overlay';
+    this.diagOverlay.style.position = 'absolute';
+    this.diagOverlay.style.top = '0';
+    this.diagOverlay.style.left = '0';
+    this.diagOverlay.style.width = '25%';
+    this.diagOverlay.style.height = '100%';
+    this.diagOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    this.diagOverlay.style.color = '#00ff00';
+    this.diagOverlay.style.fontFamily =
+      "'Courier New', Courier, monospace";
+    this.diagOverlay.style.fontSize = '16px';
+    this.diagOverlay.style.padding = '20px';
+    this.diagOverlay.style.overflowY = 'auto';
+    this.diagOverlay.style.textShadow = '2px 2px #000000';
+    this.diagOverlay.style.zIndex = '1000';
 
     document.body.appendChild(this.diagOverlay);
     this.#updateDiagUI();
@@ -136,40 +147,47 @@ export class GlobeView implements IView {
 
   #updateDiagUI() {
     if (!this.diagOverlay) return;
-    this.diagOverlay.innerHTML = "";
+    this.diagOverlay.innerHTML = '';
 
-    const title = document.createElement("h2");
-    title.textContent = "WEATHER TESTING FACILITY";
-    title.style.borderBottom = "2px solid #00ff00";
+    const title = document.createElement('h2');
+    title.textContent = 'WEATHER TESTING FACILITY';
+    title.style.borderBottom = '2px solid #00ff00';
     this.diagOverlay.appendChild(title);
 
-    const selector = document.createElement("div");
-    selector.style.display = "flex";
-    selector.style.justifyContent = "space-between";
-    selector.style.alignItems = "center";
-    selector.style.marginBottom = "20px";
-    selector.style.fontSize = "20px";
+    const selector = document.createElement('div');
+    selector.style.display = 'flex';
+    selector.style.justifyContent = 'space-between';
+    selector.style.alignItems = 'center';
+    selector.style.marginBottom = '20px';
+    selector.style.fontSize = '20px';
 
-    const btnL = document.createElement("button");
-    btnL.textContent = "◀";
-    btnL.style.background = "none";
-    btnL.style.color = "#00ff00";
-    btnL.style.border = "1px solid #00ff00";
-    btnL.style.padding = "5px 10px";
-    btnL.style.cursor = "pointer";
-    btnL.onclick = () => { this.currentLon -= 10; this.#fetchWeatherData(); };
+    const btnL = document.createElement('button');
+    btnL.textContent = '◀';
+    btnL.style.background = 'none';
+    btnL.style.color = '#00ff00';
+    btnL.style.border = '1px solid #00ff00';
+    btnL.style.padding = '5px 10px';
+    btnL.style.cursor = 'pointer';
+    btnL.onclick = () => {
+      this.currentLon -= 10;
+      this.#fetchWeatherData();
+    };
 
-    const sectorText = document.createElement("span");
-    sectorText.textContent = `LAT ${this.currentLat} LON ${this.currentLon}`;
+    const sectorText = document.createElement('span');
+    sectorText.textContent =
+      `LAT ${this.currentLat} LON ${this.currentLon}`;
 
-    const btnR = document.createElement("button");
-    btnR.textContent = "▶";
-    btnR.style.background = "none";
-    btnR.style.color = "#00ff00";
-    btnR.style.border = "1px solid #00ff00";
-    btnR.style.padding = "5px 10px";
-    btnR.style.cursor = "pointer";
-    btnR.onclick = () => { this.currentLon += 10; this.#fetchWeatherData(); };
+    const btnR = document.createElement('button');
+    btnR.textContent = '▶';
+    btnR.style.background = 'none';
+    btnR.style.color = '#00ff00';
+    btnR.style.border = '1px solid #00ff00';
+    btnR.style.padding = '5px 10px';
+    btnR.style.cursor = 'pointer';
+    btnR.onclick = () => {
+      this.currentLon += 10;
+      this.#fetchWeatherData();
+    };
 
     selector.appendChild(btnL);
     selector.appendChild(sectorText);
@@ -178,21 +196,21 @@ export class GlobeView implements IView {
 
     if (this.weatherData) {
       this.weatherData.history.forEach((year: any) => {
-        const yearTitle = document.createElement("h3");
+        const yearTitle = document.createElement('h3');
         yearTitle.textContent = `YEAR ${year.year}`;
         this.diagOverlay?.appendChild(yearTitle);
 
-        const table = document.createElement("table");
-        table.style.width = "100%";
-        table.style.borderCollapse = "collapse";
-        table.style.marginBottom = "20px";
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+        table.style.marginBottom = '20px';
 
         const header = table.insertRow();
-        ["M", "T", "P", "I"].forEach(h => {
+        ['M', 'T', 'P', 'I'].forEach((h) => {
           const cell = header.insertCell();
           cell.textContent = h;
-          cell.style.borderBottom = "1px solid #00ff00";
-          cell.style.fontWeight = "bold";
+          cell.style.borderBottom = '1px solid #00ff00';
+          cell.style.fontWeight = 'bold';
         });
 
         year.months.forEach((m: any) => {
@@ -203,7 +221,7 @@ export class GlobeView implements IView {
           const tCell = row.insertCell();
           tCell.textContent = Math.round(m.temp).toString();
           tCell.style.backgroundColor = this.#tempToColor(m.temp);
-          tCell.style.color = "#000";
+          tCell.style.color = '#000';
 
           const pCell = row.insertCell();
           pCell.textContent = Math.round(m.pressure).toString();
@@ -218,18 +236,24 @@ export class GlobeView implements IView {
   }
 
   #tempToColor(temp: number): string {
-    if (temp < 0) return "#00ffff";
-    if (temp < 10) return "#00ff00";
-    if (temp < 25) return "#ffff00";
-    return "#ff0000";
+    if (temp < 0) return '#00ffff';
+    if (temp < 10) return '#00ff00';
+    if (temp < 25) return '#ffff00';
+    return '#ff0000';
   }
 
   public onActivate(): void {
-    window.addEventListener("resize", this.onWindowResize.bind(this));
+    window.addEventListener(
+      'resize',
+      this.onWindowResize.bind(this),
+    );
   }
 
   public onDeactivate(): void {
-    window.removeEventListener("resize", this.onWindowResize.bind(this));
+    window.removeEventListener(
+      'resize',
+      this.onWindowResize.bind(this),
+    );
     this.#hideDiagOverlay();
   }
 
@@ -237,7 +261,10 @@ export class GlobeView implements IView {
     this.controls.update();
   }
 
-  public updateEntities(_entities: EntityData[], _localPlayerId?: string): void {
+  public updateEntities(
+    _entities: EntityData[],
+    _localPlayerId?: string,
+  ): void {
     // GlobeView renders large-scale sectors and units separately
     // from tactical entities. This satisfies IView.
   }
@@ -246,16 +273,24 @@ export class GlobeView implements IView {
     // Static globe for now.
   }
 
-  public rotate(direction: "up" | "down" | "left" | "right"): void {
+  public rotate(direction: 'up' | 'down' | 'left' | 'right'): void {
     if (this.controls.autoRotate) {
       this.controls.autoRotate = false;
     }
     const rotationSpeed = 0.05;
     switch (direction) {
-      case "up": this.globeGroup.rotation.x -= rotationSpeed; break;
-      case "down": this.globeGroup.rotation.x += rotationSpeed; break;
-      case "left": this.globeGroup.rotation.y -= rotationSpeed; break;
-      case "right": this.globeGroup.rotation.y += rotationSpeed; break;
+      case 'up':
+        this.globeGroup.rotation.x -= rotationSpeed;
+        break;
+      case 'down':
+        this.globeGroup.rotation.x += rotationSpeed;
+        break;
+      case 'left':
+        this.globeGroup.rotation.y -= rotationSpeed;
+        break;
+      case 'right':
+        this.globeGroup.rotation.y += rotationSpeed;
+        break;
     }
   }
 
@@ -266,13 +301,14 @@ export class GlobeView implements IView {
 
   #updateSectors(sectors: Record<string, any>): void {
     Object.values(sectors).forEach((sector) => {
-      const parts = sector.id.split("_");
+      const parts = sector.id.split('_');
       const lat = parseInt(parts[1]);
       const lon = parseInt(parts[3]);
 
       if (this.sectorMeshes[sector.id]) {
         const color = this.playerColors[sector.owner] || 0xdddddd;
-        (this.sectorMeshes[sector.id].material as THREE.MeshBasicMaterial).color
+        (this.sectorMeshes[sector.id]
+          .material as THREE.MeshBasicMaterial).color
           .set(color);
       } else {
         const color = this.playerColors[sector.owner] || 0xdddddd;
@@ -283,7 +319,11 @@ export class GlobeView implements IView {
           opacity: 0.5,
         });
         const mesh = new THREE.Mesh(geometry, material);
-        const position = this.lonLatToVector3(lon, lat, GLOBE_RADIUS);
+        const position = this.lonLatToVector3(
+          lon,
+          lat,
+          GLOBE_RADIUS,
+        );
         mesh.position.copy(position);
         mesh.lookAt(this.globeGroup.position);
 
@@ -306,7 +346,11 @@ export class GlobeView implements IView {
         this.unitMeshes[unit.id].position.copy(position);
       } else {
         const color = this.playerColors[unit.owner] || 0xffffff;
-        const geometry = new THREE.SphereGeometry(UNIT_RADIUS, 16, 16);
+        const geometry = new THREE.SphereGeometry(
+          UNIT_RADIUS,
+          16,
+          16,
+        );
         const material = new THREE.MeshBasicMaterial({ color });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.copy(position);
@@ -343,12 +387,14 @@ export class GlobeView implements IView {
   }
 
   #drawFeatures(features: any[]): void {
-    const material = new THREE.LineBasicMaterial({ color: 0x00ff00 }); // Bright Green
+    const material = new THREE.LineBasicMaterial({
+      color: 0x00ff00,
+    }); // Bright Green
     features.forEach((feature) => {
       const geom = feature.geometry;
-      if (geom.type === "Polygon") {
+      if (geom.type === 'Polygon') {
         this.#drawPolygon(geom.coordinates, material);
-      } else if (geom.type === "MultiPolygon") {
+      } else if (geom.type === 'MultiPolygon') {
         geom.coordinates.forEach((polygon: any) =>
           this.#drawPolygon(polygon, material)
         );
@@ -356,12 +402,19 @@ export class GlobeView implements IView {
     });
   }
 
-  #drawPolygon(coords: number[][][], material: THREE.LineBasicMaterial): void {
+  #drawPolygon(
+    coords: number[][][],
+    material: THREE.LineBasicMaterial,
+  ): void {
     const points: THREE.Vector3[] = [];
     coords[0].forEach((p) =>
-      points.push(this.lonLatToVector3(p[0], p[1], GLOBE_RADIUS + 0.01))
+      points.push(
+        this.lonLatToVector3(p[0], p[1], GLOBE_RADIUS + 0.01),
+      )
     );
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const geometry = new THREE.BufferGeometry().setFromPoints(
+      points,
+    );
     const line = new THREE.Line(geometry, material);
     this.globeGroup.add(line);
   }
@@ -378,7 +431,9 @@ export class GlobeView implements IView {
       for (let lon = -180; lon <= 180; lon += 5) {
         points.push(this.lonLatToVector3(lon, lat, GLOBE_RADIUS));
       }
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const geometry = new THREE.BufferGeometry().setFromPoints(
+        points,
+      );
       const line = new THREE.Line(geometry, gridMaterial);
       this.globeGroup.add(line);
     }
@@ -388,7 +443,9 @@ export class GlobeView implements IView {
       for (let lat = -90; lat <= 90; lat += 5) {
         points.push(this.lonLatToVector3(lon, lat, GLOBE_RADIUS));
       }
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const geometry = new THREE.BufferGeometry().setFromPoints(
+        points,
+      );
       const line = new THREE.Line(geometry, gridMaterial);
       this.globeGroup.add(line);
     }

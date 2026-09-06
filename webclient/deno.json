@@ -8,13 +8,13 @@
   "dependencies": {},
   "fmt": {
     "options": {
-      "semi": true,
+      "semiColons": true,
       "singleQuote": true,
-      "trailingComma": "es5",
-      "printWidth": 68,
+      "trailingCommas": "onlyMultiLine",
+      "lineWidth": 68,
       "useTabs": false
     },
-    "exclude": ["**/*.js", "deno.*"]
+    "exclude": ["**/*.js", "deno.*", "**/*.json"]
   },
   "lint": {
     "rules": {

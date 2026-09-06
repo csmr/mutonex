@@ -1,11 +1,11 @@
-import "./global_types.ts";
-import { EntityData, Terrain } from "./types.ts";
-import { LidarStyles } from "../render/LidarStyles.ts";
-import { DEV_MODE_ENABLED } from "../env-config.ts";
-import { ShortcutScope } from "../input/ShortcutConfig.ts";
-import { LidarView } from "../view/LidarView.ts";
-import { SphereView } from "../view/SphereView.ts";
-import { GlobeView } from "../view/GlobeView.ts";
+import './global_types.ts';
+import { EntityData, Terrain } from './types.ts';
+import { LidarStyles } from '../render/LidarStyles.ts';
+import { DEV_MODE_ENABLED } from '../env-config.ts';
+import { ShortcutScope } from '../input/ShortcutConfig.ts';
+import { LidarView } from '../view/LidarView.ts';
+import { SphereView } from '../view/SphereView.ts';
+import { GlobeView } from '../view/GlobeView.ts';
 
 export interface IView {
   scene: any;
@@ -18,7 +18,7 @@ export interface IView {
   update(deltaTime: number): void;
   updateEntities(
     entities: EntityData[],
-    localPlayerId?: string
+    localPlayerId?: string,
   ): void;
   updateTerrain(terrain: Terrain): void;
   onActivate(): void;
@@ -54,11 +54,11 @@ export class ViewManager {
     this.canvas = canvas;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true
+      antialias: true,
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    window.addEventListener("resize", this.resizeListener);
+    window.addEventListener('resize', this.resizeListener);
   }
 
   public get lidarView(): IView | null {
@@ -74,7 +74,7 @@ export class ViewManager {
   }
 
   public dispose(): void {
-    window.removeEventListener("resize", this.resizeListener);
+    window.removeEventListener('resize', this.resizeListener);
     this.renderer.dispose();
   }
 
@@ -87,7 +87,7 @@ export class ViewManager {
       viewManager: this,
       lidarView: this._lidarView!,
       sphereView: this._sphereView!,
-      globeView: this._globeView!
+      globeView: this._globeView!,
     };
   }
 
@@ -108,23 +108,23 @@ export class ViewManager {
     const name = view.constructor?.name;
     return Boolean(
       view.isGlobeView ||
-      name === "GlobeView" ||
-      name === "SphereView"
+        name === 'GlobeView' ||
+        name === 'SphereView',
     );
   }
 
   public getScope(phase: string): ShortcutScope {
     const active = this.getActiveView();
-    if (!active) return "lobby";
-    if (this.checkGlobeView(active)) return "globe";
-    return phase === "gamein" ? "game" : "lobby";
+    if (!active) return 'lobby';
+    if (this.checkGlobeView(active)) return 'globe';
+    return phase === 'gamein' ? 'game' : 'lobby';
   }
 
   private applyHUDVisibility(
     isGlobe: boolean,
     isGameIn: boolean,
     lobby: { show(): void; hide(): void },
-    hud: { show(): void; hide(): void }
+    hud: { show(): void; hide(): void },
   ): void {
     if (isGlobe) {
       lobby.hide();
@@ -143,19 +143,22 @@ export class ViewManager {
   public updateHUDVisibility(
     phase: string,
     lobby: { show(): void; hide(): void },
-    hud: { show(): void; hide(): void }
+    hud: { show(): void; hide(): void },
   ): void {
     const active = this.getActiveView();
     const isGlobe = this.checkGlobeView(active);
     this.applyHUDVisibility(
-      isGlobe, phase === "gamein", lobby, hud
+      isGlobe,
+      phase === 'gamein',
+      lobby,
+      hud,
     );
   }
 
   public toggleView(
     lidarView: IView,
     sphereView: IView,
-    globeView: IView
+    globeView: IView,
   ): void {
     if (this.activeView === globeView) return;
     const next = this.activeView === lidarView
@@ -166,7 +169,7 @@ export class ViewManager {
 
   public toggleGlobe(
     lidarView: IView,
-    globeView: IView
+    globeView: IView,
   ): void {
     if (!DEV_MODE_ENABLED) return;
     const next = this.activeView === globeView
@@ -184,9 +187,9 @@ export class ViewManager {
   }
 
   public rotate(
-    dir: "up" | "down" | "left" | "right"
+    dir: 'up' | 'down' | 'left' | 'right',
   ): void {
-    if (this.activeView && "rotate" in this.activeView) {
+    if (this.activeView && 'rotate' in this.activeView) {
       this.activeView.rotate?.(dir);
     }
   }
@@ -202,7 +205,7 @@ export class ViewManager {
   }
 
   public toggleDiag(): void {
-    if (this.activeView && "setDiagMode" in this.activeView) {
+    if (this.activeView && 'setDiagMode' in this.activeView) {
       this.activeView.setDiagMode?.(!this.activeView.diagEnabled);
     }
   }
@@ -215,7 +218,7 @@ export class ViewManager {
     }
     this.renderer.render(
       view.scene,
-      view.camera
+      view.camera,
     );
   }
 

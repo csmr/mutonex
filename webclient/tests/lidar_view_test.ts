@@ -9,7 +9,7 @@
 import {
   assertEquals,
   assertExists,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+} from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 // ── THREE mock ──────────────────────────────
 // Minimal stubs matching the Three.js API
@@ -56,7 +56,7 @@ class MockMatrix4 {
 }
 
 class MockColor {
-  constructor(public hex: number) { }
+  constructor(public hex: number) {}
 }
 
 class MockScene {
@@ -70,7 +70,7 @@ class MockScene {
     const idx = this.children.indexOf(obj);
     if (idx >= 0) this.children.splice(idx, 1);
   }
-  updateMatrixWorld(_force?: boolean) { }
+  updateMatrixWorld(_force?: boolean) {}
 }
 
 class MockPerspectiveCamera {
@@ -78,30 +78,30 @@ class MockPerspectiveCamera {
   far = 1000;
   aspect = 1;
   position = new MockVector3();
-  rotation: any = { x: 0, y: 0, z: 0, order: "XYZ", set: () => { } };
+  rotation: any = { x: 0, y: 0, z: 0, order: 'XYZ', set: () => {} };
   matrixWorld = new MockMatrix4();
   projectionMatrixInverse = new MockMatrix4();
-  updateProjectionMatrix() { }
+  updateProjectionMatrix() {}
 }
 
 class MockOrbitControls {
   enableDamping = false;
   autoRotate = false;
   target = new MockVector3();
-  update() { }
+  update() {}
 }
 
 function mockGeometry() {
   const attrs: Record<string, any> = {};
   return {
-    type: "BoxGeometry",
+    type: 'BoxGeometry',
     setAttribute(name: string, val: any) {
       attrs[name] = val;
     },
     getAttribute(name: string) {
       return attrs[name];
     },
-    dispose() { },
+    dispose() {},
   };
 }
 
@@ -145,36 +145,36 @@ const THREE_MOCK: any = {
     setAttribute(n: string, v: any) {
       this.attributes[n] = v;
     }
-    dispose() { }
+    dispose() {}
   },
   Float32BufferAttribute: class {
     constructor(
       public array: number[],
       public itemSize: number,
-    ) { }
+    ) {}
   },
   BufferAttribute: class {
     constructor(
       public array: any,
       public itemSize: number,
-    ) { }
+    ) {}
   },
   Points: MockPoints,
   Mesh: MockMesh,
   BoxGeometry: class {
-    type = "BoxGeometry";
-    dispose() { }
+    type = 'BoxGeometry';
+    dispose() {}
   },
   SphereGeometry: class {
-    type = "SphereGeometry";
-    dispose() { }
+    type = 'SphereGeometry';
+    dispose() {}
   },
   PlaneGeometry: class {
     rotation: any = { x: 0 };
-    dispose() { }
+    dispose() {}
   },
   MeshBasicMaterial: class {
-    constructor(public opts?: any) { }
+    constructor(public opts?: any) {}
   },
   ShaderMaterial: class {
     uniforms: any;
@@ -184,8 +184,8 @@ const THREE_MOCK: any = {
   },
   WebGLRenderTarget: class {
     texture = {};
-    setSize() { }
-    constructor() { }
+    setSize() {}
+    constructor() {}
   },
   BufferGeometryLoader: class {
     load(
@@ -211,24 +211,27 @@ const THREE_MOCK: any = {
 (globalThis as any).window = {
   innerWidth: 800,
   innerHeight: 600,
-  addEventListener: () => { },
-  removeEventListener: () => { },
+  addEventListener: () => {},
+  removeEventListener: () => {},
   // Fake OrbitControls via THREE global
   THREE: { OrbitControls: MockOrbitControls },
 };
 
 // Import after globals are ready.
 const { LidarView } = await import(
-  "../view/LidarView.ts"
+  '../view/LidarView.ts'
 );
 
 // ── Tests ───────────────────────────────────
 
 Deno.test(
-  "LidarView: constructor creates scene " +
-  "and camera",
+  'LidarView: constructor creates scene ' +
+    'and camera',
   () => {
-    const canvas = { addEventListener: () => { }, removeEventListener: () => { } } as any as HTMLCanvasElement;
+    const canvas = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any as HTMLCanvasElement;
     const lv = new LidarView(canvas);
     assertExists(lv.scene);
     assertExists(lv.camera);
@@ -237,12 +240,15 @@ Deno.test(
 );
 
 Deno.test(
-  "LidarView: setLidarStyle densePointGridVertical sets correct uniform",
+  'LidarView: setLidarStyle densePointGridVertical sets correct uniform',
   () => {
-    const canvas = { addEventListener: () => { }, removeEventListener: () => { } } as any as HTMLCanvasElement;
+    const canvas = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any as HTMLCanvasElement;
     const lv = new LidarView(canvas);
-    lv.setLidarStyle("densePointGridVertical");
-    assertEquals(lv.currentStyleName, "densePointGridVertical");
+    lv.setLidarStyle('densePointGridVertical');
+    assertEquals(lv.currentStyleName, 'densePointGridVertical');
     const u = (lv as any).lidarMaterial
       .uniforms;
     assertEquals(u.scanMode.value, 0.0);
@@ -250,12 +256,15 @@ Deno.test(
 );
 
 Deno.test(
-  "LidarView: setLidarStyle densePointGridHorizontal sets correct uniform",
+  'LidarView: setLidarStyle densePointGridHorizontal sets correct uniform',
   () => {
-    const canvas = { addEventListener: () => { }, removeEventListener: () => { } } as any as HTMLCanvasElement;
+    const canvas = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any as HTMLCanvasElement;
     const lv = new LidarView(canvas);
-    lv.setLidarStyle("densePointGridHorizontal");
-    assertEquals(lv.currentStyleName, "densePointGridHorizontal");
+    lv.setLidarStyle('densePointGridHorizontal');
+    assertEquals(lv.currentStyleName, 'densePointGridHorizontal');
     const u = (lv as any).lidarMaterial
       .uniforms;
     assertEquals(u.scanMode.value, 1.0);
@@ -263,65 +272,71 @@ Deno.test(
 );
 
 Deno.test({
-  name: "LidarView: updateEntities adds " +
-    "and removes virtual meshes",
+  name: 'LidarView: updateEntities adds ' +
+    'and removes virtual meshes',
   sanitizeOps: false,
   sanitizeResources: false,
   fn() {
-    const canvas = { addEventListener: () => { }, removeEventListener: () => { } } as any as HTMLCanvasElement;
+    const canvas = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any as HTMLCanvasElement;
     const lv = new LidarView(canvas);
 
     // Add two entities
     const entities = [
       {
-        id: "a1",
-        type: "player" as const,
+        id: 'a1',
+        type: 'player' as const,
         pos: new MockVector3(1, 0, 1),
-        char: "🧙",
+        char: '🧙',
       },
       {
-        id: "b2",
-        type: "fauna" as const,
+        id: 'b2',
+        type: 'fauna' as const,
         pos: new MockVector3(5, 0, 5),
-        char: "🦗",
+        char: '🦗',
       },
     ];
     lv.updateEntities(entities);
 
     const vm = (lv as any).entityRenderer.meshes;
     assertEquals(vm.size, 2);
-    assertEquals(vm.has("a1"), true);
-    assertEquals(vm.has("b2"), true);
+    assertEquals(vm.has('a1'), true);
+    assertEquals(vm.has('b2'), true);
 
     // Remove one entity
     lv.updateEntities([entities[0]]);
     assertEquals(vm.size, 1);
-    assertEquals(vm.has("a1"), true);
-    assertEquals(vm.has("b2"), false);
+    assertEquals(vm.has('a1'), true);
+    assertEquals(vm.has('b2'), false);
   },
 });
 
 Deno.test({
-  name: "LidarView: updateEntities updates " +
-    "mesh position",
+  name: 'LidarView: updateEntities updates ' +
+    'mesh position',
   sanitizeOps: false,
   sanitizeResources: false,
   fn() {
-    const canvas = { addEventListener: () => { }, removeEventListener: () => { } } as any as HTMLCanvasElement;
+    const canvas = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any as HTMLCanvasElement;
     const lv = new LidarView(canvas);
 
     const pos1 = new MockVector3(1, 0, 1);
     lv.updateEntities([
       {
-        id: "x1",
-        type: "unit" as const,
+        id: 'x1',
+        type: 'unit' as const,
         pos: pos1,
-        char: "🤖",
+        char: '🤖',
       },
     ]);
 
     const mesh = (lv as any).entityRenderer.meshes
-      .get("x1");
+      .get('x1');
     assertEquals(mesh.position.x, 1);
     assertEquals(mesh.position.z, 1);
 
@@ -329,10 +344,10 @@ Deno.test({
     const pos2 = new MockVector3(10, 0, 10);
     lv.updateEntities([
       {
-        id: "x1",
-        type: "unit" as const,
+        id: 'x1',
+        type: 'unit' as const,
         pos: pos2,
-        char: "🤖",
+        char: '🤖',
       },
     ]);
     assertEquals(mesh.position.x, 10);
@@ -341,9 +356,12 @@ Deno.test({
 });
 
 Deno.test(
-  "LidarView: entropy clamped by update",
+  'LidarView: entropy clamped by update',
   () => {
-    const canvas = { addEventListener: () => { }, removeEventListener: () => { } } as any as HTMLCanvasElement;
+    const canvas = {
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    } as any as HTMLCanvasElement;
     const lv = new LidarView(canvas);
     lv.entropy = 0.5;
     lv.update(0.016);
