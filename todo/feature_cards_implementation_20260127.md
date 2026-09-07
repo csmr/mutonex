@@ -50,5 +50,5 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
 ## 4. Implementation Plan for Remaining Features
 
 1.  **[COMPLETED] Unit differentiation**: Expand `Unit` struct or logic to handle `Activist` (attack) vs `Local` (work) behavior. Fauna and Octree integration is finalized.
-2.  **Building Mechanics**: Implement `Power Structure` logic (LIDAR connection) in `GameSession`.
+2.  **[COMPLETED] Building Mechanics**: Implement `Power Structure` logic (LIDAR connection) in `GameSession`.
 3.  **Action System**: Create a system to handle actions like `charm`, `build`, `attack` triggered by clients, checking `is_charmable` flags.
