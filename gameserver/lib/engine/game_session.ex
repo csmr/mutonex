@@ -281,12 +281,14 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp handle_player_update(nil, uid, pos, time, s) do
-    p = %{
-      player: %Unit{id: uid, type: :head, position: pos},
-      last_update: time
+    p = %Unit{
+      id: uid,
+      type: :head,
+      position: pos,
+      is_charmable: false
     }
 
-    update_and_broadcast(s, uid, p)
+    update_and_broadcast(s, uid, %{player: p, last_update: time})
   end
 
   defp handle_player_update(p, uid, pos, time, s) do
@@ -337,13 +339,21 @@ defmodule Mutonex.Engine.GameSession do
     :math.sqrt(dx + dy + dz)
   end
 
+  defp player_tuple(%Unit{} = p) do
+    [
+      p.id,
+      p.position.x,
+      p.position.y,
+      p.position.z,
+      p.attributes.charm,
+      p.inventory,
+      p.energy,
+      p.status
+    ]
+  end
+
   defp players_to_list(ps) do
-    Enum.map(ps, fn {_, %{player: p}} ->
-      [
-        p.id, p.position.x, p.position.y, p.position.z,
-        p.attributes.charm, p.inventory, p.energy, p.status
-      ]
-    end)
+    Enum.map(ps, fn {_, %{player: p}} -> player_tuple(p) end)
   end
 
   defp fauna_to_list(fs) do
@@ -388,12 +398,9 @@ defmodule Mutonex.Engine.GameSession do
     if s.players[uid] do
       s
     else
-      spawn_pos = %{x: 0, y: 1, z: 0}
-
-      pos =
-        ConfigReader.get(__MODULE__, :default_spawn_position, spawn_pos)
-
-      p = %Unit{id: uid, type: :head, position: pos}
+      def_pos = %{x: 0, y: 1, z: 0}
+      pos = ConfigReader.get(__MODULE__, :default_spawn_position, def_pos)
+      p = %Unit{id: uid, type: :head, position: pos, is_charmable: false}
       %{s | players: Map.put(s.players, uid, %{player: p, last_update: nil})}
     end
   end

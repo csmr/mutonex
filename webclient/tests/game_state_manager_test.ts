@@ -13,10 +13,6 @@ import {
   removeEventListener() {},
 };
 
-const { GameStateManager } = await import(
-  '../core/GameStateManager.ts'
-);
-
 class MockVector3 {
   constructor(
     public x = 0,
@@ -30,6 +26,12 @@ class MockVector3 {
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   }
 }
+
+(globalThis as any).THREE = { Vector3: MockVector3 };
+
+const { GameStateManager } = await import(
+  '../core/GameStateManager.ts'
+);
 
 class MockAvatar {
   position = new MockVector3(0, 0, 0);
@@ -144,5 +146,40 @@ Deno.test(
       provider.lastAction.payload,
       { x: 0, y: 0, z: 1 },
     );
+  },
+);
+
+Deno.test(
+  'GameStateManager: syncPlayers tracks charm, energy & status',
+  () => {
+    const gsm = new GameStateManager();
+    const provider = new MockProvider();
+    const hud = {
+      charm: 0,
+      inv: [] as string[],
+      setCharmLevel(c: number) {
+        this.charm = c;
+      },
+      setInventory(i: string[]) {
+        this.inv = i;
+      },
+    };
+
+    gsm.syncPlayers(
+      [
+        ['player_local', 10, 1, 20, 5, ['card1'], 80, 'active'],
+        ['p2', 0, 1, 0, 2, [], 0, 'mummified'],
+      ],
+      hud,
+      provider as any,
+    );
+
+    assertEquals(gsm.playerCharm.get('player_local'), 5);
+    assertEquals(gsm.playerEnergy.get('player_local'), 80);
+    assertEquals(gsm.playerStatus.get('player_local'), 'active');
+    assertEquals(gsm.playerEnergy.get('p2'), 0);
+    assertEquals(gsm.playerStatus.get('p2'), 'mummified');
+    assertEquals(hud.charm, 5);
+    assertEquals(hud.inv, ['card1']);
   },
 );

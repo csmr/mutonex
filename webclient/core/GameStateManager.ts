@@ -21,6 +21,8 @@ export interface ItemAnchorData {
 export class GameStateManager {
   public playerAnchors = new Map<string, THREE.Vector3>();
   public playerCharm = new Map<string, number>();
+  public playerEnergy = new Map<string, number>();
+  public playerStatus = new Map<string, string>();
   public faunaAnchors = new Map<string, THREE.Vector3>();
   public faunaTargets = new Map<string, THREE.Vector3>();
   public mineralAnchors = new Map<string, THREE.Vector3>();
@@ -39,6 +41,8 @@ export class GameStateManager {
   public clearSectorState(): void {
     this.playerAnchors.clear();
     this.playerCharm.clear();
+    this.playerEnergy.clear();
+    this.playerStatus.clear();
     this.faunaAnchors.clear();
     this.faunaTargets.clear();
     this.mineralAnchors.clear();
@@ -223,17 +227,27 @@ export class GameStateManager {
     );
   }
 
+  private updateLocalPlayerHUD(
+    hud: any,
+    charm?: number,
+    inv?: string[],
+  ): void {
+    if (charm !== undefined) hud.setCharmLevel(charm);
+    if (inv) hud.setInventory(inv);
+  }
+
   public syncPlayers(
     players: PlayerTuple[],
     hud: any,
     provider: GameStateProvider | null,
-  ) {
-    players.forEach(([id, x, _y, z, charm, inv]) => {
+  ): void {
+    players.forEach(([id, x, _y, z, charm, inv, nrg, st]) => {
       this.playerAnchors.set(id, new THREE.Vector3(x, 1, z));
       if (charm !== undefined) this.playerCharm.set(id, charm);
+      if (nrg !== undefined) this.playerEnergy.set(id, nrg);
+      if (st) this.playerStatus.set(id, st);
       if (provider && id === provider.playerId) {
-        hud.setCharmLevel(charm);
-        if (inv) hud.setInventory(inv);
+        this.updateLocalPlayerHUD(hud, charm, inv);
       }
     });
   }

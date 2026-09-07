@@ -29,7 +29,7 @@ layer.
   the gameserver logic.
 
 ### C. Unit/Player Unification
-- [ ] **Head Unit Full Integration**: Ensure all players spawn as
+- [x] **Head Unit Full Integration**: Ensure all players spawn as
   `:head` Units with `charm`, `inventory`, and `energy` attributes.
   (Ref: `gameplay_01_player_unit_unification.md`)
 - [ ] **Energy Lifecycle**: Implement energy depletion, collection

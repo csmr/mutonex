@@ -64,6 +64,31 @@ defmodule Mutonex.Engine.GameSessionTest do
     assert unit.attributes.charm == 1
   end
 
+  test "initial state payload includes full player unit attributes",
+       %{sector_id: sid} do
+    Mutonex.Engine.SimtellusClientMock
+    |> stub(:is_available?, fn -> true end)
+
+    {:ok, pid} = GameSession.start_link(sid)
+    wait_for_phase(pid, :lobby)
+
+    GenServer.cast(pid, {:player_joined, "user1", self()})
+    wait_for_phase(pid, :gamein)
+
+    init_state = GameSession.get_initial_state(pid)
+    players = init_state.game_state.players
+    u1 = Enum.find(players, fn [id | _] -> id == "user1" end)
+
+    assert u1 != nil
+    assert length(u1) == 8
+    [id, _x, _y, _z, charm, inv, energy, status] = u1
+    assert id == "user1"
+    assert charm == 1
+    assert inv == []
+    assert energy == 100.0
+    assert status == :active
+  end
+
   test "queues start during boot", %{sector_id: sid} do
     Mutonex.Engine.SimtellusClientMock
     |> expect(:is_available?, fn -> false end)
