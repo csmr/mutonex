@@ -1,10 +1,10 @@
 defmodule Mutonex.Engine.Systems.Actions do
-  alias Mutonex.Engine.Entities.{Unit, Item, Fauna}
+  alias Mutonex.Engine.Entities.{Unit, Item, Fauna, Building}
 
   # Action entry points
   def charm(src, tgt, s) do
     with %{} = u1 <- get_unit(s, src),
-         %{} = u2 <- get_unit_or_fauna(s, tgt),
+         %{} = u2 <- get_target(s, tgt),
          true <- charm_valid?(u1, u2) do
       {:ok, apply_charm(u2, src, s)}
     else
@@ -46,6 +46,14 @@ defmodule Mutonex.Engine.Systems.Actions do
     %{s | fauna: Map.put(s.fauna, t.id, f)}
   end
 
+  defp apply_charm(%Building{} = b, sid, s) do
+    nb = %{b | status: :active, society_id: sid, energy: 100.0}
+    bs = Enum.map(s.buildings, fn cur ->
+      if cur.id == b.id, do: nb, else: cur
+    end)
+    %{s | buildings: bs}
+  end
+
   defp apply_pickup(uid, itm, s) do
     p = s.players[uid]
     unit = %{p.player | 
@@ -62,10 +70,15 @@ defmodule Mutonex.Engine.Systems.Actions do
     pos = calculate_drop_pos(unit.position, meta)
     ni = %Item{id: itm, type: type, position: pos}
     p = %{s.players[uid] | player: %{unit | inventory: inv}}
-    %{s | items: [ni | s.items], players: Map.put(s.players, uid, p)}
+    ps = Map.put(s.players, uid, p)
+    %{s | items: [ni | s.items], players: ps}
   end
 
-  defp calculate_drop_pos(pos, %{"x" => dx, "y" => dy, "z" => dz}) do
+  defp calculate_drop_pos(pos, %{
+         "x" => dx,
+         "y" => dy,
+         "z" => dz
+       }) do
     # Defensive: apply 1m offset in direction DX, DY, DZ
     %{x: pos.x + dx, y: pos.y + dy, z: pos.z + dz}
   end
@@ -73,6 +86,11 @@ defmodule Mutonex.Engine.Systems.Actions do
   defp calculate_drop_pos(pos, _), do: pos
 
   # Utilities
+  defp charm_valid?(u1, %Building{} = b) do
+    (b.status == :ruined || b.society_id == nil) &&
+      dist(u1.position, b.position) <= 20.0
+  end
+
   defp charm_valid?(u1, u2) do
     u2.is_charmable && dist(u1.position, u2.position) <= 20.0
   end
@@ -97,5 +115,9 @@ defmodule Mutonex.Engine.Systems.Actions do
     if p = s.players[id], do: p.player, else: nil
   end
 
-  defp get_unit_or_fauna(s, id), do: get_unit(s, id) || s.fauna[id]
+  defp get_target(s, id) do
+    get_unit(s, id) || s.fauna[id] || find_b(s.buildings, id)
+  end
+
+  defp find_b(bs, id), do: Enum.find(bs, &(&1.id == id))
 end

@@ -47,16 +47,16 @@ these structural ego-monuments.
 
 ## The Implementation Roadmap
 
-- [ ] **Engine/Entities update**: Add `perimeter_radius` to
+- [x] **Engine/Entities update**: Add `perimeter_radius` to
   `Building` struct (defaulting to 2.0km for Powerstructures).
-- [ ] **Spatial Query logic**: Update `Environment` system to use
+- [x] **Spatial Query logic**: Update `Environment` system to use
   stippled sampling or octree checks before spawning new
   `Building` entities (see
   [stippling docs](../../docs/stippling-and-spawning.md)).
-- [ ] **Relic Pipeline**: Implementation of a "Graveyard Shift"
+- [x] **Relic Pipeline**: Implementation of a "Graveyard Shift"
   process that moves session buildings to `Mutonex.Simtellus`
   artifacts upon session closure.
-- [ ] **The "Charmable Ruin" conversion**: Logic to transform a
+- [x] **The "Charmable Ruin" conversion**: Logic to transform a
   persistent artifact (Simtellus) into an active session entity
   (Engine) when a player discovers it.
 

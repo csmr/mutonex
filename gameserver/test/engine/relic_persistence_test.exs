@@ -1,6 +1,6 @@
 defmodule Mutonex.Engine.RelicPersistenceTest do
   use ExUnit.Case, async: false
-  alias Mutonex.Engine.Systems.Environment
+  alias Mutonex.Engine.Systems.{Environment, Actions}
   alias Mutonex.Engine.GameSession
   alias Mutonex.Engine.Entities.Building
   import Mox
@@ -29,6 +29,18 @@ defmodule Mutonex.Engine.RelicPersistenceTest do
       fn -> true end
     )
 
+    stub(
+      Mutonex.Engine.SimtellusClientMock,
+      :get_artifacts,
+      fn _, _ -> [] end
+    )
+
+    stub(
+      Mutonex.Engine.SimtellusClientMock,
+      :add_artifact,
+      fn _, _, _ -> :ok end
+    )
+
     :ok
   end
 
@@ -37,11 +49,11 @@ defmodule Mutonex.Engine.RelicPersistenceTest do
       id: "b1",
       type: :power_structure,
       position: %{x: 0, y: 0, z: 0},
-      perimeter_radius: 2000.0
+      perimeter_radius: 2.0
     }
 
-    pos_near = %{x: 1000.0, y: 0, z: 0}
-    pos_far = %{x: 2500.0, y: 0, z: 0}
+    pos_near = %{x: 1.0, y: 0, z: 0}
+    pos_far = %{x: 3.0, y: 0, z: 0}
 
     refute Environment.valid_building_perimeter?(
              [b1],
@@ -61,10 +73,10 @@ defmodule Mutonex.Engine.RelicPersistenceTest do
       id: "b1",
       type: :power_structure,
       position: %{x: 0, y: 0, z: 0},
-      perimeter_radius: 2000.0
+      perimeter_radius: 2.0
     }
 
-    pos_near = %{x: 10.0, y: 0, z: 0}
+    pos_near = %{x: 0.5, y: 0, z: 0}
 
     assert Environment.valid_building_perimeter?(
              [b1],
@@ -77,8 +89,8 @@ defmodule Mutonex.Engine.RelicPersistenceTest do
     artifact = %{
       id: "relic_01",
       type: :relic,
-      position: %{x: 5000.0, y: 0, z: 0},
-      perimeter_radius: 2000.0,
+      position: %{x: 5.0, y: 0, z: 0},
+      perimeter_radius: 2.0,
       attributes: %{scale: 1.0}
     }
 
@@ -94,18 +106,35 @@ defmodule Mutonex.Engine.RelicPersistenceTest do
     relic = Enum.find(state.buildings, &(&1.id == "relic_01"))
     assert relic != nil
     assert relic.status == :ruined
-    assert relic.position.x == 5000.0
+    assert relic.position.x == 5.0
+  end
+
+  test "charm action reclaims ruined building" do
+    ruin = %Building{
+      id: "ruin_alpha",
+      type: :relic,
+      position: %{x: 1.0, y: 1.0, z: 0.0},
+      status: :ruined,
+      energy: 0.0
+    }
+
+    state = Environment.initial_state("sector_10_20_test")
+    state = Environment.build(state)
+    state = %{state | buildings: [ruin | state.buildings]}
+
+    caster = state.players["dummy_player_alpha"].player
+
+    {:ok, ns} = Actions.charm(caster.id, "ruin_alpha", state)
+
+    b = Enum.find(ns.buildings, &(&1.id == "ruin_alpha"))
+    assert b.status == :active
+    assert b.society_id == caster.id
+    assert b.energy == 100.0
   end
 
   test "persist_relics saves non-exempt session buildings" do
     sid = "sector_10_20_test_#{System.unique_integer()}"
     test_pid = self()
-
-    stub(
-      Mutonex.Engine.SimtellusClientMock,
-      :get_artifacts,
-      fn _, _ -> [] end
-    )
 
     stub(
       Mutonex.Engine.SimtellusClientMock,

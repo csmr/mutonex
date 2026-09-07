@@ -265,7 +265,7 @@ defmodule Mutonex.Engine.Systems.Environment do
       position: b.position,
       society_id: b.society_id,
       attributes: b.attributes,
-      perimeter_radius: Map.get(b, :perimeter_radius, 2000.0),
+      perimeter_radius: Map.get(b, :perimeter_radius, 2.0),
       energy: 0.0,
       status: :ruined
     }
@@ -277,7 +277,7 @@ defmodule Mutonex.Engine.Systems.Environment do
       type: Map.get(art, :type, :relic),
       position: Map.get(art, :position, %{x: 0, y: 0, z: 0}),
       society_id: Map.get(art, :society_id),
-      perimeter_radius: Map.get(art, :perimeter_radius, 2000.0),
+      perimeter_radius: Map.get(art, :perimeter_radius, 2.0),
       attributes: Map.get(art, :attributes, %{scale: 1.0}),
       energy: 0.0,
       status: :ruined
@@ -304,7 +304,7 @@ defmodule Mutonex.Engine.Systems.Environment do
     if b.type in @exempt_types do
       true
     else
-      r = Map.get(b, :perimeter_radius, 2000.0)
+      r = Map.get(b, :perimeter_radius, 2.0)
       ground_dist(b.position, pos) >= r
     end
   end

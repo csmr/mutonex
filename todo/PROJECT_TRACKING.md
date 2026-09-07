@@ -83,10 +83,10 @@ layer.
 ## 4. World Persistence & Interaction
 
 ### A. The Relic System
-- [ ] **Relic Pipeline**: Move session buildings to Simtellus
+- [x] **Relic Pipeline**: Move session buildings to Simtellus
   persistent state upon session closure. (Ref:
-  `building_sprawl_and_relic_persistence.md`)
-- [ ] **Spatial Perimeter**: Enforce 2km "Social Distancing"
+  `archive/building_sprawl_and_relic_persistence.md`)
+- [x] **Spatial Perimeter**: Enforce 2km "Social Distancing"
   between major buildings.
 
 ### B. Social Dynamics
