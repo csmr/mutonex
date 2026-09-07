@@ -19,6 +19,8 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
       _ -> :ok
     end
     Mox.stub(Mutonex.Engine.SimtellusClientMock, :is_available?, fn -> true end)
+    Mox.stub(Mutonex.Engine.SimtellusClientMock, :get_artifacts, fn _, _ -> [] end)
+    Mox.stub(Mutonex.Engine.SimtellusClientMock, :add_artifact, fn _, _, _ -> :ok end)
 
     uid = "test_user_" <> Base.encode16(:crypto.strong_rand_bytes(4))
     {:ok, _, socket} =

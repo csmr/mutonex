@@ -66,6 +66,7 @@ defmodule Mutonex.Engine.Entities do
               society_id: nil,
               chief_id: nil,
               sight_area: 0,
+              perimeter_radius: 2000.0,
               function: nil, # :resource_conversion, etc.
               connected_mineral_ids: [], # List of mineral_ids connected via conveyor
               attributes: %{

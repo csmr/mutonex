@@ -33,6 +33,21 @@ defmodule Mutonex.Engine.SimtellusClient do
   end
 
   @doc """
+  Fetches artifacts for lat/lon from local Simulation.
+  """
+  def get_artifacts(lat, lon) do
+    Simulation.get_artifacts(lat, lon)
+  end
+
+  @doc """
+  Adds an artifact for lat/lon in local Simulation.
+  """
+  def add_artifact(lat, lon, art) do
+    Simulation.add_artifact(lat, lon, art)
+    :ok
+  end
+
+  @doc """
   Checks if the Simtellus Simulation is available.
   """
   def is_available? do
