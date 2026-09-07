@@ -15,7 +15,8 @@ defmodule Mutonex.Engine.GameSession do
   @action_dispatch %{
     "charm" => :charm,
     "pick_up" => :pick_up,
-    "drop_item" => :drop
+    "drop_item" => :drop,
+    "install_lidar" => :install_lidar
   }
 
   # --- Client API ---
@@ -214,6 +215,17 @@ defmodule Mutonex.Engine.GameSession do
     case Actions.pick_up(src, itm_id, s) do
       {:ok, ns} ->
         broadcast_state_update(ns, %{items: ns.items})
+        {:noreply, ns}
+
+      _ ->
+        {:noreply, s}
+    end
+  end
+
+  def install_lidar(src, bld_id, _meta, s) do
+    case Actions.install_lidar(src, bld_id, s) do
+      {:ok, ns} ->
+        broadcast_state_update(ns, %{buildings: ns.buildings})
         {:noreply, ns}
 
       _ ->

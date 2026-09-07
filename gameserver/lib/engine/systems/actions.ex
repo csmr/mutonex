@@ -1,5 +1,5 @@
 defmodule Mutonex.Engine.Systems.Actions do
-  alias Mutonex.Engine.Entities.{Unit, Item, Fauna}
+  alias Mutonex.Engine.Entities.{Unit, Item, Fauna, Building}
 
   # Action entry points
   def charm(src, tgt, s) do
@@ -29,6 +29,17 @@ defmodule Mutonex.Engine.Systems.Actions do
       {:ok, apply_drop(src, itm_id, meta, p.player, s)}
     else
       {:error, :invalid}
+    end
+  end
+
+  def install_lidar(src, bld_id, s) do
+    with %Unit{} = u <- get_unit(s, src),
+         %Building{} = b <- get_building(s, bld_id),
+         lidar when not is_nil(lidar) <- find_lidar(u.inventory),
+         true <- dist(u.position, b.position) <= 15.0 do
+      {:ok, apply_install_lidar(src, lidar, b, s)}
+    else
+      _ -> {:error, :invalid}
     end
   end
 
@@ -77,10 +88,45 @@ defmodule Mutonex.Engine.Systems.Actions do
     u2.is_charmable && dist(u1.position, u2.position) <= 20.0
   end
 
+  defp apply_install_lidar(uid, lidar_id, b, s) do
+    p = s.players[uid]
+    inv = List.delete(p.player.inventory, lidar_id)
+    u = %{p.player | inventory: inv}
+    ps = Map.put(s.players, uid, %{p | player: u})
+    attrs = b.attributes || %{}
+    b_attr = Map.put(attrs, :has_lidar, true)
+    b_upd = %{b | sight_area: b.sight_area + 50.0,
+                  attributes: b_attr}
+    bs = update_building_list(s.buildings, b_upd)
+    %{s | players: ps, buildings: bs}
+  end
+
+  defp update_building_list(bs, updated) do
+    Enum.map(bs, fn b ->
+      if b.id == updated.id, do: updated, else: b
+    end)
+  end
+
+  defp find_lidar(inv) do
+    Enum.find(inv, &is_lidar?/1)
+  end
+
+  defp is_lidar?(item_id) when is_binary(item_id) do
+    String.starts_with?(item_id, "item_lidar") or
+      item_id == "lidar"
+  end
+  defp is_lidar?(_), do: false
+
+  defp get_building(s, id) do
+    Enum.find(s.buildings, &(&1.id == id))
+  end
+
   defp get_item_type(itm) do
     case itm do
       "item_gem" <> _ -> :gem
       "item_pager" <> _ -> :video_phone
+      "item_lidar" <> _ -> :lidar
+      "lidar" -> :lidar
       _ -> :unknown
     end
   end
