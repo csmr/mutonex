@@ -44,6 +44,7 @@ defmodule Mutonex.Engine.Systems.Environment do
         players: add_dummies(s.players),
         pending_start: false
     }
+    s = %{s | buildings: load_relics(s.buildings, s.sector_id)}
     if String.contains?(s.sector_id, "test") do
       apply_test_layout(s)
     else
@@ -227,5 +228,107 @@ defmodule Mutonex.Engine.Systems.Environment do
         position: %{x: -2, y: 1, z: -2}
       }
     ]
+  end
+
+  @exempt_types [:conveyor_belt, :fiber_optic, :conveyor]
+
+  def parse_sector_coords(sid) do
+    case String.split(sid, "_") do
+      ["sector", lat, lon | _] ->
+        {parse_int(lat), parse_int(lon)}
+
+      _ ->
+        {0, 0}
+    end
+  end
+
+  def load_relics(buildings, sid) do
+    {lat, lon} = parse_sector_coords(sid)
+    client = simtellus_client()
+    arts = client.get_artifacts(lat, lon) || []
+    Enum.reduce(arts, buildings, &maybe_add_relic/2)
+  end
+
+  defp maybe_add_relic(art, acc) do
+    b = artifact_to_building(art)
+    if valid_building_perimeter?(acc, b.position, b.type) do
+      [b | acc]
+    else
+      acc
+    end
+  end
+
+  def building_to_artifact(b) do
+    %{
+      id: b.id,
+      type: b.type,
+      position: b.position,
+      society_id: b.society_id,
+      attributes: b.attributes,
+      perimeter_radius: Map.get(b, :perimeter_radius, 2.0),
+      energy: 0.0,
+      status: :ruined
+    }
+  end
+
+  def artifact_to_building(art) do
+    %Mutonex.Engine.Entities.Building{
+      id: Map.get(art, :id) || "relic_#{System.unique_integer()}",
+      type: Map.get(art, :type, :relic),
+      position: Map.get(art, :position, %{x: 0, y: 0, z: 0}),
+      society_id: Map.get(art, :society_id),
+      perimeter_radius: Map.get(art, :perimeter_radius, 2.0),
+      attributes: Map.get(art, :attributes, %{scale: 1.0}),
+      energy: 0.0,
+      status: :ruined
+    }
+  end
+
+  defp simtellus_client do
+    Application.get_env(
+      :mutonex_server,
+      :simtellus_client,
+      Mutonex.Engine.SimtellusClient
+    )
+  end
+
+  def valid_building_perimeter?(existing, pos, type) do
+    if type in @exempt_types do
+      true
+    else
+      Enum.all?(existing, &within_perimeter?(&1, pos))
+    end
+  end
+
+  defp within_perimeter?(b, pos) do
+    if b.type in @exempt_types do
+      true
+    else
+      r = Map.get(b, :perimeter_radius, 2.0)
+      ground_dist(b.position, pos) >= r
+    end
+  end
+
+  defp ground_dist(p1, p2) do
+    x1 = get_pos_coord(p1, :x)
+    x2 = get_pos_coord(p2, :x)
+    z1 = get_pos_coord(p1, :z)
+    z2 = get_pos_coord(p2, :z)
+    dx = x1 - x2
+    dz = z1 - z2
+    :math.sqrt(dx * dx + dz * dz)
+  end
+
+  defp get_pos_coord(map, key) when is_map(map) do
+    Map.get(map, key, 0) || 0
+  end
+
+  defp get_pos_coord(_, _), do: 0
+
+  defp parse_int(val) do
+    case Integer.parse(val) do
+      {num, _} -> num
+      :error -> 0
+    end
   end
 end

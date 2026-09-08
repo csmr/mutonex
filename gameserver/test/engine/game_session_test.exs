@@ -20,6 +20,9 @@ defmodule Mutonex.Engine.GameSessionTest do
       Application.put_env(app, key, val)
     end)
 
+    stub(Mutonex.Engine.SimtellusClientMock, :get_artifacts, fn _, _ -> [] end)
+    stub(Mutonex.Engine.SimtellusClientMock, :add_artifact, fn _, _, _ -> :ok end)
+
     sector_id = "test_sector_#{System.unique_integer()}"
     {:ok, sector_id: sector_id}
   end

@@ -65,6 +65,7 @@ defmodule Mutonex.Engine.EntitiesTest do
         check(building.society_id == nil) &&
         check(building.chief_id == nil) &&
         check(building.sight_area == 0) &&
+        check(building.perimeter_radius == 2.0) &&
         check(building.function == nil) &&
         check(building.history == %{})
       end),

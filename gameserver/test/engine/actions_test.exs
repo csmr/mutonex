@@ -54,4 +54,46 @@ defmodule Mutonex.Engine.ActionsTest do
 
     assert {:error, :mineral_already_connected} = Actions.build_conveyor(game_state, unit, mineral, building)
   end
+
+  test "install_lidar successfully installs LIDAR into building" do
+    alias Mutonex.Engine.Systems.Actions, as: SystemActions
+    unit = %Unit{id: "u1", position: %{x: 0, y: 0, z: 0}, inventory: ["item_lidar_1"]}
+    building = %Building{id: "b1", position: %{x: 2, y: 0, z: 2}, sight_area: 10.0, attributes: %{}}
+    state = %{
+      players: %{"u1" => %{player: unit, last_update: 0}},
+      buildings: [building]
+    }
+
+    assert {:ok, new_state} = SystemActions.install_lidar("u1", "b1", state)
+    updated_unit = new_state.players["u1"].player
+    updated_building = Enum.find(new_state.buildings, &(&1.id == "b1"))
+
+    assert "item_lidar_1" not in updated_unit.inventory
+    assert updated_building.sight_area == 60.0
+    assert updated_building.attributes[:has_lidar] == true
+  end
+
+  test "install_lidar fails when unit lacks LIDAR item" do
+    alias Mutonex.Engine.Systems.Actions, as: SystemActions
+    unit = %Unit{id: "u1", position: %{x: 0, y: 0, z: 0}, inventory: ["item_gem"]}
+    building = %Building{id: "b1", position: %{x: 2, y: 0, z: 2}}
+    state = %{
+      players: %{"u1" => %{player: unit, last_update: 0}},
+      buildings: [building]
+    }
+
+    assert {:error, :invalid} = SystemActions.install_lidar("u1", "b1", state)
+  end
+
+  test "install_lidar fails when unit is too far from building" do
+    alias Mutonex.Engine.Systems.Actions, as: SystemActions
+    unit = %Unit{id: "u1", position: %{x: 0, y: 0, z: 0}, inventory: ["item_lidar_1"]}
+    building = %Building{id: "b1", position: %{x: 50, y: 0, z: 50}}
+    state = %{
+      players: %{"u1" => %{player: unit, last_update: 0}},
+      buildings: [building]
+    }
+
+    assert {:error, :invalid} = SystemActions.install_lidar("u1", "b1", state)
+  end
 end

@@ -1,5 +1,5 @@
 defmodule Mutonex.Net.GameChannelTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
   import Phoenix.ChannelTest
 
   @endpoint Mutonex.Net.Endpoint
@@ -11,6 +11,8 @@ defmodule Mutonex.Net.GameChannelTest do
   defmodule SimtellusClientStub do
     @behaviour Mutonex.Engine.SimtellusClientBehaviour
     def get_planet_state(_lat, _lon), do: {:ok, %{}}
+    def get_artifacts(_lat, _lon), do: []
+    def add_artifact(_lat, _lon, _art), do: :ok
     def is_available?, do: true
   end
 
@@ -37,6 +39,15 @@ defmodule Mutonex.Net.GameChannelTest do
     end
 
     Mox.stub_with(Mutonex.Engine.SimtellusClientMock, SimtellusClientStub)
+
+    on_exit(fn ->
+      via = {:via, Registry, {Mutonex.GameRegistry, "lobby"}}
+
+      if pid = GenServer.whereis(via) do
+        sup = Mutonex.GameSessionSupervisor
+        DynamicSupervisor.terminate_child(sup, pid)
+      end
+    end)
 
     {:ok, _, socket} =
       socket(UserSocket, "user:guest", %{})

@@ -48,7 +48,8 @@ defmodule Mutonex.Simtellus.Simulation do
   def init(opts) do
     cfg = ConfigReader.get(__MODULE__)
     sd = Keyword.get(opts, :start_date, cfg[:default_start_date])
-    yb = Keyword.get(opts, :years_before, cfg[:default_years_before])
+    def_yb = cfg[:default_years_before]
+    yb = Keyword.get(opts, :years_before, def_yb)
     sz = cfg[:sector_size] || 10
 
     state = %State{
@@ -124,17 +125,35 @@ defmodule Mutonex.Simtellus.Simulation do
     {:reply, new_state.current_date, new_state}
   end
 
+  @max_sector_artifacts 20
+
   @impl true
   def handle_cast({:add_artifact, lat, lon, art}, state) do
     key = sector_key(lat, lon, state.sector_size)
 
     new_arts =
       Map.update(state.artifacts, key, [art], fn existing ->
-        existing ++ [art]
+        upsert_artifact(existing, art)
+        |> Enum.take(-@max_sector_artifacts)
       end)
 
     {:noreply, %{state | artifacts: new_arts}}
   end
+
+  defp upsert_artifact(existing, art) do
+    art_id = get_art_id(art)
+
+    case Enum.find_index(existing, &(get_art_id(&1) == art_id)) do
+      nil -> existing ++ [art]
+      idx -> List.replace_at(existing, idx, art)
+    end
+  end
+
+  defp get_art_id(art) when is_map(art) do
+    Map.get(art, :id) || Map.get(art, "id")
+  end
+
+  defp get_art_id(_), do: nil
 
   @impl true
   def handle_info(:tick_simulation, state) do

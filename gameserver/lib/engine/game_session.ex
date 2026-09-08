@@ -15,7 +15,8 @@ defmodule Mutonex.Engine.GameSession do
   @action_dispatch %{
     "charm" => :charm,
     "pick_up" => :pick_up,
-    "drop_item" => :drop
+    "drop_item" => :drop,
+    "install_lidar" => :install_lidar
   }
 
   # --- Client API ---
@@ -25,6 +26,10 @@ defmodule Mutonex.Engine.GameSession do
 
   def get_initial_state(pid) do
     GenServer.call(pid, :get_initial_state)
+  end
+
+  def persist_relics(pid) do
+    GenServer.call(pid, :persist_relics)
   end
 
   # --- Callbacks ---
@@ -60,6 +65,16 @@ defmodule Mutonex.Engine.GameSession do
     }
 
     {:reply, resp, s}
+  end
+
+  def handle_call(:persist_relics, _from, s) do
+    do_persist_relics(s)
+    {:reply, :ok, s}
+  end
+
+  def terminate(_reason, s) do
+    do_persist_relics(s)
+    :ok
   end
 
   def handle_info(:check_simtellus, s) do
@@ -214,6 +229,17 @@ defmodule Mutonex.Engine.GameSession do
     case Actions.pick_up(src, itm_id, s) do
       {:ok, ns} ->
         broadcast_state_update(ns, %{items: ns.items})
+        {:noreply, ns}
+
+      _ ->
+        {:noreply, s}
+    end
+  end
+
+  def install_lidar(src, bld_id, _meta, s) do
+    case Actions.install_lidar(src, bld_id, s) do
+      {:ok, ns} ->
+        broadcast_state_update(ns, %{buildings: ns.buildings})
         {:noreply, ns}
 
       _ ->
@@ -449,5 +475,26 @@ defmodule Mutonex.Engine.GameSession do
 
   defp via_tuple(sid) do
     {:via, Registry, {Mutonex.GameRegistry, sid}}
+  end
+
+  defp do_persist_relics(s) do
+    {lat, lon} = Environment.parse_sector_coords(s.sector_id)
+    client = simtellus_client()
+    exempt = [:conveyor_belt, :fiber_optic, :conveyor]
+
+    Enum.each(s.buildings, fn b ->
+      if b.type not in exempt do
+        art = Environment.building_to_artifact(b)
+        client.add_artifact(lat, lon, art)
+      end
+    end)
+  end
+
+  defp simtellus_client do
+    Application.get_env(
+      :mutonex_server,
+      :simtellus_client,
+      SimtellusClient
+    )
   end
 end
