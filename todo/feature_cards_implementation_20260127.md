@@ -10,7 +10,10 @@ Entities are the core interactive objects in the game world. They are implemente
     *   *Status*: Stubbed. Needs expansion for specific behavior logic (movement speed, sight radius) which varies by type.
     *   *Charmable*: Default `true`. Can be set to `false` for specific types (e.g., Heads, if implied).
 *   **Building**: Implemented as `Mutonex.Engine.Entities.Building`. Covers `Power Structure` and generic buildings.
-    *   *Status*: Stubbed. Needs implementation of `function` logic (resource conversion, sight generation).
+    *   *Status*: Partial (In Progress). Gameserver supports
+        `install_lidar` modifier items, perimeter spacing, and
+        relic persistence. Requires webclient 3D entity rendering
+        and full building verb functions.
 *   **Society**: Implemented as `Mutonex.Engine.Entities.Society`.
     *   *Status*: Stubbed. Represents the social group or faction. Replaces the "ethnicity" concept with a `locale` property derived from `regions.yaml`.
 *   **Fauna**: Implemented as `Mutonex.Engine.Entities.Fauna`.
@@ -49,6 +52,25 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
 
 ## 4. Implementation Plan for Remaining Features
 
-1.  **[COMPLETED] Unit differentiation**: Expand `Unit` struct or logic to handle `Activist` (attack) vs `Local` (work) behavior. Fauna and Octree integration is finalized.
-2.  **[COMPLETED] Building Mechanics**: Implement `Power Structure` logic (LIDAR connection) in `GameSession`.
-3.  **Action System**: Create a system to handle actions like `charm`, `build`, `attack` triggered by clients, checking `is_charmable` flags.
+### A. Active TODOs
+1.  **Webclient 3D Building Entities**: Implement webclient 3D
+    entity rendering for in-game buildings (`Power Structure`,
+    `Tent`, `Houses`, `Cityscape`, `Moyai`, `Solar Panel`) in
+    `webclient/render/EntityRenderer.ts` and
+    `webclient/core/GameStateManager.ts`.
+2.  **Building Verbs & Functions**: Implement engine verbs
+    (`build_powerstructure`, `build_conveyor`, `build_fiber`),
+    power projection sight radius, and resource conversion in
+    `Mutonex.Engine.Actions`.
+3.  **Action System**: Create a system to handle actions like
+    `charm`, `build`, `attack` triggered by clients, checking
+    `is_charmable` flags.
+
+### B. Completed & Archived Items
+1.  **Unit Differentiation**: Expand `Unit` struct or logic to
+    handle `Activist` (attack) vs `Local` (work) behavior.
+    Fauna and Octree integration is finalized.
+2.  **Building Modifiers & Persistence**: `install_lidar` modifier
+    item attachment, 2km spatial perimeter checks, and relic
+    persistence (manifesting persistent relics as dormant unowned
+    NPC-buildings ready to be charmed) are complete in the engine.

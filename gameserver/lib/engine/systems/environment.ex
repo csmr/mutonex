@@ -177,7 +177,7 @@ defmodule Mutonex.Engine.Systems.Environment do
     %Mutonex.Engine.Entities.Building{
       id: "test_building_#{type}",
       type: type,
-      position: %{x: x, y: 0, z: cfg[:building_z] || 0},
+      position: %{x: x, y: 0, z: cfg[:building_z] || 30.0},
       energy: 100.0,
       attributes: %{
         ethnicity: FactionResolver.resolve_ethnicity(),

@@ -31,10 +31,10 @@ these structural ego-monuments.
 - **Simtellus Layer**: When a session ends, surviving buildings
   are "de-activated" and sent to the Simtellus Simulation as
   **Relics** (GDD 3.1).
-- **Relic Reclamation**: In new sessions, the engine should check
-  the Simtellus state for nearby relics. If they are far enough
-  (2km+) from the player's fair-start zone, they are manifested as
-  "ruins" ready to be charmed.
+- **Relic Reclamation**: In new sessions, the engine checks
+  Simtellus state for persistent relics. If far enough (2km+)
+  from the fair-start zone, they manifest as dormant unowned
+  **NPC-buildings** (relics) ready to be charmed by players.
 
 ### 3. The "Fair Start" Seeding (Procedural Logic)
 - **Guaranteed Spawns**: Upon player `head_unit` spawn, the engine
@@ -56,9 +56,9 @@ these structural ego-monuments.
 - [x] **Relic Pipeline**: Implementation of a "Graveyard Shift"
   process that moves session buildings to `Mutonex.Simtellus`
   artifacts upon session closure.
-- [x] **The "Charmable Ruin" conversion**: Logic to transform a
+- [x] **The "Charmable Relic" conversion**: Logic to transform a
   persistent artifact (Simtellus) into an active session entity
-  (Engine) when a player discovers it.
+  (Engine) when a player charms the NPC building.
 
 ## Witty Observation
 *If a tree falls in the forest and no one is around to LIDAR-scan
