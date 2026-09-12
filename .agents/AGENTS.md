@@ -32,11 +32,12 @@ standalone, existing for each module.
 - Format files: `bash scripts/format_doc.sh [-f]`
 
 ## Getting Started
-1. Read `devenv.sh` for env generation.
-2. Read `README.md` for module development basics.
-3. Read `docs/mutonex-design-document.html` TOC for index.
-4. Install dependencies: `bash .agents/agent_setup.sh`
-5. Verify webclient bundle: `bash webclient/build-webclient.sh`
+1. Read `.agents/DEVELOPMENT_GUIDE.md` for workflow guide.
+2. Read `devenv.sh` for env generation.
+3. Read `README.md` for module development basics.
+4. Read `docs/mutonex-design-document.html` TOC for index.
+5. Install dependencies: `bash .agents/agent_setup.sh`
+6. Verify webclient bundle: `bash webclient/build-webclient.sh`
 
 ## Directories
 - Use `docs/` for reference.
