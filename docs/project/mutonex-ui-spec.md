@@ -26,7 +26,15 @@ Accessibility is a primary design goal. The UI must be perceivable, operable, un
 *   **High Contrast:** The "Orange LIDAR" theme is designed for high contrast. All text and meaningful UI elements will meet or exceed a 4.5:1 contrast ratio.
 *   **Color Independence:** Color will not be the sole means of conveying information. Patterns, icons, and text labels will be used to differentiate game elements like political control.
 *   **Keyboard Navigation:** All interactive elements, including globe functions and menus, must be fully operable via the keyboard.
-*   **Screen Reader Support:** ARIA attributes will be used extensively to ensure all components are understandable to screen readers. Visual information on the globe will have textual alternatives (e.g., announcing selected sector details).
+*   **Screen Reader Support:** ARIA attributes will be used
+    extensively to ensure all components are understandable to
+    screen readers. Visual information on the globe will have
+    textual alternatives (e.g., announcing selected sector
+    details).
+*   **Modals & Detail Panels:** Interactive modals and detail
+    panels (e.g., Sector Info Panel, Diplomacy Menu) are fully
+    keyboard-navigable with ARIA roles and structured for clear
+    screen reader announcements.
 
 ## 4. Core UI Features
 
@@ -70,56 +78,32 @@ A dedicated view for real-time diplomacy via webcams or avatars, triggered durin
 
 ## 5. Technical Implementation
 
-This section outlines the proposed technology stack, compatible with the existing Deno/TypeScript webclient foundation.
+This section outlines the technology stack for the Deno/TypeScript
+webclient foundation.
 
-### 5.1. Frontend Framework
+### 5.1. Frontend Architecture
 
-*   **Recommendation:** **Svelte** or **Preact**.
-*   **Justification:** High performance, small bundle sizes, and simplicity, ideal for a fast-loading game UI.
+*   **Choice:** **Vanilla TypeScript** (`webclient/core/`,
+    `webclient/view/`, `webclient/input/`).
+*   **Justification:** Direct DOM manipulation and minimal module
+    coupling without heavy framework dependencies.
 
 ### 5.2. 3D Rendering
 
-*   **Recommendation:** **Three.js**.
-*   **Justification:** Mature, feature-rich, and high-performance WebGL library.
+*   **Choice:** **Three.js**.
+*   **Justification:** Mature, feature-rich, and high-performance
+    WebGL library.
 
 ### 5.3. State Management
 
-*   **Recommendation:** **Svelte Stores** or a lightweight custom solution.
-*   **Justification:** A full state management library is unnecessary as the server drives the game state.
+*   **Choice:** **Vanilla TS Managers** (`GameStateManager`,
+    `InputManager`, `ViewManager`).
+*   **Justification:** Server drives authoritative state; local
+    managers handle UI sync and input loops cleanly.
 
 ### 5.4. Server Communication
 
 *   **Protocol:** **WebSockets**.
-*   **Implementation:** A persistent connection to `gameserver` will be used.
+*   **Implementation:** Persistent connection via Phoenix Channel
+    socket client.
 *   **Message Format:** JSON.
-
-## 6. Component Breakdown
-
-This section describes the high-level UI components.
-
-### 6.1. `Game.svelte` (or `Game.tsx`)
-
-*   **Description:** The root component. Manages the WebSocket connection and overall game state.
-
-### 6.2. `Globe.svelte`
-
-*   **Description:** Renders the 3D globe with Three.js. Handles all 3D rendering and user interaction.
-*   **Props:** `sectors`, `units`.
-*   **Events:** `on:sectorClick`, `on:sectorFocus`.
-
-### 6.3. `HUD.svelte`
-
-*   **Description:** Renders the HUD. A "dumb" component that displays data passed to it.
-*   **Props:** `gameTimer`, `turn`, `inGameDate`, `resources`, `politicalData`.
-
-### 6.4. `SectorInfoPanel.svelte`
-
-*   **Description:** Displays detailed information for the selected sector.
-*   **Props:** `sector` object.
-*   **Accessibility:** Content will be structured for clear screen reader announcements.
-
-### 6.5. `DiplomacyMenu.svelte`
-
-*   **Description:** A modal for managing diplomacy.
-*   **Props:** `players`, `alliances`.
-*   **Accessibility:** Fully keyboard-navigable with ARIA roles for all controls.
