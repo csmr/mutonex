@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.29 - Turn Timer UI & Spatial Collision
+- **Turn Timer UI:** Added lightweight GPU shader-driven turn
+  timer disk overlay with 500ms time snapping.
+- **Collision Detection:** Integrated 2D spatial collision
+  engine for avatar sliding movement and fauna avoidance.
+
 ## v02.2.28 - Gameplay Dynamics & Unit Distribution
 - **Spatial Distribution Algo**: `Mutonex.Engine.Stippling` implementing
 customized Bridson's Poisson disk, integrate stippling into FaunaBehavior

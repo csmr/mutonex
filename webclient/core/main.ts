@@ -44,12 +44,16 @@ function initRenderPipeline(canvas: HTMLCanvasElement): ViewSet {
 }
 
 function bindDebugConsole(viewSet: ViewSet) {
-  const { lidarView, viewManager } = viewSet;
+  const { lidarView, viewManager, turnTimer } = viewSet;
   const win = window as MutonexWindow;
   win.__mutonex = {
     lidarView,
     viewManager,
+    turnTimer,
     renderer: (viewManager as any).renderer,
+    startTimer: (durationMs: number) => {
+      turnTimer.startTimer(durationMs);
+    },
   };
   win.__mutonex.lidarView.setStyle = (
     styleName: string,
@@ -82,6 +86,9 @@ function handleInit(
   performSync: () => void,
 ): void {
   ShortcutEngine.printHelp();
+  if (viewSet.turnTimer) {
+    viewSet.turnTimer.startTimer(60000);
+  }
   gsm.handleInitState(
     { fauna, terrain, minerals, buildings },
     viewSet,

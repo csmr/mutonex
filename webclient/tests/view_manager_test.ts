@@ -18,17 +18,42 @@ import {
   devicePixelRatio: 1,
 };
 
+class MockVector3 {
+  set() {}
+}
+
 (globalThis as any).THREE = {
   WebGLRenderer: class {
     setSize() {}
     setPixelRatio() {}
     render() {}
+    dispose() {}
   },
   Clock: class {
     getDelta() {
       return 0.016;
     }
   },
+  Scene: class {
+    add() {}
+  },
+  OrthographicCamera: class {
+    position = new MockVector3();
+    updateProjectionMatrix() {}
+  },
+  ShaderMaterial: class {
+    uniforms = {
+      uProgress: { value: 1.0 },
+      uColor: { value: {} },
+    };
+  },
+  Mesh: class {
+    visible = true;
+    position = new MockVector3();
+  },
+  RingGeometry: class {},
+  Color: class {},
+  DoubleSide: 2,
 };
 
 const { ViewManager } = await import(

@@ -19,6 +19,9 @@ class MockVector3 {
     public y = 0,
     public z = 0,
   ) {}
+  clone() {
+    return new MockVector3(this.x, this.y, this.z);
+  }
   distanceTo(v: MockVector3) {
     const dx = this.x - v.x;
     const dy = this.y - v.y;
