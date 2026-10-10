@@ -3,6 +3,8 @@
 ## v0.2.29 - Turn Timer UI & Spatial Collision
 - **Turn Timer UI:** Added lightweight GPU shader-driven turn
   timer disk overlay with 500ms time snapping.
+- **Game Rules Store:** Added functional GameRules state store
+  supporting GDD 4.9.2 turn intervals (default, beginner, fast).
 - **Collision Detection:** Integrated 2D spatial collision
   engine for avatar sliding movement and fauna avoidance.
 

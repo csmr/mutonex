@@ -44,7 +44,8 @@ class MockVector3 {
   ShaderMaterial: class {
     uniforms = {
       uProgress: { value: 1.0 },
-      uColor: { value: {} },
+      uActiveColor: { value: {} },
+      uTrackColor: { value: {} },
     };
   },
   Mesh: class {

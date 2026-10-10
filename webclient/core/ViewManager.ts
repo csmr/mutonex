@@ -238,6 +238,9 @@ export class ViewManager {
   }
 
   private onWindowResize(): void {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.renderer.setSize(w, h);
+    this.turnTimer.updateCanvasSize(w, h);
   }
 }

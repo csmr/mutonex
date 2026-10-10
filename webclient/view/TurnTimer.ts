@@ -1,6 +1,17 @@
 // webclient/view/TurnTimer.ts
 
+import { DEFAULTS, Rules } from '../core/GameRules.ts';
+
 declare const THREE: typeof import('three');
+
+// Design & Game Feature Parameters
+export const ACTIVE_COLOR_HEX = 0x00ff66;
+export const TRACK_COLOR_HEX = 0x8b4500;
+export const TIMER_RADIUS = 15;
+export const RING_SEGMENTS = 64;
+export const MARGIN_X = 35;
+export const MARGIN_Y = 35;
+export const STEP_MS = 500;
 
 const VERTEX_SHADER = `
 varying vec2 vUv;
@@ -12,23 +23,24 @@ void main() {
 
 const FRAGMENT_SHADER = `
 uniform float uProgress;
-uniform vec3 uColor;
+uniform vec3 uActiveColor;
+uniform vec3 uTrackColor;
 varying vec2 vUv;
 void main() {
   vec2 uv = vUv - 0.5;
   float angle = atan(uv.x, uv.y) + 3.14159265;
   float normalizedAngle = angle / (2.0 * 3.14159265);
-  if (normalizedAngle > uProgress) {
-    discard;
-  }
-  gl_FragColor = vec4(uColor, 1.0);
+  vec3 col = (normalizedAngle <= uProgress)
+    ? uActiveColor
+    : uTrackColor;
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 
-const TIMER_RADIUS = 15;
-const MARGIN = 35;
-const STEP_MS = 500;
-
+/**
+ * Renders an orthographic HUD turn timer in top-right screen space.
+ * Uses a static RingGeometry and GPU progress sweep shader for 0 CPU overhead.
+ */
 export class TurnTimer {
   public hudScene: any;
   public hudCamera: any;
@@ -37,19 +49,25 @@ export class TurnTimer {
   public timerDuration = 0;
   public timerStart = 0;
   public isTimerActive = false;
+  private rules: Rules = DEFAULTS;
   private progressUniform: { value: number } | null = null;
-  private boundResize: () => void;
 
   constructor() {
-    this.boundResize = () => this.onWindowResize();
     if (typeof THREE === 'undefined') return;
     this.hudScene = new THREE.Scene();
     this.hudCamera = this.createCamera();
     this.clockMat = this.createMaterial();
     this.clockMesh = this.createMesh();
     this.hudScene.add(this.clockMesh);
-    window.addEventListener('resize', this.boundResize);
-    this.updatePosition();
+    this.updateCanvasSize(window.innerWidth, window.innerHeight);
+  }
+
+  public setRules(rules: Rules): void {
+    this.rules = rules;
+    if (rules.turnIntervalMs <= 0) {
+      this.isTimerActive = false;
+      if (this.clockMesh) this.clockMesh.visible = false;
+    }
   }
 
   private createCamera(): any {
@@ -67,12 +85,22 @@ export class TurnTimer {
     return cam;
   }
 
-  private createMaterial(): any {
-    const mat = new THREE.ShaderMaterial({
-      uniforms: {
-        uProgress: { value: 1.0 },
-        uColor: { value: new THREE.Color(0x00ff66) },
+  private buildUniforms(): any {
+    return {
+      uProgress: { value: 1.0 },
+      uActiveColor: {
+        value: new THREE.Color(ACTIVE_COLOR_HEX),
       },
+      uTrackColor: {
+        value: new THREE.Color(TRACK_COLOR_HEX),
+      },
+    };
+  }
+
+  private createMaterial(): any {
+    const uniforms = this.buildUniforms();
+    const mat = new THREE.ShaderMaterial({
+      uniforms,
       vertexShader: VERTEX_SHADER,
       fragmentShader: FRAGMENT_SHADER,
       transparent: true,
@@ -83,38 +111,53 @@ export class TurnTimer {
   }
 
   private createMesh(): any {
-    const geo = new THREE.RingGeometry(0, TIMER_RADIUS, 64);
+    const geo = new THREE.RingGeometry(
+      0,
+      TIMER_RADIUS,
+      RING_SEGMENTS,
+    );
     const mesh = new THREE.Mesh(geo, this.clockMat);
     mesh.visible = false;
     return mesh;
   }
 
-  private updatePosition(): void {
-    if (!this.clockMesh) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    this.clockMesh.position.set(w / 2 - MARGIN, h / 2 - MARGIN, 0);
-  }
-
-  private onWindowResize(): void {
-    if (!this.hudCamera) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+  public updateCanvasSize(w: number, h: number): void {
+    if (!this.hudCamera || !this.clockMesh) return;
     this.hudCamera.left = -w / 2;
     this.hudCamera.right = w / 2;
     this.hudCamera.top = h / 2;
     this.hudCamera.bottom = -h / 2;
     this.hudCamera.updateProjectionMatrix();
-    this.updatePosition();
+    const px = w / 2 - MARGIN_X;
+    const py = h / 2 - MARGIN_Y;
+    this.clockMesh.position.set(px, py, 0);
   }
 
-  public startTimer(durationMs: number): void {
-    this.timerDuration = durationMs;
+  private resetVisualState(dur: number): void {
+    this.timerDuration = dur;
     this.timerStart = performance.now();
     this.isTimerActive = true;
     if (this.clockMesh) this.clockMesh.visible = true;
     if (this.progressUniform) {
       this.progressUniform.value = 1.0;
+    }
+  }
+
+  public startTimer(durationMs?: number): void {
+    const dur = durationMs ?? this.rules.turnIntervalMs;
+    if (dur <= 0) {
+      this.isTimerActive = false;
+      if (this.clockMesh) this.clockMesh.visible = false;
+      return;
+    }
+    this.resetVisualState(dur);
+  }
+
+  private updateProgressUniform(elapsed: number): void {
+    const stepped = Math.floor(elapsed / STEP_MS) * STEP_MS;
+    if (this.progressUniform) {
+      this.progressUniform.value = 1.0 -
+        (stepped / this.timerDuration);
     }
   }
 
@@ -126,11 +169,7 @@ export class TurnTimer {
       if (this.clockMesh) this.clockMesh.visible = false;
       return;
     }
-    const stepped = Math.floor(elapsed / STEP_MS) * STEP_MS;
-    if (this.progressUniform) {
-      this.progressUniform.value = 1.0 -
-        (stepped / this.timerDuration);
-    }
+    this.updateProgressUniform(elapsed);
   }
 
   public render(renderer: any): void {
@@ -142,7 +181,5 @@ export class TurnTimer {
     renderer.autoClear = prevAutoClear;
   }
 
-  public dispose(): void {
-    window.removeEventListener('resize', this.boundResize);
-  }
+  public dispose(): void {}
 }
