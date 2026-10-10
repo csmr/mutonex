@@ -1,12 +1,16 @@
 # Changelog
 
-## v0.2.29 - Spatial Collision Detection
-- **2D Spatial Collision**: Added 2D circle collision detection
+## v0.2.29 - Turn Timer UI & Spatial Collision
+- **[webclient] 2D Spatial Collision**: Added 2D circle collision detection
   (`CollisionEngine.ts`) with avatar WASD sliding and fauna
   obstacle avoidance.
-- **Entity Profiles**: Extracted `EntityProfiles.ts` sourcing
+- **[webclient] Turn Timer UI**: Added lightweight GPU shader-driven turn
+  timer disk overlay (`TurnTimer.ts`) with 500ms time snapping.
+- **[webclient] Game Rules Store**: Added functional GameRules state store
+  (`GameRules.ts`) supporting GDD 4.9.2 turn intervals (default, beginner, fast).
+- **[webclient] Entity Profiles**: Extracted `EntityProfiles.ts` sourcing
   scales and glyph mappings from `glyph_profiles.json`.
-- **Glyph Profiles Refactor**: Refactored `glyph_profiles.json` to
+- **[content] Glyph Profiles Refactor**: Refactored `glyph_profiles.json` to
   use a `defaults` dictionary and `types` arrays; updated
   `build_entity_models.ts` and `EntityProfiles.ts` consumers.
 
