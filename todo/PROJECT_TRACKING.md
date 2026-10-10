@@ -56,10 +56,11 @@ layer.
   `gameplay_11_kessler_sage_narrative_20260606.md`)
 
 ### B. Audio-Visual Feedback
-- [ ] **Webclient 3D Building Entities**: Render in-game 3D
+- [x] **Webclient 3D Building Entities**: Render in-game 3D
   buildings (`Power Structure`, `Tent`, `Houses`, `Cityscape`,
   `Moyai`, `Solar Panel`) in `EntityRenderer.ts` and
-  `GameStateManager.ts`. (Ref: `feature_cards_implementation_20260127.md`)
+  `GameStateManager.ts`. (Ref:
+  `feature_cards_implementation_20260127.md`)
 - [ ] **LIDAR Audio Pings**: Directional audio "echolocation" when
   the sensor beam hits charmable units. (Ref:
   `gameplay_07_lidar_audio_pings.md`)

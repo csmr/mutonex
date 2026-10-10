@@ -18,6 +18,11 @@ export interface ItemAnchorData {
   type: string;
 }
 
+export interface BuildingAnchorData {
+  pos: THREE.Vector3;
+  type: string;
+}
+
 export class GameStateManager {
   public playerAnchors = new Map<string, THREE.Vector3>();
   public playerCharm = new Map<string, number>();
@@ -27,6 +32,7 @@ export class GameStateManager {
   public faunaTargets = new Map<string, THREE.Vector3>();
   public mineralAnchors = new Map<string, THREE.Vector3>();
   public itemAnchors = new Map<string, ItemAnchorData>();
+  public buildingAnchors = new Map<string, BuildingAnchorData>();
   public entities: EntityData[] = [];
 
   private interpMap = new Map<string, THREE.Vector3>();
@@ -47,6 +53,7 @@ export class GameStateManager {
     this.faunaTargets.clear();
     this.mineralAnchors.clear();
     this.itemAnchors.clear();
+    this.buildingAnchors.clear();
     this.entities.length = 0;
   }
 
@@ -209,6 +216,16 @@ export class GameStateManager {
         terrain,
       )
     );
+    this.buildingAnchors.forEach((d, id) => {
+      const entType = `building_${d.type}` as EntityType;
+      this.entities.push({
+        id,
+        type: entType,
+        pos: this.getEntityPos(terrain, d.pos),
+        char: '',
+        isStationary: true,
+      });
+    });
     return this.entities;
   }
 
@@ -269,6 +286,9 @@ export class GameStateManager {
         this.mineralAnchors.set(m.id, p);
       });
     }
+    if (gs.buildings) {
+      this.handleUpdateBuildings(gs.buildings);
+    }
   }
 
   public handleUpdateItems(items: any[]) {
@@ -280,6 +300,19 @@ export class GameStateManager {
         item.position.z,
       );
       this.itemAnchors.set(item.id, { pos: p, type: item.type });
+    });
+  }
+
+  public handleUpdateBuildings(buildings: any[]) {
+    this.buildingAnchors.clear();
+    buildings.forEach((b: any) => {
+      const isArr = Array.isArray(b);
+      const id = isArr ? b[0] : b.id;
+      const x = isArr ? b[1] : b.position.x;
+      const z = isArr ? b[3] : b.position.z;
+      const type = isArr ? b[4] : b.type;
+      const p = new THREE.Vector3(x, 0, z);
+      this.buildingAnchors.set(id, { pos: p, type });
     });
   }
 

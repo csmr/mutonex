@@ -17,6 +17,7 @@ const AUTO_JOIN_DELAY_MS = 2000;
 const LOBBY_SECTORS = [
   { id: 'game:sector_alpha', name: 'Sector Alpha (Dev)' },
   { id: 'game:sector_beta', name: 'Sector Beta (Test)' },
+  { id: 'game:sector_test', name: 'Test Sector (All Entities)' },
 ];
 
 interface GameInitData {
@@ -24,12 +25,14 @@ interface GameInitData {
   fauna?: any[];
   terrain?: any;
   minerals?: any[];
+  buildings?: any[];
 }
 
 interface GameUpdateData {
   players?: PlayerTuple[];
   fauna?: any[];
   items?: any[];
+  buildings?: any[];
 }
 
 type MutonexWindow = Window & typeof globalThis & {
@@ -70,7 +73,7 @@ function startLobbyAutoJoin(
 }
 
 function handleInit(
-  { players, fauna, terrain, minerals }: GameInitData,
+  { players, fauna, terrain, minerals, buildings }: GameInitData,
   viewSet: ViewSet,
   gsm: GameStateManager,
   hud: ActionHUD,
@@ -79,7 +82,10 @@ function handleInit(
   performSync: () => void,
 ): void {
   ShortcutEngine.printHelp();
-  gsm.handleInitState({ fauna, terrain, minerals }, viewSet);
+  gsm.handleInitState(
+    { fauna, terrain, minerals, buildings },
+    viewSet,
+  );
   if (players?.length && provider) {
     gsm.syncPlayers(players, hud, provider);
     lobby.updatePlayerQueue(players);
@@ -92,7 +98,7 @@ function handleInit(
 }
 
 function handleUpdate(
-  { players, fauna, items }: GameUpdateData,
+  { players, fauna, items, buildings }: GameUpdateData,
   gsm: GameStateManager,
   hud: ActionHUD,
   provider: GameStateProvider | null,
@@ -109,6 +115,7 @@ function handleUpdate(
     gsm.faunaAnchors.set(id, new THREE.Vector3(x, 1, z))
   );
   if (items?.length) gsm.handleUpdateItems(items);
+  if (buildings?.length) gsm.handleUpdateBuildings(buildings);
 }
 
 function runLoopTick(

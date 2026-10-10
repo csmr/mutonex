@@ -88,7 +88,10 @@ defmodule Mutonex.Engine.Systems.Environment do
     flv = FactionResolver.resolve_flavor()
     b = build_test_spawn_hub(type, x, eth, flv, cfg)
     u = build_test_unit(type, x, b.id, eth, flv, cfg)
-    p = %{player: u, last_update: System.os_time(:millisecond)}
+    p = %{
+      player: u,
+      last_update: System.os_time(:millisecond)
+    }
     {Map.put(p_acc, u.id, p), [b | b_acc], x + 10}
   end
 
@@ -98,7 +101,11 @@ defmodule Mutonex.Engine.Systems.Environment do
       type: :spawn_hub,
       position: %{x: x, y: 0, z: cfg[:spawn_hub_z] || 45},
       energy: 100.0,
-      attributes: %{ethnicity: eth, element: flv, scale: cfg[:spawn_hub_scale] || 10.0}
+      attributes: %{
+        ethnicity: eth,
+        element: flv,
+        scale: cfg[:spawn_hub_scale] || 10.0
+      }
     }
   end
 
@@ -159,7 +166,7 @@ defmodule Mutonex.Engine.Systems.Environment do
     {bs, _} =
       Enum.reduce(
         types,
-        {s.buildings, -30},
+        {s.buildings, -50},
         &do_spawn_building(&1, &2, cfg)
       )
 
@@ -168,7 +175,7 @@ defmodule Mutonex.Engine.Systems.Environment do
 
   defp do_spawn_building(type, {acc, x}, cfg) do
     b = build_test_building(type, x, cfg)
-    {[b | acc], x + 12}
+    {[b | acc], x + 25}
   end
 
   defp build_test_building(type, x, cfg) do

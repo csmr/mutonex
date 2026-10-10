@@ -33,7 +33,7 @@ config :mutonex_server, Mutonex.Engine.Systems.Environment,
     unit_z: 40,
     spawn_hub_z: 45,
     item_z: -40,
-    building_z: 0,
+    building_z: 30.0,
     # Scales for specific test buildings
     spawn_hub_scale: 10.0,
     building_scales: %{

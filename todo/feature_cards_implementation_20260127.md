@@ -53,12 +53,7 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
 ## 4. Implementation Plan for Remaining Features
 
 ### A. Active TODOs
-1.  **Webclient 3D Building Entities**: Implement webclient 3D
-    entity rendering for in-game buildings (`Power Structure`,
-    `Tent`, `Houses`, `Cityscape`, `Moyai`, `Solar Panel`) in
-    `webclient/render/EntityRenderer.ts` and
-    `webclient/core/GameStateManager.ts`.
-2.  **Building Verbs & Functions**: Implement engine verbs
+1.  **Building Verbs & Functions**: Implement engine verbs
     (`build_powerstructure`, `build_conveyor`, `build_fiber`),
     power projection sight radius, and resource conversion in
     `Mutonex.Engine.Actions`.
@@ -67,7 +62,11 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
     `is_charmable` flags.
 
 ### B. Completed & Archived Items
-1.  **Unit Differentiation**: Expand `Unit` struct or logic to
+1.  **Webclient 3D Building Entities**: 3D entity rendering for
+    in-game buildings (`Power Structure`, `Tent`, `Houses`,
+    `Cityscape`, `Moyai`, `Solar Panel`) in `EntityRenderer.ts`
+    and `GameStateManager.ts` is complete.
+2.  **Unit Differentiation**: Expand `Unit` struct or logic to
     handle `Activist` (attack) vs `Local` (work) behavior.
     Fauna and Octree integration is finalized.
 2.  **Building Modifiers & Persistence**: `install_lidar` modifier
