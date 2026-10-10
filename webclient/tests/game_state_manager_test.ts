@@ -183,3 +183,27 @@ Deno.test(
     assertEquals(hud.inv, ['card1']);
   },
 );
+
+Deno.test(
+  'GameStateManager: handleUpdateBuildings updates building state',
+  () => {
+    const gsm = new GameStateManager();
+    gsm.handleUpdateBuildings([
+      ['b1', -30, 0, 30, 'tent', 100, 'active'],
+      ['b2', -18, 0, 30, 'houses', 100, 'active'],
+    ]);
+
+    assertEquals(gsm.buildingAnchors.size, 2);
+    assertEquals(gsm.buildingAnchors.get('b1')?.type, 'tent');
+    assertEquals(gsm.buildingAnchors.get('b2')?.type, 'houses');
+
+    const ents = gsm.computeEntities(null);
+    const bEnt1 = ents.find((e) => e.id === 'b1');
+    const bEnt2 = ents.find((e) => e.id === 'b2');
+
+    assertEquals(bEnt1?.type, 'building_tent');
+    assertEquals(bEnt1?.isStationary, true);
+    assertEquals(bEnt2?.type, 'building_houses');
+    assertEquals(bEnt2?.isStationary, true);
+  },
+);

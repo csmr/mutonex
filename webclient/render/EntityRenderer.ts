@@ -30,6 +30,13 @@ export class EntityRenderer {
     ],
     'unit': ['🤖', '✈'],
     'building': ['🏛'],
+    'building_tent': ['🎪'],
+    'building_houses': ['🏘'],
+    'building_cityscape': ['🏙'],
+    'building_power_structure': ['🏛'],
+    'building_spawn_hub': ['🏛'],
+    'building_moyai': ['🗿'],
+    'building_solar_panel': ['🎛'],
     'society': ['🎪', '🏘', '🏙', '🏰', '🗿', '💩'],
     'mineral': [
       '⭓',
@@ -55,6 +62,13 @@ export class EntityRenderer {
     'fauna': 0x228B22,
     'unit': 0xFFA500,
     'building': 0x8B4513,
+    'building_tent': 0xE9967A,
+    'building_houses': 0xCD853F,
+    'building_cityscape': 0x708090,
+    'building_power_structure': 0xDAA520,
+    'building_spawn_hub': 0x8A2BE2,
+    'building_moyai': 0x808080,
+    'building_solar_panel': 0x4682B4,
     'society': 0x00CED1,
     'mineral': 0x800080,
     'item': 0xFFFF00,
@@ -90,7 +104,11 @@ export class EntityRenderer {
   }
 
   private getChar(entity: EntityData): string {
-    const chars = this.charMap[entity.type] || ['?'];
+    let chars = this.charMap[entity.type];
+    if (!chars && entity.type.startsWith('building_')) {
+      chars = this.charMap['building'];
+    }
+    chars = chars || ['?'];
     const idLen = entity.id.length;
     const charIdx = entity.id.charCodeAt(idLen - 1);
     return chars[charIdx % chars.length];
@@ -103,11 +121,9 @@ export class EntityRenderer {
   ) {
     let mesh = this.getOrCreate(ent, char, color);
     if (mesh) {
-      // Avoid wobbling logic overriding the anchor if it's stationary in the metadata
-      const isStationary = mesh.geometry?.userData?.metadata
-        ?.isStationary;
+      const isStationary = ent.isStationary ||
+        mesh.geometry?.userData?.metadata?.isStationary;
 
-      // We only apply the continuous interpolated 'ent.pos' updates if it mathematically moves.
       if (isStationary) {
         if (mesh.position.distanceTo(ent.pos) > 1.0) {
           mesh.position.copy(ent.pos);
@@ -163,7 +179,7 @@ export class EntityRenderer {
           return;
         }
         const geo = this.loader.parse(json);
-        // Apply pre-compiled JSON physical orientations and caching metadata
+        // Apply JSON physical orientations and metadata
         if (json.mutonex_entity_metadata) {
           geo.userData.metadata = json.mutonex_entity_metadata;
           const matrix = new THREE.Matrix4().fromArray(
@@ -173,10 +189,7 @@ export class EntityRenderer {
         }
 
         this.geoCache.set(hex, geo);
-        // We don't have ent metadata inside fetchGeo promise readily without a closure mapping,
-        // but replaceGeo will normally get called next tick by getOrCreate.
-        // For immediate loading:
-        // this.replaceGeo(ent, geo); // Deferred to prevent losing metadata sync
+        // replaceGeo called next tick by getOrCreate
       })
       .catch((e) => console.error('Geo fetch fail', hex, e));
   }
