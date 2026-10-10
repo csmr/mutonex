@@ -6,6 +6,9 @@
   obstacle avoidance.
 - **Entity Profiles**: Extracted `EntityProfiles.ts` sourcing
   scales and glyph mappings from `glyph_profiles.json`.
+- **Glyph Profiles Refactor**: Refactored `glyph_profiles.json` to
+  use a `defaults` dictionary and `types` arrays; updated
+  `build_entity_models.ts` and `EntityProfiles.ts` consumers.
 
 ## v02.2.28 - Gameplay Dynamics & Unit Distribution
 - **Spatial Distribution Algo**: `Mutonex.Engine.Stippling` implementing
