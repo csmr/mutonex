@@ -2,6 +2,11 @@ import '../core/global_types.ts';
 import { ViewManager } from '../core/ViewManager.ts';
 import { GameStateProvider } from '../core/GameStateProvider.ts';
 import { sampleTerrainHeight } from '../render/TerrainMesh.ts';
+import {
+  getObstacleRadius,
+  Obstacle,
+  resolveSlideMovement,
+} from '../core/CollisionEngine.ts';
 
 /**
  * Handles avatar movement, input, and state synchronization.
@@ -10,6 +15,7 @@ export class AvatarController {
   private viewManager: ViewManager;
   private stateProvider: () => GameStateProvider | null;
   private isActionPressed: (action: string) => boolean;
+  public getObstacles?: () => Obstacle[];
 
   public position = new THREE.Vector3(10, 0, 10);
   private lastSentPosition = new THREE.Vector3();
@@ -48,7 +54,15 @@ export class AvatarController {
       this.moveVector.copy(this.moveDirection).multiplyScalar(
         this.speed * delta,
       );
-      this.position.add(this.moveVector);
+      const obs = this.getObstacles ? this.getObstacles() : [];
+      const r = getObstacleRadius('player');
+      const nextPos = resolveSlideMovement(
+        this.position,
+        this.moveVector,
+        r,
+        obs,
+      );
+      this.position.copy(nextPos);
     }
 
     this.updateCamera();

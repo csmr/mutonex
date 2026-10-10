@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.29 - Spatial Collision Detection
+- **2D Spatial Collision**: Added 2D circle collision detection
+  (`CollisionEngine.ts`) with avatar WASD sliding and fauna
+  obstacle avoidance.
+- **Entity Profiles**: Extracted `EntityProfiles.ts` sourcing
+  scales and glyph mappings from `glyph_profiles.json`.
+
 ## v02.2.28 - Gameplay Dynamics & Unit Distribution
 - **Spatial Distribution Algo**: `Mutonex.Engine.Stippling` implementing
 customized Bridson's Poisson disk, integrate stippling into FaunaBehavior

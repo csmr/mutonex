@@ -3,6 +3,11 @@ import './global_types.ts';
 import { GameStateProvider } from './GameStateProvider.ts';
 import { EntityData, EntityType, Terrain } from './types.ts';
 import { sampleTerrainHeight } from '../render/TerrainMesh.ts';
+import {
+  getObstacleRadius,
+  Obstacle,
+  resolveFaunaStep,
+} from './CollisionEngine.ts';
 import type {
   PlayerTuple,
 } from '../mocks/MockGameStateProvider.ts';
@@ -33,6 +38,7 @@ export class GameStateManager {
   public mineralAnchors = new Map<string, THREE.Vector3>();
   public itemAnchors = new Map<string, ItemAnchorData>();
   public buildingAnchors = new Map<string, BuildingAnchorData>();
+  public staticObstacles: Obstacle[] = [];
   public entities: EntityData[] = [];
 
   private interpMap = new Map<string, THREE.Vector3>();
@@ -54,7 +60,20 @@ export class GameStateManager {
     this.mineralAnchors.clear();
     this.itemAnchors.clear();
     this.buildingAnchors.clear();
+    this.staticObstacles.length = 0;
     this.entities.length = 0;
+  }
+
+  public rebuildStaticObstacles(): void {
+    this.staticObstacles.length = 0;
+    this.buildingAnchors.forEach((data, id) => {
+      const radius = getObstacleRadius(data.type);
+      this.staticObstacles.push({ id, pos: data.pos, radius });
+    });
+    this.mineralAnchors.forEach((pos, id) => {
+      const radius = getObstacleRadius('mineral');
+      this.staticObstacles.push({ id, pos, radius });
+    });
   }
 
   private stepFaunaVector(
@@ -175,11 +194,40 @@ export class GameStateManager {
     );
   }
 
+  public getObstacles(excludeId?: string): Obstacle[] {
+    const list: Obstacle[] = [...this.staticObstacles];
+    this.playerAnchors.forEach((pos, id) => {
+      if (id !== excludeId) {
+        list.push({
+          id,
+          pos,
+          radius: getObstacleRadius('player'),
+        });
+      }
+    });
+    this.faunaAnchors.forEach((anch, id) => {
+      if (id !== excludeId) {
+        const pos = this.interpMap.get(id) || anch;
+        list.push({ id, pos, radius: getObstacleRadius('fauna') });
+      }
+    });
+    return list;
+  }
+
   public updateFauna(
     dt: number,
     avatarPos?: THREE.Vector3,
   ): Map<string, THREE.Vector3> {
     this.interpMap.clear();
+    const faunaRadius = getObstacleRadius('fauna');
+    const baseObs = this.getObstacles();
+    if (avatarPos) {
+      baseObs.push({
+        id: 'avatar',
+        pos: avatarPos,
+        radius: getObstacleRadius('player'),
+      });
+    }
     this.faunaAnchors.forEach((anch, id) => {
       if (this.isFaunaCulled(anch, avatarPos)) return;
       let t = this.faunaTargets.get(id);
@@ -187,7 +235,14 @@ export class GameStateManager {
         t = anch.clone();
         this.faunaTargets.set(id, t);
       }
-      this.interpMap.set(id, this.stepFauna(anch, t, dt));
+      const rawStep = this.stepFauna(anch, t, dt);
+      const safeStep = resolveFaunaStep(
+        rawStep,
+        faunaRadius,
+        baseObs,
+        id,
+      );
+      this.interpMap.set(id, safeStep);
     });
     return this.interpMap;
   }
@@ -289,6 +344,7 @@ export class GameStateManager {
     if (gs.buildings) {
       this.handleUpdateBuildings(gs.buildings);
     }
+    this.rebuildStaticObstacles();
   }
 
   public handleUpdateItems(items: any[]) {
@@ -314,6 +370,7 @@ export class GameStateManager {
       const p = new THREE.Vector3(x, 0, z);
       this.buildingAnchors.set(id, { pos: p, type });
     });
+    this.rebuildStaticObstacles();
   }
 
   private findNearbyItems(avatar: any) {

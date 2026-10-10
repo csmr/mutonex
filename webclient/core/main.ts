@@ -127,7 +127,7 @@ function runLoopTick(
   provider: GameStateProvider | null,
   dt: number,
 ): void {
-  const interp = gsm.updateFauna(dt);
+  const interp = gsm.updateFauna(dt, avatar.position);
   const active = viewSet.viewManager.getActiveView();
   const { nearbyItem, hoveredItem } = gsm.getHUDData(
     avatar,
@@ -237,6 +237,8 @@ function main() {
     () => provider,
     (act) => inputMgr.isActionPressed(act),
   );
+  avatar.getObstacles = () =>
+    gameStateManager.getObstacles(provider?.playerId);
 
   lobby.renderSectorList(LOBBY_SECTORS);
   gameStateManager.bindActionHUD(hud, avatar, () => provider);
