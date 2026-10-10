@@ -1,12 +1,13 @@
 # Changelog
 
 ## v0.2.29 - Building Verbs & Tactical Action System
-- [gameserver] **Building Verbs**: Implemented `build_conveyor`,
+- **Building Verbs**: Implemented in gameserver `build_conveyor`,
   `build_powerstructure` (100km sight radius), and `build_fiber` pure
   functions and stateful handlers in `Mutonex.Engine.Actions` and
   `Mutonex.Engine.Systems.Actions`.
-- [gameserver] **Action Dispatching**: Dispatched building verbs via
-  `GameSession`, enforcing 15m proximity and spatial perimeter checks.
+- **Action Dispatching**: Dispatched building verbs via
+  `GameSession` in gameserver, enforcing 15m proximity and spatial
+  perimeter checks.
 
 ## v02.2.28 - Gameplay Dynamics & Unit Distribution
 - **Spatial Distribution Algo**: `Mutonex.Engine.Stippling` implementing
