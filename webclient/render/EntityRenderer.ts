@@ -76,6 +76,19 @@ export class EntityRenderer {
     'item_video_phone': 0x00FF00,
   };
 
+  private scaleMap: { [key in string]: number } = {
+    'player': 2.0,
+    'unit': 2.0,
+    'building': 2.0,
+    'building_tent': 6.0,
+    'building_houses': 7.5,
+    'building_cityscape': 25.0,
+    'building_power_structure': 12.0,
+    'building_spawn_hub': 10.0,
+    'building_moyai': 3.0,
+    'building_solar_panel': 1.0,
+  };
+
   constructor(
     scene: any,
     matFactory: (color: number) => any,
@@ -148,7 +161,8 @@ export class EntityRenderer {
     let mesh = this.meshes.get(id);
 
     if (!mesh) {
-      const box = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      const s = this.scaleMap[ent.type] || 0.5;
+      const box = new THREE.BoxGeometry(s, s, s);
       mesh = new THREE.Mesh(box, this.matFactory(color));
       mesh.userData = { entityId: id, entityType: ent.type };
       this.scene.add(mesh);

@@ -166,7 +166,7 @@ defmodule Mutonex.Engine.Systems.Environment do
     {bs, _} =
       Enum.reduce(
         types,
-        {s.buildings, -30},
+        {s.buildings, -125},
         &do_spawn_building(&1, &2, cfg)
       )
 
@@ -175,7 +175,7 @@ defmodule Mutonex.Engine.Systems.Environment do
 
   defp do_spawn_building(type, {acc, x}, cfg) do
     b = build_test_building(type, x, cfg)
-    {[b | acc], x + 12}
+    {[b | acc], x + 50}
   end
 
   defp build_test_building(type, x, cfg) do
