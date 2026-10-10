@@ -16,7 +16,10 @@ defmodule Mutonex.Engine.GameSession do
     "charm" => :charm,
     "pick_up" => :pick_up,
     "drop_item" => :drop,
-    "install_lidar" => :install_lidar
+    "install_lidar" => :install_lidar,
+    "build_powerstructure" => :build_powerstructure,
+    "build_conveyor" => :build_conveyor,
+    "build_fiber" => :build_fiber
   }
 
   # --- Client API ---

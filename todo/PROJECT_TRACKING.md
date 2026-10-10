@@ -37,7 +37,7 @@ layer.
   `gameplay_10_test_sector_fauna_units.md`)
 
 ### D. Advanced Action System
-- [ ] **Building Verbs**: Implement `build_conveyor`,
+- [x] **Building Verbs**: Implement `build_conveyor`,
   `build_powerstructure`, and `build_fiber`. (Ref:
   `Mutonex.Engine.Actions`)
 - [ ] **Attack/Defend Verbs**: Implement activist unit area-denial

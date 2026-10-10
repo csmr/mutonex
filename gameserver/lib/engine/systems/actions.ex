@@ -1,5 +1,6 @@
 defmodule Mutonex.Engine.Systems.Actions do
   alias Mutonex.Engine.Entities.{Unit, Item, Fauna, Building}
+  alias Mutonex.Engine.Actions, as: PureActions
 
   # Action entry points
   def charm(src, tgt, s) do
@@ -38,6 +39,43 @@ defmodule Mutonex.Engine.Systems.Actions do
          lidar when not is_nil(lidar) <- find_lidar(u.inventory),
          true <- dist(u.position, b.position) <= 15.0 do
       {:ok, apply_install_lidar(src, lidar, b, s)}
+    else
+      _ -> {:error, :invalid}
+    end
+  end
+
+  def build_powerstructure(src, meta, s) do
+    with %Unit{} = u <- get_unit(s, src),
+         pos <- extract_pos(meta, u.position),
+         {:ok, b} <- PureActions.build_powerstructure(
+           u, pos, s.buildings
+         ) do
+      {:ok, %{s | buildings: [b | s.buildings]}}
+    else
+      _ -> {:error, :invalid}
+    end
+  end
+
+  def build_conveyor(src, meta, s) do
+    with %Unit{} = u <- get_unit(s, src),
+         %{} = min <- get_mineral(s, meta["mineral_id"]),
+         %Building{} = bld <- get_building(s, meta["building_id"]),
+         {:ok, c, upd_bld} <- PureActions.build_conveyor(
+           s, u, min, bld
+         ) do
+      s_upd = apply_conveyor_build(src, c, upd_bld, s)
+      {:ok, s_upd}
+    else
+      _ -> {:error, :invalid}
+    end
+  end
+
+  def build_fiber(src, meta, s) do
+    with %Unit{} = u <- get_unit(s, src),
+         pos <- extract_pos(meta, u.position),
+         {:ok, fb} <- PureActions.build_fiber(u, pos) do
+      s_upd = consume_item_if_present(src, "fiber", s)
+      {:ok, %{s_upd | buildings: [fb | s_upd.buildings]}}
     else
       _ -> {:error, :invalid}
     end
@@ -90,7 +128,6 @@ defmodule Mutonex.Engine.Systems.Actions do
          "y" => dy,
          "z" => dz
        }) do
-    # Defensive: apply 1m offset in direction DX, DY, DZ
     %{x: pos.x + dx, y: pos.y + dy, z: pos.z + dz}
   end
 
@@ -118,6 +155,41 @@ defmodule Mutonex.Engine.Systems.Actions do
     bs = update_building_list(s.buildings, b_upd)
     %{s | players: ps, buildings: bs}
   end
+
+  defp extract_pos(%{"x" => x, "y" => y, "z" => z}, _def) do
+    %{x: x * 1.0, y: y * 1.0, z: z * 1.0}
+  end
+  defp extract_pos(_, default_pos), do: default_pos
+
+  defp get_mineral(s, id) do
+    Enum.find(s.minerals || [], &(&1.id == id))
+  end
+
+  defp apply_conveyor_build(uid, c, upd_bld, s) do
+    s_inv = consume_item_if_present(uid, "conveyor", s)
+    bs = update_building_list(s_inv.buildings, upd_bld)
+    convs = [c | (s_inv.conveyors || [])]
+    %{s_inv | buildings: bs, conveyors: convs}
+  end
+
+  defp consume_item_if_present(uid, prefix, s) do
+    if p = s.players[uid] do
+      inv = p.player.inventory || []
+      case Enum.find(inv, &item_match?(&1, prefix)) do
+        nil -> s
+        match ->
+          new_u = %{p.player | inventory: List.delete(inv, match)}
+          %{s | players: Map.put(s.players, uid, %{p | player: new_u})}
+      end
+    else
+      s
+    end
+  end
+
+  defp item_match?(itm_id, prefix) when is_binary(itm_id) do
+    String.contains?(itm_id, prefix)
+  end
+  defp item_match?(_, _), do: false
 
   defp update_building_list(bs, updated) do
     Enum.map(bs, fn b ->
