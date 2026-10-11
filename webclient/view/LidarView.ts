@@ -328,7 +328,6 @@ export class LidarView implements IView {
     const geo = new THREE.PlaneGeometry(2, 2);
     this.outlineMesh = new THREE.Mesh(geo, this.outlineMaterial);
     this.outlineMesh.frustumCulled = false;
-    this.scene.add(this.outlineMesh);
   }
 
   private createLidarShader(): any {
@@ -478,6 +477,15 @@ export class LidarView implements IView {
         this.camera.projectionMatrixInverse,
       );
       uniforms.viewInverse.value.copy(this.camera.matrixWorld);
+    }
+  }
+
+  public postRender(renderer: any): void {
+    if (this.outlineMesh) {
+      const prevAutoClear = renderer.autoClear;
+      renderer.autoClear = false;
+      renderer.render(this.outlineMesh, this.camera);
+      renderer.autoClear = prevAutoClear;
     }
   }
 

@@ -32,6 +32,7 @@ export interface IView {
   rotate?(direction: string): void;
   dispose?(): void;
   preRender?(renderer: any): void;
+  postRender?(renderer: any): void;
 }
 
 export type ViewSet = {
@@ -226,6 +227,9 @@ export class ViewManager {
       view.scene,
       view.camera,
     );
+    if (view.postRender) {
+      view.postRender(this.renderer);
+    }
     this.turnTimer.update();
     this.turnTimer.render(this.renderer);
   }
