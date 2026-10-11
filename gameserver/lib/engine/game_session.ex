@@ -147,7 +147,8 @@ defmodule Mutonex.Engine.GameSession do
     broadcast_state_update(ns, %{
       items: ns.items,
       buildings: ns.buildings,
-      fauna: ns.fauna
+      fauna: ns.fauna,
+      turn_start: true
     })
 
     schedule_sector_tick(s.cfg_cache.tick_ms)
@@ -421,6 +422,12 @@ defmodule Mutonex.Engine.GameSession do
         else: pld
 
     s.cfg_cache.notifier.broadcast("game:#{sid}", "state_update", pld)
+
+    if extra[:turn_start] do
+      s.cfg_cache.notifier.broadcast("game:#{sid}", "turn_start", %{
+        turn_interval_ms: s.cfg_cache.tick_ms
+      })
+    end
   end
 
   defp add_player_if_missing(s, uid) do

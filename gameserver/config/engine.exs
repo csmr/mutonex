@@ -1,7 +1,7 @@
 import Config
 
 config :mutonex_server, Mutonex.Engine.GameLoop,
-  turn_interval_ms: 20_000,
+  turn_interval_ms: 17_000,
   active_sectors: [
     %{lat: 0, lon: 0},
     %{lat: 51.5, lon: -0.12}, # London

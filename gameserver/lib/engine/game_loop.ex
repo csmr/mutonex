@@ -5,7 +5,7 @@ defmodule Mutonex.Engine.GameLoop do
   @turn_interval_ms Application.compile_env(
                       :mutonex_server,
                       [__MODULE__, :turn_interval_ms],
-                      20_000
+                      17_000
                     )
 
   #
@@ -132,10 +132,12 @@ defmodule Mutonex.Engine.GameLoop do
   end
 
   defp schedule_tick() do
+    cfg = Mutonex.Utils.ConfigReader.get(__MODULE__)
+    interval = cfg[:turn_interval_ms] || @turn_interval_ms
     Process.send_after(
       self(),
       :tick,
-      @turn_interval_ms
+      interval
     )
   end
 end

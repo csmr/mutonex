@@ -232,10 +232,14 @@ function bindSectorSelect(
       handleUpdate(update, gsm, hud, getProvider(), lobby);
       performSync();
     };
+    const onTurnStart = (data: { turn_interval_ms?: number }) => {
+      viewSet.turnTimer?.startTimer(data.turn_interval_ms);
+    };
     const provider = new GameStateProvider(
       sector.id,
       onInit,
       onUpdate,
+      onTurnStart,
     );
     provider.start();
     setProvider(provider);
