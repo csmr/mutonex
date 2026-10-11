@@ -8,6 +8,9 @@
 - **Action Dispatching**: Dispatched building verbs via
   `GameSession` in gameserver, enforcing 15m proximity and spatial
   perimeter checks.
+- **SAST Security Hardening**: Added `sobelow` to gameserver
+  dependencies and resolved static analysis findings in test
+  environment config and `PageController`.
 
 ## v0.2.29 - Turn Timer UI & Spatial Collision
 - **2D Spatial Collision**: Added webclient 2D circle collision

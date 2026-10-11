@@ -4,7 +4,9 @@ import Config
 # you can enable the server option below.
 config :mutonex_server, Mutonex.Net.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4001],
-  secret_key_base: "H8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/P",
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") ||
+      "H8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/PZ8Z9+Y/P",
   server: false
 
 # Print only warnings and errors during test
