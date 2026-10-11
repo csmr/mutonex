@@ -41,11 +41,12 @@ const {
 } = await import('../core/CollisionEngine.ts');
 
 Deno.test('CollisionEngine: getObstacleRadius returns expected radii', () => {
-  assertEquals(getObstacleRadius('player'), 1.0);
-  assertEquals(getObstacleRadius('fauna'), 0.85);
-  assertEquals(getObstacleRadius('mineral'), 1.0);
-  assertEquals(getObstacleRadius('tent'), 3.5);
-  assertEquals(getObstacleRadius('cityscape'), 7.5);
+  const round = (val: number) => Math.round(val * 100) / 100;
+  assertEquals(round(getObstacleRadius('player')), 0.7);
+  assertEquals(round(getObstacleRadius('fauna')), 0.6);
+  assertEquals(round(getObstacleRadius('mineral')), 0.7);
+  assertEquals(round(getObstacleRadius('tent')), 2.45);
+  assertEquals(round(getObstacleRadius('cityscape')), 5.25);
 });
 
 Deno.test('CollisionEngine: isColliding2D detects overlapping circles', () => {

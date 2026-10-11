@@ -27,9 +27,13 @@ uniform vec3 uActiveColor;
 uniform vec3 uTrackColor;
 varying vec2 vUv;
 void main() {
-  vec2 uv = vUv - 0.5;
-  float angle = atan(uv.x, uv.y) + 3.14159265;
-  float normalizedAngle = angle / (2.0 * 3.14159265);
+  vec2 uv = vUv - vec2(0.5);
+  float dist = length(uv);
+  if (dist > 0.5 || dist < 0.25) {
+    discard;
+  }
+  float angle = atan(uv.x, -uv.y);
+  float normalizedAngle = (angle + 3.141592653589793) / (2.0 * 3.141592653589793);
   vec3 col = (normalizedAngle <= uProgress)
     ? uActiveColor
     : uTrackColor;
@@ -67,6 +71,8 @@ export class TurnTimer {
     if (rules.turnIntervalMs <= 0) {
       this.isTimerActive = false;
       if (this.clockMesh) this.clockMesh.visible = false;
+    } else if (this.isTimerActive) {
+      this.startTimer(rules.turnIntervalMs);
     }
   }
 
@@ -111,10 +117,9 @@ export class TurnTimer {
   }
 
   private createMesh(): any {
-    const geo = new THREE.RingGeometry(
-      0,
-      TIMER_RADIUS,
-      RING_SEGMENTS,
+    const geo = new THREE.PlaneGeometry(
+      TIMER_RADIUS * 2,
+      TIMER_RADIUS * 2,
     );
     const mesh = new THREE.Mesh(geo, this.clockMat);
     mesh.visible = false;
@@ -165,8 +170,13 @@ export class TurnTimer {
     if (!this.isTimerActive) return;
     const elapsed = performance.now() - this.timerStart;
     if (elapsed >= this.timerDuration) {
-      this.isTimerActive = false;
-      if (this.clockMesh) this.clockMesh.visible = false;
+      if (this.rules.turnIntervalMs > 0) {
+        this.timerStart = performance.now();
+        this.updateProgressUniform(0);
+      } else {
+        this.isTimerActive = false;
+        if (this.clockMesh) this.clockMesh.visible = false;
+      }
       return;
     }
     this.updateProgressUniform(elapsed);

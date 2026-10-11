@@ -13,7 +13,7 @@ export interface Obstacle {
 
 export function getObstacleRadius(typeOrHex: string): number {
   const prof = getEntityProfile(typeOrHex);
-  return (prof?.scale ?? 2.0) * 0.5;
+  return (prof?.scale ?? 1.0) * 0.35;
 }
 
 export function isColliding2D(

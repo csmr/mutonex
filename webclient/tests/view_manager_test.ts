@@ -53,6 +53,7 @@ class MockVector3 {
     position = new MockVector3();
   },
   RingGeometry: class {},
+  PlaneGeometry: class {},
   Color: class {},
   DoubleSide: 2,
 };

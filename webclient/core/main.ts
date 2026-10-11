@@ -28,6 +28,7 @@ interface GameInitData {
   fauna?: any[];
   terrain?: any;
   minerals?: any[];
+  items?: any[];
   buildings?: any[];
 }
 
@@ -104,7 +105,8 @@ function syncInitialPlayers(
 }
 
 function handleInit(
-  { players, fauna, terrain, minerals, buildings }: GameInitData,
+  { players, fauna, terrain, minerals, items, buildings }:
+    GameInitData,
   viewSet: ViewSet,
   gsm: GameStateManager,
   hud: ActionHUD,
@@ -117,7 +119,7 @@ function handleInit(
   viewSet.turnTimer?.setRules(rulesStore.get());
   viewSet.turnTimer?.startTimer();
   gsm.handleInitState(
-    { fauna, terrain, minerals, buildings },
+    { fauna, terrain, minerals, items, buildings },
     viewSet,
   );
   syncInitialPlayers(players, gsm, hud, provider, lobby);
@@ -145,7 +147,7 @@ function handleUpdate(
   fauna?.forEach(([id, x, _y, z]) =>
     gsm.faunaAnchors.set(id, new THREE.Vector3(x, 1, z))
   );
-  if (items?.length) gsm.handleUpdateItems(items);
+  if (items) gsm.handleUpdateItems(items);
   if (buildings?.length) gsm.handleUpdateBuildings(buildings);
 }
 
@@ -279,6 +281,8 @@ function main() {
 
   lobby.renderSectorList(LOBBY_SECTORS);
   gameStateManager.bindActionHUD(hud, avatar, () => provider);
+  viewSet.turnTimer.setRules(rulesStore.get());
+  viewSet.turnTimer.startTimer();
   performSync();
 
   bindSectorSelect(

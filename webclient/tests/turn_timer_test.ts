@@ -78,6 +78,7 @@ class MockScene {
   ShaderMaterial: MockShaderMaterial,
   Mesh: MockMesh,
   RingGeometry: class {},
+  PlaneGeometry: class {},
   Color: MockColor,
   DoubleSide: 2,
 };
@@ -119,12 +120,16 @@ Deno.test(
 );
 
 Deno.test(
-  'TurnTimer: update deactivates when duration expires',
+  'TurnTimer: update loops when active or deactivates when interval is zero',
   () => {
     const timer = new TurnTimer();
     timer.startTimer(10000);
     timer.timerStart = performance.now() - 10001;
     timer.update();
+    assertEquals(timer.isTimerActive, true);
+
+    timer.setRules({ turnIntervalMs: 0 } as any);
+    timer.startTimer(0);
     assertEquals(timer.isTimerActive, false);
     assertEquals(timer.clockMesh.visible, false);
   },

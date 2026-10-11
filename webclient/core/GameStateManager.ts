@@ -34,6 +34,7 @@ export class GameStateManager {
   public playerEnergy = new Map<string, number>();
   public playerStatus = new Map<string, string>();
   public faunaAnchors = new Map<string, THREE.Vector3>();
+  public faunaTypes = new Map<string, string>();
   public faunaTargets = new Map<string, THREE.Vector3>();
   public mineralAnchors = new Map<string, THREE.Vector3>();
   public itemAnchors = new Map<string, ItemAnchorData>();
@@ -56,6 +57,7 @@ export class GameStateManager {
     this.playerEnergy.clear();
     this.playerStatus.clear();
     this.faunaAnchors.clear();
+    this.faunaTypes.clear();
     this.faunaTargets.clear();
     this.mineralAnchors.clear();
     this.itemAnchors.clear();
@@ -194,6 +196,11 @@ export class GameStateManager {
     );
   }
 
+  public getFaunaRadius(id: string): number {
+    const type = this.faunaTypes.get(id) || id;
+    return getObstacleRadius(type);
+  }
+
   public getObstacles(excludeId?: string): Obstacle[] {
     const list: Obstacle[] = [...this.staticObstacles];
     this.playerAnchors.forEach((pos, id) => {
@@ -208,7 +215,11 @@ export class GameStateManager {
     this.faunaAnchors.forEach((anch, id) => {
       if (id !== excludeId) {
         const pos = this.interpMap.get(id) || anch;
-        list.push({ id, pos, radius: getObstacleRadius('fauna') });
+        list.push({
+          id,
+          pos,
+          radius: this.getFaunaRadius(id),
+        });
       }
     });
     return list;
@@ -219,7 +230,6 @@ export class GameStateManager {
     avatarPos?: THREE.Vector3,
   ): Map<string, THREE.Vector3> {
     this.interpMap.clear();
-    const faunaRadius = getObstacleRadius('fauna');
     const baseObs = this.getObstacles();
     if (avatarPos) {
       baseObs.push({
@@ -238,7 +248,7 @@ export class GameStateManager {
       const rawStep = this.stepFauna(anch, t, dt);
       const safeStep = resolveFaunaStep(
         rawStep,
-        faunaRadius,
+        this.getFaunaRadius(id),
         baseObs,
         id,
       );
@@ -331,15 +341,19 @@ export class GameStateManager {
       viewSet.sphereView.updateTerrain(gs.terrain);
     }
     if (gs.fauna) {
-      gs.fauna.forEach(([id, x, _y, z]: any) =>
-        this.faunaAnchors.set(id, new THREE.Vector3(x, 1, z))
-      );
+      gs.fauna.forEach(([id, x, _y, z, type]: any) => {
+        this.faunaAnchors.set(id, new THREE.Vector3(x, 1, z));
+        if (type) this.faunaTypes.set(id, type);
+      });
     }
     if (gs.minerals) {
       gs.minerals.forEach((m: any) => {
         const p = new THREE.Vector3(m.position.x, 1, m.position.z);
         this.mineralAnchors.set(m.id, p);
       });
+    }
+    if (gs.items) {
+      this.handleUpdateItems(gs.items);
     }
     if (gs.buildings) {
       this.handleUpdateBuildings(gs.buildings);
