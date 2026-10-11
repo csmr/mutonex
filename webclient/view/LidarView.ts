@@ -9,42 +9,48 @@ import { EntityData, Terrain } from '../core/types.ts';
 import {
   LidarFragmentShader,
   LidarVertexShader,
+  NormalMeshFragmentShader,
+  NormalMeshVertexShader,
+  OutlineFragmentShader,
+  OutlineVertexShader,
   ProceduralMeshFragmentShader,
   ProceduralMeshVertexShader,
 } from '../render/LidarShaders.ts';
-
 import {
   LidarStyleConfig,
   LidarStyles,
 } from '../render/LidarStyles.ts';
 
 export class LidarView implements IView {
-  public scene: any; // THREE.Scene
-  public camera: any; // THREE.PerspectiveCamera
+  public scene: any;
+  public camera: any;
 
-  // Dot Rendering Parameters
-  public currentStyleName: string = 'pointCloud';
-  public dotRadiusMin = 1.0; // Radius for objects far away (vDist >= 30.0)
-  public dotRadiusMax = 4.0; // Radius for objects very close (vDist == 0.0)
-  public dotType = 1.0; // 0.0 = square, 1.0 = circular
+  public currentStyleName = 'pointCloud';
+  public dotRadiusMin = 1.0;
+  public dotRadiusMax = 4.0;
+  public dotType = 1.0;
 
   private samplesH = 480;
   private samplesV = 300;
-  public entropy: number = 0.1; // Parametric signal loss (0=no noise, 1=max)
+  public entropy = 0.1;
 
-  // The "Virtual" scene contains the actual geometry
-  private virtualScene: any; // THREE.Scene
+  private virtualScene: any;
   private entityRenderer: EntityRenderer;
 
   private renderTarget: any;
+  private normalRenderTarget: any;
   private baseMaterials: Map<number, any> = new Map();
+  private normalMaterial: any;
 
   public controls: any;
   private renderer: any | null = null;
   private boundResize: () => void;
+  private boundKeyDown: (e: KeyboardEvent) => void;
 
   private loader: any;
   private lidarMaterial: any;
+  private outlineMaterial: any;
+  private outlineMesh: any;
   private lidarPoints: any;
 
   private modelCache: Map<string, any> = new Map();
@@ -63,12 +69,27 @@ export class LidarView implements IView {
       (color: number) => this.getLidarBaseMaterial(color),
     );
 
+    this.normalMaterial = new THREE.ShaderMaterial({
+      uniforms: { far: { value: this.camera.far } },
+      vertexShader: NormalMeshVertexShader,
+      fragmentShader: NormalMeshFragmentShader,
+    });
+
     this.lidarMaterial = this.createLidarShader();
+    this.outlineMaterial = this.createOutlineShader();
+    this.initOutlineQuad();
     this.createGroundGrid();
     this.startBufferRebuild(LidarStyles.pointCloud);
 
     this.loader = new THREE.BufferGeometryLoader();
     this.boundResize = this.onWindowResize.bind(this);
+    this.boundKeyDown = this.onKeyDown.bind(this);
+  }
+
+  private onKeyDown(e: KeyboardEvent): void {
+    if (e.key === 'k' || e.key === 'K') {
+      this.cycleShaderMode();
+    }
   }
 
   private initMainScene(domElement: HTMLCanvasElement) {
@@ -83,10 +104,7 @@ export class LidarView implements IView {
       0.1,
       1000,
     );
-
-    // FPV start pos
     this.camera.position.set(10, 1.7, 10);
-
     this.controls = new FirstPersonControls(
       this.camera,
       domElement,
@@ -97,7 +115,6 @@ export class LidarView implements IView {
     this.virtualScene = new THREE.Scene();
     this.virtualScene.background = new THREE.Color(0x000000);
 
-    // TEST SPHERE: Remove after terrain rendering confirmed.
     const debugGeo = new THREE.SphereGeometry(1.5, 16, 16);
     const debugMat = this.getLidarBaseMaterial(0xff0000);
     const debugMesh = new THREE.Mesh(debugGeo, debugMat);
@@ -108,16 +125,18 @@ export class LidarView implements IView {
   private initRenderTarget() {
     const w = window.innerWidth;
     const h = window.innerHeight;
-
-    // FloatType allows full-precision linear depth in R channel.
-    this.renderTarget = new THREE.WebGLRenderTarget(w, h, {
+    const opts = {
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
       format: THREE.RGBAFormat,
       type: THREE.FloatType,
-    });
-
-    // FloatType allows full-precision Color (RGB) + Depth (Alpha).
+    };
+    this.renderTarget = new THREE.WebGLRenderTarget(w, h, opts);
+    this.normalRenderTarget = new THREE.WebGLRenderTarget(
+      w,
+      h,
+      opts,
+    );
   }
 
   private getLidarBaseMaterial(colorHex: number): any {
@@ -128,6 +147,8 @@ export class LidarView implements IView {
           far: { value: this.camera.far },
           uColor: { value: new THREE.Color(colorHex) },
           uProceduralMode: { value: 0.0 },
+          stripeSpacing: { value: 0.017 },
+          stripeWidth: { value: 0.002 },
           time: { value: 0.0 },
         },
         vertexShader: ProceduralMeshVertexShader,
@@ -138,14 +159,25 @@ export class LidarView implements IView {
     return mat;
   }
 
-  public setLidarStyle(styleName: string) {
-    const config = LidarStyles[styleName] || LidarStyles.pointCloud;
-    this.currentStyleName = styleName;
+  private updateOutlineUniforms(cfg: any): void {
+    if (!this.outlineMaterial || !cfg) return;
+    const u = this.outlineMaterial.uniforms;
+    u.minWidth.value = cfg.minWidth ?? 1.0;
+    u.maxWidth.value = cfg.maxWidth ?? 15.0;
+    u.shadeMode.value = cfg.shadeMode ?? 0.0;
+    u.nearEdgeColor.value.set(cfg.nearEdgeColor ?? '#b24d00');
+    u.farEdgeColor.value.set(cfg.farEdgeColor ?? '#000000');
+    u.depthThreshold.value = cfg.depthThreshold;
+  }
 
-    // Task 3: Dynamic Resolution
+  public setLidarStyle(styleName: string) {
+    const config = LidarStyles[styleName] ||
+      LidarStyles.pointCloud;
+    this.currentStyleName = styleName;
+    console.log(`LidarView style set to: ${styleName}`);
+
     this.samplesH = config.samplesH;
     this.samplesV = config.samplesV;
-
     this.dotType = config.dotType;
     this.dotRadiusMin = config.dotRadiusMin;
     this.dotRadiusMax = config.dotRadiusMax;
@@ -159,9 +191,9 @@ export class LidarView implements IView {
         this.dotRadiusMax;
     }
 
+    this.updateOutlineUniforms(config.outline);
     const isProcedural = styleName === 'proceduralLidar';
 
-    // Toggle active rendering tree
     if (isProcedural) {
       this.scene.add(this.virtualScene);
       if (this.lidarPoints) this.lidarPoints.visible = false;
@@ -170,9 +202,10 @@ export class LidarView implements IView {
       if (this.lidarPoints) this.lidarPoints.visible = true;
     }
 
-    // Toggle base material execution mode
     for (const mat of this.baseMaterials.values()) {
-      mat.uniforms.uProceduralMode.value = isProcedural ? 1.0 : 0.0;
+      mat.uniforms.uProceduralMode.value = isProcedural
+        ? 1.0
+        : 0.0;
     }
 
     if (this.isRebuildingBuffer) {
@@ -182,11 +215,22 @@ export class LidarView implements IView {
     }
   }
 
+  public cycleShaderMode(): void {
+    if (!this.outlineMaterial) return;
+    const u = this.outlineMaterial.uniforms;
+    const cur = u.shadeMode.value;
+    const next = cur > 0.5 ? 0.0 : 1.0;
+    u.shadeMode.value = next;
+    const modeName = next > 0.5
+      ? 'World Normal'
+      : 'Screen Space';
+    console.log(`LidarView shadeMode toggled to: ${modeName}`);
+  }
+
   private startBufferRebuild(config: LidarStyleConfig) {
     this.isRebuildingBuffer = true;
     this.pendingStyleConfig = null;
 
-    // Execute chunk generator across frames
     const gen = this.chunkedGeometryGenerator(
       config.samplesH,
       config.samplesV,
@@ -197,17 +241,12 @@ export class LidarView implements IView {
         requestAnimationFrame(processChunk);
       } else {
         this.isRebuildingBuffer = false;
-
-        // Double Buffering Swap: Install new Points, dispose old Points
         if (this.lidarPoints) {
           this.scene.remove(this.lidarPoints);
           this.lidarPoints.geometry.dispose();
         }
-
-        this.lidarPoints = result.value as any; // THREE.Points
+        this.lidarPoints = result.value as any;
         this.scene.add(this.lidarPoints);
-
-        // If another request queued while we were building, start again
         if (this.pendingStyleConfig) {
           this.setLidarStyle(this.pendingStyleConfig);
         }
@@ -221,10 +260,7 @@ export class LidarView implements IView {
     samplesV: number,
   ): Generator<void, any, void> {
     const geometry = new THREE.BufferGeometry();
-
-    // Unconnected Point Cloud
     const totalPoints = samplesH * samplesV;
-
     const positions = new Float32Array(totalPoints * 3);
     const uvs = new Float32Array(totalPoints * 2);
 
@@ -233,14 +269,10 @@ export class LidarView implements IView {
 
     for (let y = 0; y < samplesV; y++) {
       for (let x = 0; x < samplesH; x++) {
-        // positions default to 0,0,0
         uvs[currentIdx * 2] = x / (samplesH - 1);
         uvs[currentIdx * 2 + 1] = y / (samplesV - 1);
         currentIdx++;
-
-        if (currentIdx % chunkSize === 0) {
-          yield; // Yield control back to main thread
-        }
+        if (currentIdx % chunkSize === 0) yield;
       }
     }
 
@@ -250,13 +282,53 @@ export class LidarView implements IView {
     );
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
-    const newGeometryGroup = new THREE.Points(
-      geometry,
-      this.lidarMaterial,
-    );
-    newGeometryGroup.frustumCulled = false;
+    const points = new THREE.Points(geometry, this.lidarMaterial);
+    points.frustumCulled = false;
+    return points;
+  }
 
-    return newGeometryGroup;
+  private createOutlineShader(): any {
+    const res = new THREE.Vector2(
+      window.innerWidth,
+      window.innerHeight,
+    );
+    const cfg = LidarStyles[this.currentStyleName]?.outline;
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        tScene: { value: null },
+        tNormal: { value: null },
+        resolution: { value: res },
+        minWidth: { value: cfg?.minWidth ?? 1.0 },
+        maxWidth: { value: cfg?.maxWidth ?? 15.0 },
+        far: { value: this.camera.far },
+        shadeMode: { value: cfg?.shadeMode ?? 0.0 },
+        nearEdgeColor: {
+          value: new THREE.Color(
+            cfg?.nearEdgeColor ?? '#b24d00',
+          ),
+        },
+        farEdgeColor: {
+          value: new THREE.Color(
+            cfg?.farEdgeColor ?? '#000000',
+          ),
+        },
+        depthThreshold: { value: cfg?.depthThreshold ?? 0.04 },
+        outlineDebug: { value: 0.0 },
+      },
+      vertexShader: OutlineVertexShader,
+      fragmentShader: OutlineFragmentShader,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+    });
+  }
+
+  private initOutlineQuad(): void {
+    const geo = new THREE.PlaneGeometry(2, 2);
+    this.outlineMesh = new THREE.Mesh(geo, this.outlineMaterial);
+    this.outlineMesh.frustumCulled = false;
+    this.scene.add(this.outlineMesh);
   }
 
   private createLidarShader(): any {
@@ -264,23 +336,18 @@ export class LidarView implements IView {
       window.innerWidth,
       window.innerHeight,
     );
-
     const uniforms = {
       tDepth: { value: null },
       cameraNear: { value: 0.1 },
       cameraFar: { value: 1000.0 },
       viewInverse: { value: new THREE.Matrix4() },
-      projectionInverse: {
-        value: new THREE.Matrix4(),
-      },
+      projectionInverse: { value: new THREE.Matrix4() },
       resolution: { value: resolution },
       time: { value: 0 },
       scanMode: {
         value: LidarStyles[this.currentStyleName]?.scanMode ?? 1.0,
       },
       entropy: { value: this.entropy },
-      // diagMode: 0.0 = normal rendering, 1.0 = diagnostic (red=elevated, blue=ground).
-      // Toggle from browser console: lidarView.lidarMaterial.uniforms.diagMode.value = 1.0
       diagMode: { value: 0.0 },
       dotType: { value: this.dotType },
       dotRadiusMin: { value: this.dotRadiusMin },
@@ -292,7 +359,7 @@ export class LidarView implements IView {
       vertexShader: LidarVertexShader,
       fragmentShader: LidarFragmentShader,
       transparent: true,
-      depthWrite: false, // Task 6: Disable depthWrite to fix occlusion sorting with AdditiveBlending
+      depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
   }
@@ -321,12 +388,7 @@ export class LidarView implements IView {
   }
 
   private createGroundGrid() {
-    const geo = new THREE.PlaneGeometry(
-      200,
-      200,
-      100,
-      100,
-    );
+    const geo = new THREE.PlaneGeometry(200, 200, 100, 100);
     const mat = this.getLidarBaseMaterial(0x333333);
     const plane = new THREE.Mesh(geo, mat);
     plane.rotation.x = -Math.PI / 2;
@@ -334,26 +396,23 @@ export class LidarView implements IView {
   }
 
   public onActivate(): void {
-    window.addEventListener(
-      'resize',
-      this.boundResize,
-    );
-    if (this.controls) {
-      this.controls.enabled = true;
-    }
+    window.addEventListener('resize', this.boundResize);
+    window.addEventListener('keydown', this.boundKeyDown);
+    if (this.controls) this.controls.enabled = true;
   }
 
-  public onDeactivate(): void {}
+  public onDeactivate(): void {
+    window.removeEventListener('resize', this.boundResize);
+    window.removeEventListener('keydown', this.boundKeyDown);
+  }
 
   public getInteractableObjects(): any[] {
     return this.virtualScene.children;
   }
 
   public dispose(): void {
-    window.removeEventListener(
-      'resize',
-      this.boundResize,
-    );
+    window.removeEventListener('resize', this.boundResize);
+    window.removeEventListener('keydown', this.boundKeyDown);
     if (this.controls) {
       this.controls.dispose();
       this.controls.enabled = false;
@@ -379,30 +438,6 @@ export class LidarView implements IView {
   public preRender(renderer: any): void {
     this.renderer = renderer;
 
-    // Fast-path bypass for Procedural Lidar (Native occulusion rendering)
-    if (this.currentStyleName === 'proceduralLidar') {
-      for (const mat of this.baseMaterials.values()) {
-        mat.uniforms.far.value = this.camera.far;
-      }
-      return;
-    }
-
-    const uniforms = this.lidarMaterial.uniforms;
-
-    // Bind the colour texture (which contains depth-packed data) to tDepth.
-    uniforms.tDepth.value = this.renderTarget.texture;
-    uniforms.cameraNear.value = this.camera.near;
-    uniforms.cameraFar.value = this.camera.far;
-
-    const projInv = this.camera.projectionMatrixInverse;
-    uniforms.projectionInverse.value.copy(projInv);
-    const mw = this.camera.matrixWorld;
-    uniforms.viewInverse.value.copy(mw);
-
-    // Depth & Color pass: render virtualScene with
-    // intrinsic LidarBaseMaterials.
-    // Background clear sets Alpha (depth) to 1.0
-    // and RGB to 0.0 (black sky).
     const currentRT = renderer.getRenderTarget();
     renderer.setRenderTarget(this.renderTarget);
     renderer.setClearColor(0x000000, 1.0);
@@ -412,11 +447,38 @@ export class LidarView implements IView {
       mat.uniforms.far.value = this.camera.far;
     }
 
-    const prevBackground = this.virtualScene.background;
-    this.virtualScene.background = null; // let explicit clear stand
+    const prevBg = this.virtualScene.background;
+    this.virtualScene.background = null;
     renderer.render(this.virtualScene, this.camera);
-    this.virtualScene.background = prevBackground;
+
+    if (this.outlineMaterial?.uniforms.shadeMode.value > 0.5) {
+      renderer.setRenderTarget(this.normalRenderTarget);
+      renderer.clear();
+      this.virtualScene.overrideMaterial = this.normalMaterial;
+      renderer.render(this.virtualScene, this.camera);
+      this.virtualScene.overrideMaterial = null;
+    }
+
+    this.virtualScene.background = prevBg;
     renderer.setRenderTarget(currentRT);
+
+    if (this.outlineMaterial) {
+      const u = this.outlineMaterial.uniforms;
+      u.tScene.value = this.renderTarget.texture;
+      u.tNormal.value = this.normalRenderTarget.texture;
+      u.far.value = this.camera.far;
+    }
+
+    if (this.currentStyleName !== 'proceduralLidar') {
+      const uniforms = this.lidarMaterial.uniforms;
+      uniforms.tDepth.value = this.renderTarget.texture;
+      uniforms.cameraNear.value = this.camera.near;
+      uniforms.cameraFar.value = this.camera.far;
+      uniforms.projectionInverse.value.copy(
+        this.camera.projectionMatrixInverse,
+      );
+      uniforms.viewInverse.value.copy(this.camera.matrixWorld);
+    }
   }
 
   private onWindowResize(): void {
@@ -425,7 +487,12 @@ export class LidarView implements IView {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderTarget.setSize(w, h);
-    const res = this.lidarMaterial.uniforms.resolution;
-    res.value.set(w, h);
+    this.normalRenderTarget.setSize(w, h);
+    if (this.lidarMaterial) {
+      this.lidarMaterial.uniforms.resolution.value.set(w, h);
+    }
+    if (this.outlineMaterial) {
+      this.outlineMaterial.uniforms.resolution.value.set(w, h);
+    }
   }
 }

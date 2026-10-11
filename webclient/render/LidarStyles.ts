@@ -1,3 +1,14 @@
+export interface OutlineConfig {
+  width?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  shadeMode?: number;
+  color?: string;
+  nearEdgeColor?: string;
+  farEdgeColor?: string;
+  depthThreshold: number;
+}
+
 export interface LidarStyleConfig {
   name: string;
   scanMode: number;
@@ -7,6 +18,7 @@ export interface LidarStyleConfig {
   dotRadiusMin: number;
   dotRadiusMax: number;
   geometryMode?: 'Points' | 'LineSegments';
+  outline?: OutlineConfig;
 }
 
 export const LidarStyles: Record<string, LidarStyleConfig> = {
@@ -19,6 +31,16 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     samplesV: 300,
     dotRadiusMin: 1.0,
     dotRadiusMax: 4.0,
+    outline: {
+      width: 2.5,
+      minWidth: 1.0,
+      maxWidth: 15.0,
+      shadeMode: 0.0,
+      color: '#000000',
+      nearEdgeColor: '#b24d00',
+      farEdgeColor: '#000000',
+      depthThreshold: 0.04,
+    },
   },
   lineLidar: {
     name: 'lineLidar',
@@ -26,9 +48,19 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     scanMode: 0.0,
     dotType: 1.0,
     samplesH: 400,
-    samplesV: 290, // Task 3: dynamic high resolution vertical mode
+    samplesV: 290,
     dotRadiusMin: 0.0,
     dotRadiusMax: 5.0,
+    outline: {
+      width: 2.0,
+      minWidth: 1.0,
+      maxWidth: 10.0,
+      shadeMode: 0.0,
+      color: '#000000',
+      nearEdgeColor: '#b24d00',
+      farEdgeColor: '#000000',
+      depthThreshold: 0.04,
+    },
   },
   legacy: {
     name: 'legacy',
@@ -39,6 +71,16 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     samplesV: 280,
     dotRadiusMin: 1.0,
     dotRadiusMax: 4.0,
+    outline: {
+      width: 1.5,
+      minWidth: 1.0,
+      maxWidth: 8.0,
+      shadeMode: 0.0,
+      color: '#000000',
+      nearEdgeColor: '#b24d00',
+      farEdgeColor: '#000000',
+      depthThreshold: 0.05,
+    },
   },
   densePointGridVertical: {
     name: 'densePointGridVertical',
@@ -49,6 +91,16 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     samplesV: 560,
     dotRadiusMin: 1.0,
     dotRadiusMax: 6.0,
+    outline: {
+      width: 3.0,
+      minWidth: 1.0,
+      maxWidth: 15.0,
+      shadeMode: 0.0,
+      color: '#000000',
+      nearEdgeColor: '#b24d00',
+      farEdgeColor: '#000000',
+      depthThreshold: 0.03,
+    },
   },
   densePointGridHorizontal: {
     name: 'densePointGridHorizontal',
@@ -59,6 +111,16 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     samplesV: 300,
     dotRadiusMin: 1.0,
     dotRadiusMax: 4.0,
+    outline: {
+      width: 2.5,
+      minWidth: 1.0,
+      maxWidth: 15.0,
+      shadeMode: 0.0,
+      color: '#000000',
+      nearEdgeColor: '#b24d00',
+      farEdgeColor: '#000000',
+      depthThreshold: 0.04,
+    },
   },
   proceduralLidar: {
     name: 'proceduralLidar',
@@ -69,5 +131,15 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     samplesV: 10,
     dotRadiusMin: 0.0,
     dotRadiusMax: 0.0,
+    outline: {
+      width: 2.5,
+      minWidth: 1.0,
+      maxWidth: 15.0,
+      shadeMode: 0.0,
+      color: '#000000',
+      nearEdgeColor: '#b24d00',
+      farEdgeColor: '#000000',
+      depthThreshold: 0.04,
+    },
   },
 };
