@@ -64,6 +64,7 @@ indexGlyphProfiles();
 export const getEntityProfile = (
   key: string,
 ): EntityProfile | undefined => {
+  if (typeof key !== 'string') return undefined;
   const upper = key.toUpperCase();
   if (profiles.has(upper)) return profiles.get(upper);
   const glyphs = getGlyphsForType(key);
@@ -74,6 +75,7 @@ export const getEntityProfile = (
 export const getGlyphsForType = (
   type: string,
 ): readonly string[] => {
+  if (typeof type !== 'string') return [];
   const normType = type.replace(/^(building_|item_)/, '');
   const list = glyphsByType.get(normType) ?? glyphsByType.get(type);
   if (!list) return [];
