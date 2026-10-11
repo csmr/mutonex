@@ -108,6 +108,16 @@ Deno.test(
 );
 
 Deno.test(
+  'TurnTimer: startTimer with elapsedMs offset calculates initial progress',
+  () => {
+    const timer = new TurnTimer();
+    timer.startTimer(10000, 2500);
+    assertEquals(timer.isTimerActive, true);
+    assertEquals(timer.clockMat.uniforms.uProgress.value, 0.75);
+  },
+);
+
+Deno.test(
   'TurnTimer: update updates progress uniform',
   () => {
     const timer = new TurnTimer();

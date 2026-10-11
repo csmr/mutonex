@@ -138,24 +138,22 @@ export class TurnTimer {
     this.clockMesh.position.set(px, py, 0);
   }
 
-  private resetVisualState(dur: number): void {
+  private resetVisualState(dur: number, elapsedMs = 0): void {
     this.timerDuration = dur;
-    this.timerStart = performance.now();
+    this.timerStart = performance.now() - elapsedMs;
     this.isTimerActive = true;
     if (this.clockMesh) this.clockMesh.visible = true;
-    if (this.progressUniform) {
-      this.progressUniform.value = 1.0;
-    }
+    this.updateProgressUniform(elapsedMs);
   }
 
-  public startTimer(durationMs?: number): void {
+  public startTimer(durationMs?: number, elapsedMs = 0): void {
     const dur = durationMs ?? this.rules.turnIntervalMs;
     if (dur <= 0) {
       this.isTimerActive = false;
       if (this.clockMesh) this.clockMesh.visible = false;
       return;
     }
-    this.resetVisualState(dur);
+    this.resetVisualState(dur, elapsedMs);
   }
 
   private updateProgressUniform(elapsed: number): void {

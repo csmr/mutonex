@@ -46,6 +46,7 @@ defmodule Mutonex.Engine.GameSession do
 
     state =
       Environment.initial_state(sid)
+      |> Map.put(:turn_start_time, System.os_time(:millisecond))
       |> Map.put(:cfg_cache, %{
         maint: cfg[:building_maintenance_cost] || 3.0,
         depletion: cfg[:player_energy_depletion] || 0.5,
@@ -62,8 +63,12 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   def handle_call(:get_initial_state, _from, s) do
+    now = System.os_time(:millisecond)
+    st = Map.get(s, :turn_start_time, now)
     resp = %{
       phase: Atom.to_string(s.phase),
+      turn_interval_ms: s.cfg_cache.tick_ms,
+      turn_elapsed_ms: max(0, now - st),
       game_state: build_payload(s)
     }
 
@@ -142,7 +147,13 @@ defmodule Mutonex.Engine.GameSession do
       update_buildings_energy(s.buildings, s.sector_energy, maint)
 
     new_players = update_players_energy(s.players, depletion)
-    ns = %{s | buildings: new_buildings, players: new_players}
+    st = System.os_time(:millisecond)
+    ns = %{
+      s
+      | buildings: new_buildings,
+        players: new_players,
+        turn_start_time: st
+    }
 
     broadcast_state_update(ns, %{
       items: ns.items,
@@ -424,8 +435,10 @@ defmodule Mutonex.Engine.GameSession do
     s.cfg_cache.notifier.broadcast("game:#{sid}", "state_update", pld)
 
     if extra[:turn_start] do
+      st = Map.get(s, :turn_start_time, System.os_time(:millisecond))
       s.cfg_cache.notifier.broadcast("game:#{sid}", "turn_start", %{
-        turn_interval_ms: s.cfg_cache.tick_ms
+        turn_interval_ms: s.cfg_cache.tick_ms,
+        turn_start_time: st
       })
     end
   end

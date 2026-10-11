@@ -30,6 +30,8 @@ interface GameInitData {
   minerals?: any[];
   items?: any[];
   buildings?: any[];
+  turn_interval_ms?: number;
+  turn_elapsed_ms?: number;
 }
 
 interface GameUpdateData {
@@ -105,8 +107,16 @@ function syncInitialPlayers(
 }
 
 function handleInit(
-  { players, fauna, terrain, minerals, items, buildings }:
-    GameInitData,
+  {
+    players,
+    fauna,
+    terrain,
+    minerals,
+    items,
+    buildings,
+    turn_interval_ms,
+    turn_elapsed_ms,
+  }: GameInitData,
   viewSet: ViewSet,
   gsm: GameStateManager,
   hud: ActionHUD,
@@ -117,6 +127,12 @@ function handleInit(
 ): void {
   ShortcutEngine.printHelp();
   viewSet.turnTimer?.setRules(rulesStore.get());
+  if (turn_interval_ms) {
+    viewSet.turnTimer?.startTimer(
+      turn_interval_ms,
+      turn_elapsed_ms || 0,
+    );
+  }
   gsm.handleInitState(
     { fauna, terrain, minerals, items, buildings },
     viewSet,
@@ -232,7 +248,7 @@ function bindSectorSelect(
       performSync();
     };
     const onTurnStart = (data: { turn_interval_ms?: number }) => {
-      viewSet.turnTimer?.startTimer(data.turn_interval_ms);
+      viewSet.turnTimer?.startTimer(data.turn_interval_ms, 0);
     };
     const provider = new GameStateProvider(
       sector.id,
