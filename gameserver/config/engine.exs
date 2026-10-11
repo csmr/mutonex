@@ -11,8 +11,8 @@ config :mutonex_server, Mutonex.Engine.GameLoop,
 config :mutonex_server, Mutonex.Engine.GameSession,
   # Max speed: ~8 km/h (2.22 m/s)
   max_speed_ms: 2.22,
-  # Sector turn is ~17s per GDD, but for testing we use faster rate
-  sector_tick_ms: 5000,
+  # Sector turn is 17s per GDD 4.9.2
+  sector_tick_ms: 17_000,
   token_rotation_ms: 10_000,
   # Energy/Turn = Scale * SectorWatts - Maintenance
   building_maintenance_cost: 3.0,

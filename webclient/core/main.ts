@@ -117,7 +117,6 @@ function handleInit(
 ): void {
   ShortcutEngine.printHelp();
   viewSet.turnTimer?.setRules(rulesStore.get());
-  viewSet.turnTimer?.startTimer();
   gsm.handleInitState(
     { fauna, terrain, minerals, items, buildings },
     viewSet,
@@ -286,7 +285,6 @@ function main() {
   lobby.renderSectorList(LOBBY_SECTORS);
   gameStateManager.bindActionHUD(hud, avatar, () => provider);
   viewSet.turnTimer.setRules(rulesStore.get());
-  viewSet.turnTimer.startTimer();
   performSync();
 
   bindSectorSelect(
