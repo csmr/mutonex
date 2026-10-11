@@ -323,6 +323,10 @@ float depthAt(vec2 uv) {
   return texture2D(tScene, uv).a;
 }
 
+vec3 colorAt(vec2 uv) {
+  return texture2D(tScene, uv).rgb;
+}
+
 bool skyPair(float a, float b) {
   return a > SKY && b > SKY;
 }
@@ -338,26 +342,40 @@ float edgeOf(float a, float b) {
   return clamp(rel, 0.0, 1.0);
 }
 
+float colorEdgeOf(vec3 a, vec3 b) {
+  return length(a - b);
+}
+
 float edgeMask(vec2 uv) {
   float d0 = depthAt(uv);
+  vec3 c0 = colorAt(uv);
   vec2 t = (widthAt(d0) / resolution);
+
   float d1 = depthAt(uv + vec2(t.x, 0.0));
-  float d2 = depthAt(uv + vec2(0.0, t.y));
-  float d3 = depthAt(uv + t);
-  float e = edgeOf(d0, d1) + edgeOf(d0, d2) + edgeOf(d0, d3);
-  return step(depthThreshold, e);
+  float d2 = depthAt(uv - vec2(t.x, 0.0));
+  float d3 = depthAt(uv + vec2(0.0, t.y));
+  float d4 = depthAt(uv - vec2(0.0, t.y));
+
+  vec3 c1 = colorAt(uv + vec2(t.x, 0.0));
+  vec3 c2 = colorAt(uv - vec2(t.x, 0.0));
+
+  float depthEdge = edgeOf(d0, d1) + edgeOf(d0, d2) +
+                    edgeOf(d0, d3) + edgeOf(d0, d4);
+  float colorEdge = colorEdgeOf(c0, c1) + colorEdgeOf(c0, c2);
+
+  return step(depthThreshold, depthEdge + colorEdge * 0.5);
 }
 
 vec3 computeShade(vec2 uv) {
   if (shadeMode > 0.5) {
     vec3 norm = texture2D(tNormal, uv).rgb * 2.0 - 1.0;
-    float t = clamp(norm.z, 0.0, 1.0);
+    float t = clamp(norm.z * 0.5 + 0.5, 0.0, 1.0);
     return mix(farEdgeColor, nearEdgeColor, t);
   }
   vec2 texel = 1.0 / resolution;
   float dY = depthAt(uv + vec2(0.0, texel.y)) -
              depthAt(uv - vec2(0.0, texel.y));
-  float t = smoothstep(-0.01, 0.01, dY);
+  float t = clamp(abs(dY) * 50.0, 0.3, 1.0);
   return mix(farEdgeColor, nearEdgeColor, t);
 }
 

@@ -104,6 +104,11 @@ export class ViewManager {
     }
     this.activeView = view;
     this.activeView.onActivate();
+    const viewName = view.constructor?.name || 'UnknownView';
+    const style = (view as any).currentStyleName || 'default';
+    console.log(
+      `[ViewManager] Active view: ${viewName} | Shader: ${style}`,
+    );
   }
 
   public getActiveView(): IView | null {
@@ -190,7 +195,11 @@ export class ViewManager {
     const styles = Object.keys(LidarStyles);
     const cur = lidarView.currentStyleName || styles[0];
     const idx = (styles.indexOf(cur) + 1) % styles.length;
-    lidarView.setLidarStyle?.(styles[idx]);
+    const nextStyle = styles[idx];
+    lidarView.setLidarStyle?.(nextStyle);
+    console.log(
+      `[ViewManager] LIDAR Shader/Style set to: ${nextStyle}`,
+    );
   }
 
   public rotate(
