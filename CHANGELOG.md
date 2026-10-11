@@ -8,6 +8,9 @@
 - **Action Dispatching**: Dispatched building verbs via
   `GameSession` in gameserver, enforcing 15m proximity and spatial
   perimeter checks.
+- **Turn Timer Integration**: Synchronized gameserver turn timing
+  metadata (`turn_interval_ms`, `turn_elapsed_ms`) with webclient
+  `TurnTimer` HUD overlay for authoritative turn boundary alignment.
 - **SAST Security Hardening**: Added `sobelow` to gameserver
   dependencies and resolved static analysis findings in test
   environment config and `PageController`.

@@ -30,6 +30,8 @@ interface GameInitData {
   minerals?: any[];
   items?: any[];
   buildings?: any[];
+  duration_ms?: number;
+  turn_ends_at_ms?: number;
   turn_interval_ms?: number;
   turn_elapsed_ms?: number;
 }
@@ -114,6 +116,8 @@ function handleInit(
     minerals,
     items,
     buildings,
+    duration_ms,
+    turn_ends_at_ms,
     turn_interval_ms,
     turn_elapsed_ms,
   }: GameInitData,
@@ -127,11 +131,12 @@ function handleInit(
 ): void {
   ShortcutEngine.printHelp();
   viewSet.turnTimer?.setRules(rulesStore.get());
-  if (turn_interval_ms) {
-    viewSet.turnTimer?.startTimer(
-      turn_interval_ms,
-      turn_elapsed_ms || 0,
-    );
+  const dur = turn_ends_at_ms
+    ? (duration_ms || turn_interval_ms)
+    : turn_interval_ms;
+  if (dur) {
+    const endOrElapsed = turn_ends_at_ms || (turn_elapsed_ms || 0);
+    viewSet.turnTimer?.startTimer(dur, endOrElapsed);
   }
   gsm.handleInitState(
     { fauna, terrain, minerals, items, buildings },
@@ -247,8 +252,14 @@ function bindSectorSelect(
       handleUpdate(update, gsm, hud, getProvider(), lobby);
       performSync();
     };
-    const onTurnStart = (data: { turn_interval_ms?: number }) => {
-      viewSet.turnTimer?.startTimer(data.turn_interval_ms, 0);
+    const onTurnStart = (data: {
+      duration_ms?: number;
+      turn_ends_at_ms?: number;
+      turn_interval_ms?: number;
+    }) => {
+      const dur = data.duration_ms || data.turn_interval_ms;
+      const endOrElapsed = data.turn_ends_at_ms || 0;
+      viewSet.turnTimer?.startTimer(dur, endOrElapsed);
     };
     const provider = new GameStateProvider(
       sector.id,

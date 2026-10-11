@@ -52,6 +52,7 @@ export class TurnTimer {
   public clockMat: any;
   public timerDuration = 0;
   public timerStart = 0;
+  public turnEndsAtMs = 0;
   public isTimerActive = false;
   private rules: Rules = DEFAULTS;
   private progressUniform: { value: number } | null = null;
@@ -138,22 +139,35 @@ export class TurnTimer {
     this.clockMesh.position.set(px, py, 0);
   }
 
-  private resetVisualState(dur: number, elapsedMs = 0): void {
+  private resetVisualState(
+    dur: number,
+    elapsedOrEndsAtMs = 0,
+  ): void {
     this.timerDuration = dur;
-    this.timerStart = performance.now() - elapsedMs;
+    if (elapsedOrEndsAtMs > 1e9) {
+      this.turnEndsAtMs = elapsedOrEndsAtMs;
+      const rem = Math.max(0, this.turnEndsAtMs - Date.now());
+      this.timerStart = performance.now() - (dur - rem);
+    } else {
+      this.timerStart = performance.now() - elapsedOrEndsAtMs;
+      this.turnEndsAtMs = Date.now() + (dur - elapsedOrEndsAtMs);
+    }
     this.isTimerActive = true;
     if (this.clockMesh) this.clockMesh.visible = true;
-    this.updateProgressUniform(elapsedMs);
+    this.update();
   }
 
-  public startTimer(durationMs?: number, elapsedMs = 0): void {
+  public startTimer(
+    durationMs?: number,
+    elapsedOrEndsAtMs = 0,
+  ): void {
     const dur = durationMs ?? this.rules.turnIntervalMs;
     if (dur <= 0) {
       this.isTimerActive = false;
       if (this.clockMesh) this.clockMesh.visible = false;
       return;
     }
-    this.resetVisualState(dur, elapsedMs);
+    this.resetVisualState(dur, elapsedOrEndsAtMs);
   }
 
   private updateProgressUniform(elapsed: number): void {
@@ -166,10 +180,15 @@ export class TurnTimer {
 
   public update(): void {
     if (!this.isTimerActive) return;
-    const elapsed = performance.now() - this.timerStart;
+    let elapsed = performance.now() - this.timerStart;
+    if (this.turnEndsAtMs > 0) {
+      const rem = Math.max(0, this.turnEndsAtMs - Date.now());
+      elapsed = Math.max(0, this.timerDuration - rem);
+    }
     if (elapsed >= this.timerDuration) {
       if (this.rules.turnIntervalMs > 0) {
         this.timerStart = performance.now();
+        this.turnEndsAtMs = Date.now() + this.rules.turnIntervalMs;
         this.updateProgressUniform(0);
       } else {
         this.isTimerActive = false;

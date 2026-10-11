@@ -65,9 +65,12 @@ defmodule Mutonex.Engine.GameSession do
   def handle_call(:get_initial_state, _from, s) do
     now = System.os_time(:millisecond)
     st = Map.get(s, :turn_start_time, now)
+    dur = s.cfg_cache.tick_ms
     resp = %{
       phase: Atom.to_string(s.phase),
-      turn_interval_ms: s.cfg_cache.tick_ms,
+      duration_ms: dur,
+      turn_ends_at_ms: st + dur,
+      turn_interval_ms: dur,
       turn_elapsed_ms: max(0, now - st),
       game_state: build_payload(s)
     }
@@ -436,8 +439,11 @@ defmodule Mutonex.Engine.GameSession do
 
     if extra[:turn_start] do
       st = Map.get(s, :turn_start_time, System.os_time(:millisecond))
+      dur = s.cfg_cache.tick_ms
       s.cfg_cache.notifier.broadcast("game:#{sid}", "turn_start", %{
-        turn_interval_ms: s.cfg_cache.tick_ms,
+        duration_ms: dur,
+        turn_ends_at_ms: st + dur,
+        turn_interval_ms: dur,
         turn_start_time: st
       })
     end

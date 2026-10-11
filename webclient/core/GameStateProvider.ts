@@ -8,7 +8,11 @@ type StateUpdateCallback = (
   update: { players?: PlayerTuple[]; fauna?: PlayerTuple[] },
 ) => void;
 type TurnStartCallback = (
-  data: { turn_interval_ms?: number },
+  data: {
+    duration_ms?: number;
+    turn_ends_at_ms?: number;
+    turn_interval_ms?: number;
+  },
 ) => void;
 
 export class GameStateProvider {
