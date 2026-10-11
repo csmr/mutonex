@@ -182,7 +182,6 @@ function runLoop(
   getProvider: () => GameStateProvider | null,
 ): void {
   let lastTime = performance.now();
-  viewSet.viewManager.animate();
   const tick = () => {
     requestAnimationFrame(tick);
     const p = getProvider();
@@ -249,6 +248,8 @@ function main() {
   ) as HTMLCanvasElement;
   if (!canvas) return;
   const viewSet = initRenderPipeline(canvas);
+  viewSet.viewManager.animate();
+
   const rulesStore = store();
   rulesStore.sub((rules) => {
     viewSet.turnTimer.setRules(rules);

@@ -36,6 +36,7 @@ const RAW: RawShortcut[] = [
   // Global
   ['p', null, 'toggle_view', 'Switch View', 'global'],
   ['y', null, 'toggle_globe', 'Toggle Globe', 'global'],
+  ['l', null, 'cycle_style', 'Scan Mode', 'global'],
 
   // Lobby
   ['ArrowUp', null, 'lobby_prev', 'Prev Sector', 'lobby'],
@@ -85,7 +86,6 @@ const RAW: RawShortcut[] = [
   ],
 
   // Game (Controls)
-  ['l', null, 'cycle_style', 'Scan Mode', 'game'],
   ['u', null, 'dec_entropy', 'Less Noise', 'game'],
   ['o', null, 'inc_entropy', 'More Noise', 'game'],
 

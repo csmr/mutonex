@@ -118,7 +118,7 @@ export class LidarView implements IView {
     const debugGeo = new THREE.SphereGeometry(1.5, 16, 16);
     const debugMat = this.getLidarBaseMaterial(0xff0000);
     const debugMesh = new THREE.Mesh(debugGeo, debugMat);
-    debugMesh.position.set(0, 1.5, 10);
+    debugMesh.position.set(10, 1.5, 3);
     this.virtualScene.add(debugMesh);
   }
 
