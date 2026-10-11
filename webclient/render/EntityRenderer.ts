@@ -1,5 +1,9 @@
 import '../core/global_types.ts';
 import { EntityData, EntityType } from '../core/types.ts';
+import {
+  getEntityProfile,
+  getGlyphChar,
+} from '../core/EntityProfiles.ts';
 
 /**
  * Manages 3D representation of game entities.
@@ -76,19 +80,6 @@ export class EntityRenderer {
     'item_video_phone': 0x00FF00,
   };
 
-  private scaleMap: { [key in string]: number } = {
-    'player': 2.0,
-    'unit': 2.0,
-    'building': 2.0,
-    'building_tent': 6.0,
-    'building_houses': 7.5,
-    'building_cityscape': 25.0,
-    'building_power_structure': 12.0,
-    'building_spawn_hub': 10.0,
-    'building_moyai': 3.0,
-    'building_solar_panel': 1.0,
-  };
-
   constructor(
     scene: any,
     matFactory: (color: number) => any,
@@ -121,7 +112,7 @@ export class EntityRenderer {
     if (!chars && entity.type.startsWith('building_')) {
       chars = this.charMap['building'];
     }
-    chars = chars || ['?'];
+    if (!chars) return getGlyphChar(entity.type);
     const idLen = entity.id.length;
     const charIdx = entity.id.charCodeAt(idLen - 1);
     return chars[charIdx % chars.length];
@@ -161,7 +152,9 @@ export class EntityRenderer {
     let mesh = this.meshes.get(id);
 
     if (!mesh) {
-      const s = this.scaleMap[ent.type] || 0.5;
+      const prof = getEntityProfile(ent.type) ||
+        getEntityProfile(hex);
+      const s = prof?.scale ?? 2.0;
       const box = new THREE.BoxGeometry(s, s, s);
       mesh = new THREE.Mesh(box, this.matFactory(color));
       mesh.userData = { entityId: id, entityType: ent.type };

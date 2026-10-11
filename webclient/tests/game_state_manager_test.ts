@@ -22,6 +22,44 @@ class MockVector3 {
   clone() {
     return new MockVector3(this.x, this.y, this.z);
   }
+  copy(v: MockVector3) {
+    this.x = v.x;
+    this.y = v.y;
+    this.z = v.z;
+    return this;
+  }
+  add(v: MockVector3) {
+    this.x += v.x;
+    this.y += v.y;
+    this.z += v.z;
+    return this;
+  }
+  sub(v: MockVector3) {
+    this.x -= v.x;
+    this.y -= v.y;
+    this.z -= v.z;
+    return this;
+  }
+  subVectors(a: MockVector3, b: MockVector3) {
+    this.x = a.x - b.x;
+    this.y = a.y - b.y;
+    this.z = a.z - b.z;
+    return this;
+  }
+  multiplyScalar(s: number) {
+    this.x *= s;
+    this.y *= s;
+    this.z *= s;
+    return this;
+  }
+  lengthSq() {
+    return this.x * this.x + this.y * this.y + this.z * this.z;
+  }
+  normalize() {
+    const len = Math.sqrt(this.lengthSq());
+    if (len > 0) this.multiplyScalar(1 / len);
+    return this;
+  }
   distanceTo(v: MockVector3) {
     const dx = this.x - v.x;
     const dy = this.y - v.y;

@@ -1,308 +1,288 @@
 {
-    "description": "Defines the default geometry transformations and Domain Entities property templates.",
-    "templates": {
-        "stationary_default": {
-            "isStationary": true,
-            "scale": 2.5,
-            "elevateY": 0.0,
-            "facing": "front"
-        },
-        "item_default": {
-            "isStationary": true,
-            "scale": 2.5,
-            "elevateY": 0.0,
-            "facing": "front"
-        },
-        "unit_default": {
-            "isStationary": false,
-            "scale": 2.0,
-            "elevateY": 0.0,
-            "facing": "front"
-        },
-        "fauna_standard": {
-            "isStationary": false,
-            "scale": 1.6,
-            "elevateY": 0.0,
-            "facing": "side"
-        },
-        "fauna_tiny": {
-            "isStationary": false,
-            "scale": 0.15,
-            "elevateY": 0.0,
-            "facing": "side"
-        },
-        "fauna_flying": {
-            "isStationary": false,
-            "scale": 1.0,
-            "elevateY": 8.0,
-            "facing": "side"
-        }
+    "description": "Defines default geometry transformations and entity property mappings.",
+    "defaults": {
+        "building": { "isStationary": true,  "scale": 2.0, "facing": "front" },
+        "item":     { "isStationary": true,  "scale": 0.5, "facing": "front" },
+        "unit":     { "isStationary": false, "scale": 2.0, "facing": "front" },
+        "fauna":    { "isStationary": false, "scale": 1.6, "facing": "side" },
+        "flora":    { "isStationary": true,  "scale": 2.0, "facing": "front" },
+        "mineral":  { "isStationary": true,  "scale": 2.0, "facing": "front" }
     },
     "glyphs": {
         "1F331": {
             "name": "Sprout",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 0.4
         },
         "1F332": {
             "name": "Evergreen Tree",
-            "template": "stationary_default",
-            "scale": 5
+            "types": ["flora"],
+            "scale": 5.0
         },
         "1F3AA": {
             "name": "Circus Tent",
-            "template": "stationary_default",
+            "types": ["building", "tent"],
             "scale": 7.0
         },
         "1F3D8": {
             "name": "Houses",
-            "template": "stationary_default",
+            "types": ["building", "houses"],
             "scale": 8.5
         },
         "1F3D9": {
             "name": "Cityscape",
-            "template": "stationary_default",
-            "scale": 15
+            "types": ["building", "cityscape"],
+            "scale": 15.0
         },
         "1F3F0": {
             "name": "Power Structure",
-            "template": "stationary_default",
+            "types": ["building", "power_structure"],
             "scale": 12.0
+        },
+        "1F3F1": {
+            "name": "Spawn Hub",
+            "types": ["building", "spawn_hub"],
+            "scale": 10.0
         },
         "2B53": {
             "name": "Mineral A",
-            "template": "stationary_default",
+            "types": ["mineral"],
             "scale": 2.5
         },
         "2B20": {
             "name": "Mineral B",
-            "template": "stationary_default",
-            "scale": 3
+            "types": ["mineral"],
+            "scale": 3.0
         },
         "1F404": {
             "name": "Cow",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 1.7
         },
         "1F986": {
             "name": "Duck",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 0.4
         },
         "1F416": {
             "name": "Pig",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 1.2
         },
         "1F98E": {
             "name": "Lizard",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 0.6,
             "facing": "top"
         },
         "1F40D": {
             "name": "Snake",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 0.5
         },
         "1F427": {
             "name": "Penguin",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 0.7
         },
         "1F48E": {
             "name": "Gem",
-            "template": "item_default",
-            "scale": 0.40
+            "types": ["item", "gem"],
+            "scale": 0.4
         },
         "1F41C": {
             "name": "Ant",
-            "template": "fauna_tiny",
+            "types": ["fauna"],
+            "scale": 0.3,
             "facing": "top"
         },
         "1F41D": {
             "name": "Honeybee",
-            "template": "fauna_tiny",
+            "types": ["fauna"],
+            "scale": 0.3,
             "elevateY": 2.0
         },
         "1F997": {
             "name": "Cricket",
-            "template": "fauna_tiny",
-            "facing": "side"
+            "types": ["fauna"],
+            "scale": 0.3
         },
         "1F400": {
             "name": "Rat",
-            "template": "fauna_tiny",
+            "types": ["fauna"],
             "scale": 0.3
         },
         "1F402": {
             "name": "Ox",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 2.2
         },
         "1F406": {
             "name": "Leopard",
-            "template": "fauna_standard"
+            "types": ["fauna"]
         },
         "1F408": {
             "name": "Cat",
-            "template": "fauna_standard",
+            "types": ["fauna"],
             "scale": 0.5
         },
         "1F40A": {
             "name": "Crocodile",
-            "template": "fauna_standard"
+            "types": ["fauna"]
         },
         "1F426": {
             "name": "Bird",
-            "template": "fauna_flying"
+            "types": ["fauna"],
+            "elevateY": 8.0
         },
         "1F5FF": {
             "name": "Moyai",
-            "template": "stationary_default",
+            "types": ["building", "moyai"],
             "scale": 3.0
         },
         "1F987": {
             "name": "Bat",
-            "template": "fauna_flying",
+            "types": ["fauna"],
             "scale": 0.3,
+            "elevateY": 8.0,
             "facing": "top"
         },
         "1F422": {
             "name": "Turtle",
-            "template": "fauna_tiny",
+            "types": ["fauna"],
             "scale": 0.4
         },
         "1F415": {
             "name": "Dog",
-            "template": "fauna_standard"
+            "types": ["fauna"]
         },
         "1F4A9": {
             "name": "Poo",
-            "template": "item_default",
+            "types": ["item"],
             "scale": 0.2
         },
         "1F54A": {
             "name": "Dove",
-            "template": "fauna_flying"
+            "types": ["fauna"],
+            "elevateY": 8.0
         },
         "1F994": {
             "name": "Hedgehog",
-            "template": "fauna_tiny",
+            "types": ["fauna"],
             "scale": 0.4
         },
         "1F9D9": {
             "name": "Mage",
-            "template": "unit_default"
+            "types": ["unit", "player"]
         },
         "101D1": {
             "name": "Phaistos Disc 1",
-            "template": "unit_default"
+            "types": ["unit", "player"]
         },
         "101D2": {
             "name": "Phaistos Disc 2",
-            "template": "unit_default"
+            "types": ["unit", "player"]
         },
         "1F477": {
             "name": "Construction Worker",
-            "template": "unit_default"
+            "types": ["unit", "player"]
         },
         "1F9D5": {
             "name": "Woman with Headscarf",
-            "template": "unit_default"
+            "types": ["unit", "player"]
         },
         "1F916": {
             "name": "Robot",
-            "template": "unit_default"
+            "types": ["unit"]
         },
         "2708": {
             "name": "Airplane",
-            "template": "unit_default",
+            "types": ["unit"],
             "elevateY": 18.0,
             "scale": 9.0
         },
         "1F333": {
             "name": "Deciduous Tree",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 4.0
         },
         "1F334": {
             "name": "Palm Tree",
-            "template": "stationary_default",
-            "scale": 5
+            "types": ["flora"],
+            "scale": 5.0
         },
         "1F335": {
             "name": "Cactus",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 1.8
         },
         "1F33E": {
             "name": "Ear of Rice",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 0.3
         },
         "1F344": {
             "name": "Mushroom",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 0.2
         },
         "1F33A": {
             "name": "Hibiscus",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 0.3
         },
         "1F33B": {
             "name": "Sunflower",
-            "template": "stationary_default",
+            "types": ["flora"],
             "scale": 0.6
         },
         "23FF": {
             "name": "LIDAR Scanner",
-            "template": "item_default",
+            "types": ["item"],
             "scale": 0.5
         },
         "1F4DF": {
             "name": "Video-phone",
-            "template": "item_default",
+            "types": ["item", "videophone"],
             "scale": 0.3
         },
         "1F6E4": {
             "name": "Conveyor Belt",
-            "template": "item_default",
+            "types": ["item"],
             "scale": 4.0
         },
         "1F4F0": {
             "name": "Society Policy",
-            "template": "item_default",
+            "types": ["item"],
             "scale": 0.3
         },
         "1F36F": {
             "name": "Sunspot Cream",
-            "template": "item_default",
+            "types": ["item"],
             "scale": 0.3
         },
         "1F9F6": {
             "name": "Fiber Optic",
-            "template": "item_default"
+            "types": ["item"]
         },
         "1F93A": {
             "name": "Attack Modifier",
-            "template": "item_default",
+            "types": ["item"],
             "scale": 0.3
-        },
-        "2622": {
-            "name": "Nuclear Fallout",
-            "template": "stationary_default",
-            "scale": 2.0
         },
         "2600": {
             "name": "Solar Panel",
-            "template": "stationary_default",
+            "types": ["building", "solar_panel"],
             "scale": 1.0
+        },
+        "2622": {
+            "name": "Nuclear Fallout",
+            "types": ["mineral"],
+            "scale": 2.0
         },
         "1F6F0": {
             "name": "Space Debris",
-            "template": "stationary_default",
+            "types": ["mineral"],
             "scale": 1.5
         }
     }

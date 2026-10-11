@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.29 - Building Verbs & Tactical Action System
+## v0.2.30 - Building Verbs & Tactical Action System
 - **Building Verbs**: Implemented in gameserver `build_conveyor`,
   `build_powerstructure` (100km sight radius), and `build_fiber` pure
   functions and stateful handlers in `Mutonex.Engine.Actions` and
@@ -8,6 +8,21 @@
 - **Action Dispatching**: Dispatched building verbs via
   `GameSession` in gameserver, enforcing 15m proximity and spatial
   perimeter checks.
+
+## v0.2.29 - Turn Timer UI & Spatial Collision
+- **2D Spatial Collision**: Added webclient 2D circle collision
+  detection (`CollisionEngine.ts`) with avatar WASD sliding and
+  fauna obstacle avoidance.
+- **Turn Timer UI**: Added webclient GPU shader-driven turn timer disk
+  overlay (`TurnTimer.ts`) with 500ms time snapping.
+- **Game Rules Store**: Added webclient functional GameRules state
+  store (`GameRules.ts`) supporting GDD 4.9.2 turn intervals
+  (default, beginner, fast).
+- **Entity Profiles**: Extracted webclient `EntityProfiles.ts` sourcing
+  scales and glyph mappings from `glyph_profiles.json`.
+- **Glyph Profiles Refactor**: Refactored content `glyph_profiles.json`
+  to use a `defaults` dictionary and `types` arrays; updated
+  `build_entity_models.ts` and `EntityProfiles.ts` consumers.
 
 ## v02.2.28 - Gameplay Dynamics & Unit Distribution
 - **Spatial Distribution Algo**: `Mutonex.Engine.Stippling` implementing

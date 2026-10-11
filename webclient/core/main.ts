@@ -9,9 +9,12 @@ import { ActionHUD } from '../view/ActionHUD.ts';
 import * as ShortcutEngine from '../input/ShortcutEngine.ts';
 import { GameStateManager } from './GameStateManager.ts';
 import { InputManager } from '../input/InputManager.ts';
+import { Rules, store, updateRules } from './GameRules.ts';
 import type {
   PlayerTuple,
 } from '../mocks/MockGameStateProvider.ts';
+
+type RulesStore = ReturnType<typeof store>;
 
 const AUTO_JOIN_DELAY_MS = 2000;
 const LOBBY_SECTORS = [
@@ -25,6 +28,7 @@ interface GameInitData {
   fauna?: any[];
   terrain?: any;
   minerals?: any[];
+  items?: any[];
   buildings?: any[];
 }
 
@@ -43,17 +47,32 @@ function initRenderPipeline(canvas: HTMLCanvasElement): ViewSet {
   return new ViewManager(canvas).initPipeline();
 }
 
-function bindDebugConsole(viewSet: ViewSet) {
-  const { lidarView, viewManager } = viewSet;
+function attachGlobals(
+  viewSet: ViewSet,
+  rulesStore: RulesStore,
+): void {
+  const { lidarView, viewManager, turnTimer } = viewSet;
   const win = window as MutonexWindow;
   win.__mutonex = {
     lidarView,
     viewManager,
+    turnTimer,
+    gameRules: rulesStore,
     renderer: (viewManager as any).renderer,
+    startTimer: (d?: number) => turnTimer.startTimer(d),
+    updateRules: (p: Partial<Rules>) =>
+      rulesStore.dispatch(updateRules(p)),
   };
-  win.__mutonex.lidarView.setStyle = (
-    styleName: string,
-  ) => {
+}
+
+function bindDebugConsole(
+  viewSet: ViewSet,
+  rulesStore: RulesStore,
+): void {
+  attachGlobals(viewSet, rulesStore);
+  const { lidarView } = viewSet;
+  const win = window as MutonexWindow;
+  win.__mutonex.lidarView.setStyle = (styleName: string) => {
     if (LidarStyles[styleName]) lidarView.setLidarStyle(styleName);
   };
   ShortcutEngine.printHelp();
@@ -72,24 +91,38 @@ function startLobbyAutoJoin(
   }
 }
 
+function syncInitialPlayers(
+  players: PlayerTuple[] | undefined,
+  gsm: GameStateManager,
+  hud: ActionHUD,
+  provider: GameStateProvider | null,
+  lobby: LobbyView,
+): void {
+  if (players?.length && provider) {
+    gsm.syncPlayers(players, hud, provider);
+    lobby.updatePlayerQueue(players);
+  }
+}
+
 function handleInit(
-  { players, fauna, terrain, minerals, buildings }: GameInitData,
+  { players, fauna, terrain, minerals, items, buildings }:
+    GameInitData,
   viewSet: ViewSet,
   gsm: GameStateManager,
   hud: ActionHUD,
   provider: GameStateProvider | null,
   lobby: LobbyView,
   performSync: () => void,
+  rulesStore: RulesStore,
 ): void {
   ShortcutEngine.printHelp();
+  viewSet.turnTimer?.setRules(rulesStore.get());
+  viewSet.turnTimer?.startTimer();
   gsm.handleInitState(
-    { fauna, terrain, minerals, buildings },
+    { fauna, terrain, minerals, items, buildings },
     viewSet,
   );
-  if (players?.length && provider) {
-    gsm.syncPlayers(players, hud, provider);
-    lobby.updatePlayerQueue(players);
-  }
+  syncInitialPlayers(players, gsm, hud, provider, lobby);
   performSync();
   gsm.updateEntitiesList(
     viewSet.viewManager.getActiveView(),
@@ -114,7 +147,7 @@ function handleUpdate(
   fauna?.forEach(([id, x, _y, z]) =>
     gsm.faunaAnchors.set(id, new THREE.Vector3(x, 1, z))
   );
-  if (items?.length) gsm.handleUpdateItems(items);
+  if (items) gsm.handleUpdateItems(items);
   if (buildings?.length) gsm.handleUpdateBuildings(buildings);
 }
 
@@ -127,7 +160,7 @@ function runLoopTick(
   provider: GameStateProvider | null,
   dt: number,
 ): void {
-  const interp = gsm.updateFauna(dt);
+  const interp = gsm.updateFauna(dt, avatar.position);
   const active = viewSet.viewManager.getActiveView();
   const { nearbyItem, hoveredItem } = gsm.getHUDData(
     avatar,
@@ -180,6 +213,7 @@ function bindSectorSelect(
   performSync: () => void,
   getProvider: () => GameStateProvider | null,
   setProvider: (p: GameStateProvider) => void,
+  rulesStore: RulesStore,
 ): void {
   lobby.onSectorSelect((sector) => {
     if (getProvider()) return;
@@ -192,6 +226,7 @@ function bindSectorSelect(
         getProvider(),
         lobby,
         performSync,
+        rulesStore,
       );
     const onUpdate = (update: GameUpdateData) => {
       handleUpdate(update, gsm, hud, getProvider(), lobby);
@@ -214,7 +249,11 @@ function main() {
   ) as HTMLCanvasElement;
   if (!canvas) return;
   const viewSet = initRenderPipeline(canvas);
-  bindDebugConsole(viewSet);
+  const rulesStore = store();
+  rulesStore.sub((rules) => {
+    viewSet.turnTimer.setRules(rules);
+  });
+  bindDebugConsole(viewSet, rulesStore);
 
   let provider: GameStateProvider | null = null;
   const lobby = new LobbyView();
@@ -237,9 +276,13 @@ function main() {
     () => provider,
     (act) => inputMgr.isActionPressed(act),
   );
+  avatar.getObstacles = () =>
+    gameStateManager.getObstacles(provider?.playerId);
 
   lobby.renderSectorList(LOBBY_SECTORS);
   gameStateManager.bindActionHUD(hud, avatar, () => provider);
+  viewSet.turnTimer.setRules(rulesStore.get());
+  viewSet.turnTimer.startTimer();
   performSync();
 
   bindSectorSelect(
@@ -254,6 +297,7 @@ function main() {
     (p) => {
       provider = p;
     },
+    rulesStore,
   );
 
   startLobbyAutoJoin(lobby, () => provider);

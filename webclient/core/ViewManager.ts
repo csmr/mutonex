@@ -6,6 +6,7 @@ import { ShortcutScope } from '../input/ShortcutConfig.ts';
 import { LidarView } from '../view/LidarView.ts';
 import { SphereView } from '../view/SphereView.ts';
 import { GlobeView } from '../view/GlobeView.ts';
+import { TurnTimer } from '../view/TurnTimer.ts';
 
 export interface IView {
   scene: any;
@@ -38,6 +39,7 @@ export type ViewSet = {
   lidarView: IView;
   sphereView: IView;
   globeView: IView;
+  turnTimer: TurnTimer;
 };
 
 export class ViewManager {
@@ -48,9 +50,11 @@ export class ViewManager {
   private _lidarView: IView | null = null;
   private _sphereView: IView | null = null;
   private _globeView: IView | null = null;
+  public turnTimer: TurnTimer;
   private resizeListener = () => this.onWindowResize();
 
   constructor(canvas: HTMLCanvasElement) {
+    this.turnTimer = new TurnTimer();
     this.canvas = canvas;
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -75,6 +79,7 @@ export class ViewManager {
 
   public dispose(): void {
     window.removeEventListener('resize', this.resizeListener);
+    this.turnTimer.dispose();
     this.renderer.dispose();
   }
 
@@ -88,6 +93,7 @@ export class ViewManager {
       lidarView: this._lidarView!,
       sphereView: this._sphereView!,
       globeView: this._globeView!,
+      turnTimer: this.turnTimer,
     };
   }
 
@@ -220,6 +226,8 @@ export class ViewManager {
       view.scene,
       view.camera,
     );
+    this.turnTimer.update();
+    this.turnTimer.render(this.renderer);
   }
 
   public animate(): void {
@@ -230,6 +238,9 @@ export class ViewManager {
   }
 
   private onWindowResize(): void {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    this.renderer.setSize(w, h);
+    this.turnTimer.updateCanvasSize(w, h);
   }
 }

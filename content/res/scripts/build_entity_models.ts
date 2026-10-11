@@ -67,10 +67,10 @@ export async function loadGlyphRegistry(): Promise<GlyphRegistry> {
   const data = JSON.parse(file);
   const registry: GlyphRegistry = {};
   for (const [hex, entry] of Object.entries(data.glyphs)) {
-    const templateName = (entry as any).template;
-    const template = templateName ? data.templates[templateName] : {};
+    const primaryType = (entry as any).types?.[0];
+    const defaultProps = primaryType ? data.defaults?.[primaryType] : {};
     const char = String.fromCodePoint(parseInt(hex, 16));
-    registry[char] = { ...template, ...(entry as any) };
+    registry[char] = { ...defaultProps, ...(entry as any) };
   }
   return registry;
 }

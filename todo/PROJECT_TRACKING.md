@@ -40,6 +40,14 @@ layer.
 - [x] **Building Verbs**: Implement `build_conveyor`,
   `build_powerstructure`, and `build_fiber`. (Ref:
   `Mutonex.Engine.Actions`)
+- [ ] **Building Instance Logic**: Powerstructure, Fiber Optic,
+  and Conveyor building instance state and lifecycle logic.
+  (Partial - base instance state, energy decay, and build verbs
+  implemented)
+- [ ] **Building Game-Rule Mechanics**: Game-rule mechanics for
+  Powerstructure, Fiber Optic, and Conveyor items/buildings.
+  (Partial - 100km sight area, LIDAR modifier, and conveyor
+  connections implemented)
 - [ ] **Attack/Defend Verbs**: Implement activist unit area-denial
   and building destruction logic.
 
