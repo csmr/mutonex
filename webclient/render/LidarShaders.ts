@@ -254,42 +254,22 @@ void emitDepthColor(vec3 base) {
   gl_FragColor = vec4(base, vViewZ / far);
 }
 
+void emitProcedural(vec3 base) {
+  float d = vViewZ / far;
+  if (stripeMask(vLidarTexCoord.x) < 0.5) {
+    gl_FragColor = vec4(vec3(0.0), d);
+    return;
+  }
+  gl_FragColor = vec4(hitColor(base), d);
+}
+
 void main() {
   vec3 base = mix(uColor, elevationColor(vWorldPosition.y), 0.7);
   if (uProceduralMode < 0.5) {
     emitDepthColor(base);
     return;
   }
-  float depthAlpha = clamp(vViewZ / far, 0.0, 1.0);
-  if (stripeMask(vLidarTexCoord.x) < 0.5) {
-    gl_FragColor = vec4(vec3(0.0), depthAlpha);
-    return;
-  }
-  gl_FragColor = vec4(hitColor(base), depthAlpha);
-}
-`;
-
-export const NormalMeshVertexShader = `
-varying vec3 vNormal;
-varying float vViewZ;
-
-void main() {
-  vec4 vPos = modelViewMatrix * vec4(position, 1.0);
-  vViewZ = -vPos.z;
-  vNormal = normalize(normalMatrix * normal);
-  gl_Position = projectionMatrix * vPos;
-}
-`;
-
-export const NormalMeshFragmentShader = `
-uniform float far;
-
-varying vec3 vNormal;
-varying float vViewZ;
-
-void main() {
-  vec3 n = normalize(vNormal) * 0.5 + 0.5;
-  gl_FragColor = vec4(n, vViewZ / far);
+  emitProcedural(base);
 }
 `;
 
@@ -332,27 +312,29 @@ float widthAt(float d) {
   return clamp(maxWidth / meters, minWidth, maxWidth);
 }
 
-float gapOf(float a, float b) {
-  if (skyPair(a, b)) return 0.0;
-  return abs(a - b) * far;
+float jumpOf(float d0, float dn, float w, float dt) {
+  if (skyPair(d0, dt)) return 0.0;
+  float slope = dn - d0;
+  float pred = d0 + slope * w;
+  return abs(dt - pred) * far;
+}
+
+float dirJump(vec2 uv, vec2 e, float w) {
+  vec2 texel = e / resolution;
+  float d0 = depthAt(uv);
+  float dn = depthAt(uv + texel);
+  float dt = depthAt(uv + texel * w);
+  return jumpOf(d0, dn, w, dt);
 }
 
 float edgeMask(vec2 uv) {
-  float d0 = depthAt(uv);
-  vec2 t = (widthAt(d0) / resolution);
-
-  float d1 = depthAt(uv + vec2(t.x, 0.0));
-  float d2 = depthAt(uv - vec2(t.x, 0.0));
-  float d3 = depthAt(uv + vec2(0.0, t.y));
-  float d4 = depthAt(uv - vec2(0.0, t.y));
-
-  float g1 = gapOf(d0, d1);
-  float g2 = gapOf(d0, d2);
-  float g3 = gapOf(d0, d3);
-  float g4 = gapOf(d0, d4);
-
-  float maxGap = max(max(g1, g2), max(g3, g4));
-  return step(gapMeters, maxGap);
+  float w = widthAt(depthAt(uv));
+  float ex1 = dirJump(uv, vec2( 1.0, 0.0), w);
+  float ex2 = dirJump(uv, vec2(-1.0, 0.0), w);
+  float ey1 = dirJump(uv, vec2( 0.0, 1.0), w);
+  float ey2 = dirJump(uv, vec2( 0.0,-1.0), w);
+  float j = max(max(ex1, ex2), max(ey1, ey2));
+  return step(gapMeters, j);
 }
 
 vec3 computeShade(vec2 uv) {
@@ -377,5 +359,29 @@ void main() {
   if (m < 0.01) discard;
   vec3 col = computeShade(vUv);
   gl_FragColor = vec4(col, m);
+}
+`;
+
+export const NormalMeshVertexShader = `
+varying vec3 vWorldNormal;
+varying float vViewZ;
+
+void main() {
+  vWorldNormal = normalize(mat3(modelMatrix) * normal);
+  vec4 vPos = modelViewMatrix * vec4(position, 1.0);
+  vViewZ = -vPos.z;
+  gl_Position = projectionMatrix * vPos;
+}
+`;
+
+export const NormalMeshFragmentShader = `
+uniform float far;
+
+varying vec3 vWorldNormal;
+varying float vViewZ;
+
+void main() {
+  vec3 n = normalize(vWorldNormal) * 0.5 + 0.5;
+  gl_FragColor = vec4(n, vViewZ / far);
 }
 `;
