@@ -87,9 +87,27 @@ export class LidarView implements IView {
   }
 
   private onKeyDown(e: KeyboardEvent): void {
-    if (e.key === 'k' || e.key === 'K') {
-      this.cycleShaderMode();
-    }
+    const k = e.key.toLowerCase();
+    if (k === 'k') this.cycleShaderMode();
+    if (k === 'l') this.cycleStyle();
+    if (k === 'j') this.adjustGapMeters(-0.1);
+    if (k === 'h') this.adjustGapMeters(0.1);
+  }
+
+  public cycleStyle(): void {
+    const styleNames = Object.keys(LidarStyles);
+    const idx = styleNames.indexOf(this.currentStyleName);
+    const nextIdx = (idx + 1) % styleNames.length;
+    this.setLidarStyle(styleNames[nextIdx]);
+  }
+
+  public adjustGapMeters(delta: number): void {
+    if (!this.outlineMaterial) return;
+    const u = this.outlineMaterial.uniforms;
+    const current = u.gapMeters.value || 0.5;
+    const nextVal = Math.max(0.05, current + delta);
+    u.gapMeters.value = Number(nextVal.toFixed(2));
+    console.log(`LidarView gapMeters set to: ${u.gapMeters.value}`);
   }
 
   private initMainScene(domElement: HTMLCanvasElement) {
@@ -165,9 +183,13 @@ export class LidarView implements IView {
     u.minWidth.value = cfg.minWidth ?? 1.0;
     u.maxWidth.value = cfg.maxWidth ?? 15.0;
     u.shadeMode.value = cfg.shadeMode ?? 0.0;
-    u.nearEdgeColor.value.set(cfg.nearEdgeColor ?? '#b24d00');
-    u.farEdgeColor.value.set(cfg.farEdgeColor ?? '#000000');
-    u.depthThreshold.value = cfg.depthThreshold;
+    if (u.nearEdgeColor?.value?.set) {
+      u.nearEdgeColor.value.set(cfg.nearEdgeColor ?? '#b24d00');
+    }
+    if (u.farEdgeColor?.value?.set) {
+      u.farEdgeColor.value.set(cfg.farEdgeColor ?? '#000000');
+    }
+    u.gapMeters.value = cfg.gapMeters ?? 0.5;
   }
 
   public setLidarStyle(styleName: string) {
@@ -203,9 +225,7 @@ export class LidarView implements IView {
     }
 
     for (const mat of this.baseMaterials.values()) {
-      mat.uniforms.uProceduralMode.value = isProcedural
-        ? 1.0
-        : 0.0;
+      mat.uniforms.uProceduralMode.value = isProcedural ? 1.0 : 0.0;
     }
 
     if (this.isRebuildingBuffer) {
@@ -221,9 +241,7 @@ export class LidarView implements IView {
     const cur = u.shadeMode.value;
     const next = cur > 0.5 ? 0.0 : 1.0;
     u.shadeMode.value = next;
-    const modeName = next > 0.5
-      ? 'World Normal'
-      : 'Screen Space';
+    const modeName = next > 0.5 ? 'World Normal' : 'Screen Space';
     console.log(`LidarView shadeMode toggled to: ${modeName}`);
   }
 
@@ -312,7 +330,7 @@ export class LidarView implements IView {
             cfg?.farEdgeColor ?? '#000000',
           ),
         },
-        depthThreshold: { value: cfg?.depthThreshold ?? 0.04 },
+        gapMeters: { value: cfg?.gapMeters ?? 0.5 },
         outlineDebug: { value: 0.0 },
       },
       vertexShader: OutlineVertexShader,

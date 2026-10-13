@@ -6,7 +6,7 @@ export interface OutlineConfig {
   color?: string;
   nearEdgeColor?: string;
   farEdgeColor?: string;
-  depthThreshold: number;
+  gapMeters: number;
 }
 
 export interface LidarStyleConfig {
@@ -39,7 +39,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
   lineLidar: {
@@ -59,7 +59,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
   legacy: {
@@ -79,7 +79,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.05,
+      gapMeters: 0.5,
     },
   },
   densePointGridVertical: {
@@ -99,7 +99,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.03,
+      gapMeters: 0.5,
     },
   },
   densePointGridHorizontal: {
@@ -119,7 +119,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
   proceduralLidar: {
@@ -139,7 +139,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
 };

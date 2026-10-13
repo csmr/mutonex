@@ -312,7 +312,7 @@ uniform float far;
 uniform float shadeMode;
 uniform vec3 nearEdgeColor;
 uniform vec3 farEdgeColor;
-uniform float depthThreshold;
+uniform float gapMeters;
 uniform float outlineDebug;
 
 varying vec2 vUv;
@@ -321,10 +321,6 @@ const float SKY = 0.99;
 
 float depthAt(vec2 uv) {
   return texture2D(tScene, uv).a;
-}
-
-vec3 colorAt(vec2 uv) {
-  return texture2D(tScene, uv).rgb;
 }
 
 bool skyPair(float a, float b) {
@@ -336,19 +332,13 @@ float widthAt(float d) {
   return clamp(maxWidth / meters, minWidth, maxWidth);
 }
 
-float edgeOf(float a, float b) {
+float gapOf(float a, float b) {
   if (skyPair(a, b)) return 0.0;
-  float rel = abs(a - b) / max(max(a, b), 0.001);
-  return clamp(rel, 0.0, 1.0);
-}
-
-float colorEdgeOf(vec3 a, vec3 b) {
-  return length(a - b);
+  return abs(a - b) * far;
 }
 
 float edgeMask(vec2 uv) {
   float d0 = depthAt(uv);
-  vec3 c0 = colorAt(uv);
   vec2 t = (widthAt(d0) / resolution);
 
   float d1 = depthAt(uv + vec2(t.x, 0.0));
@@ -356,14 +346,13 @@ float edgeMask(vec2 uv) {
   float d3 = depthAt(uv + vec2(0.0, t.y));
   float d4 = depthAt(uv - vec2(0.0, t.y));
 
-  vec3 c1 = colorAt(uv + vec2(t.x, 0.0));
-  vec3 c2 = colorAt(uv - vec2(t.x, 0.0));
+  float g1 = gapOf(d0, d1);
+  float g2 = gapOf(d0, d2);
+  float g3 = gapOf(d0, d3);
+  float g4 = gapOf(d0, d4);
 
-  float depthEdge = edgeOf(d0, d1) + edgeOf(d0, d2) +
-                    edgeOf(d0, d3) + edgeOf(d0, d4);
-  float colorEdge = colorEdgeOf(c0, c1) + colorEdgeOf(c0, c2);
-
-  return step(depthThreshold, depthEdge + colorEdge * 0.5);
+  float maxGap = max(max(g1, g2), max(g3, g4));
+  return step(gapMeters, maxGap);
 }
 
 vec3 computeShade(vec2 uv) {
@@ -385,6 +374,7 @@ void main() {
     gl_FragColor = vec4(vec3(m), 1.0);
     return;
   }
+  if (m < 0.01) discard;
   vec3 col = computeShade(vUv);
   gl_FragColor = vec4(col, m);
 }
