@@ -6,6 +6,7 @@ uniform float scanMode;
 uniform float dotRadiusMin;
 uniform float dotRadiusMax;
 uniform float dotType;
+uniform float beamMode;
 
 varying float vRawDepth;
 varying float vDist;
@@ -32,8 +33,18 @@ vec4 project(vec3 w) {
   return projectionMatrix * modelViewMatrix * vec4(w, 1.0);
 }
 
+float beamPointSize() {
+  float meters = max(vDist, 3.0);
+  float px = dotRadiusMax * 1.5 * 3.0 / meters;
+  return max(px, max(dotRadiusMin, 0.5) * 2.0);
+}
+
 float pointSize() {
-  if (scanMode < 0.5) return dotRadiusMax * 1.5;
+  if (scanMode < 0.5) {
+    return beamMode > 0.5
+      ? beamPointSize()
+      : dotRadiusMax * 1.5;
+  }
   if (dotType < 0.5) return dotRadiusMax;
   float t = clamp(vDist / 30.0, 0.0, 1.0);
   return max(1.0, mix(dotRadiusMax, dotRadiusMin, t) * 2.0);
@@ -134,7 +145,8 @@ float beamRowAlpha() {
 
 float shapeAlpha() {
   if (scanMode < 0.5) {
-    return beamMode < 0.5 ? contourAlpha() : beamRowAlpha();
+    if (beamMode < 0.5) return contourAlpha();
+    return beamRowAlpha() * circleAlpha();
   }
   if (dotType < 0.5) return squareAlpha();
   return circleAlpha();

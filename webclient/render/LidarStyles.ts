@@ -56,7 +56,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
     dotType: 1.0,
     samplesH: 400,
     samplesV: 290,
-    dotRadiusMin: 0.0,
+    dotRadiusMin: 1.0,
     dotRadiusMax: 5.0,
     outline: {
       width: 2.0,
