@@ -10,15 +10,20 @@ export interface OutlineConfig {
 }
 
 export interface BeamConfig {
-  mode?: number;
   step?: number;
   width?: number;
 }
 
+export type LidarPipeline =
+  | 'cloud'
+  | 'square'
+  | 'contour'
+  | 'beam'
+  | 'procedural';
+
 export interface LidarStyleConfig {
   name: string;
-  scanMode: number;
-  dotType: number;
+  pipeline: LidarPipeline;
   samplesH: number;
   samplesV: number;
   dotRadiusMin: number;
@@ -31,9 +36,8 @@ export interface LidarStyleConfig {
 export const LidarStyles: Record<string, LidarStyleConfig> = {
   pointCloud: {
     name: 'pointCloud',
+    pipeline: 'cloud',
     geometryMode: 'Points',
-    scanMode: 1.0,
-    dotType: 1.0,
     samplesH: 480,
     samplesV: 300,
     dotRadiusMin: 1.0,
@@ -51,9 +55,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
   },
   lineLidar: {
     name: 'lineLidar',
+    pipeline: 'beam',
     geometryMode: 'Points',
-    scanMode: 0.0,
-    dotType: 1.0,
     samplesH: 400,
     samplesV: 290,
     dotRadiusMin: 1.0,
@@ -69,16 +72,14 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       gapMeters: 0.5,
     },
     beam: {
-      mode: 1.0,
       step: 0.022,
       width: 0.003,
     },
   },
   legacy: {
     name: 'legacy',
+    pipeline: 'square',
     geometryMode: 'Points',
-    scanMode: 1.0,
-    dotType: 0.0,
     samplesH: 400,
     samplesV: 280,
     dotRadiusMin: 1.0,
@@ -96,9 +97,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
   },
   densePointGridVertical: {
     name: 'densePointGridVertical',
+    pipeline: 'beam',
     geometryMode: 'Points',
-    scanMode: 0.0,
-    dotType: 1.0,
     samplesH: 800,
     samplesV: 560,
     dotRadiusMin: 1.0,
@@ -114,16 +114,14 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       gapMeters: 0.5,
     },
     beam: {
-      mode: 1.0,
       step: 0.015,
       width: 0.002,
     },
   },
   densePointGridHorizontal: {
     name: 'densePointGridHorizontal',
+    pipeline: 'cloud',
     geometryMode: 'Points',
-    scanMode: 1.0,
-    dotType: 1.0,
     samplesH: 480,
     samplesV: 300,
     dotRadiusMin: 1.0,
@@ -141,9 +139,8 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
   },
   proceduralLidar: {
     name: 'proceduralLidar',
+    pipeline: 'procedural',
     geometryMode: 'Points',
-    scanMode: 0.0,
-    dotType: 0.0,
     samplesH: 10,
     samplesV: 10,
     dotRadiusMin: 0.0,
