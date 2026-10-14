@@ -48,7 +48,8 @@ defmodule Mutonex.Game.MixProject do
       {:mox, "~> 1.0", only: :test},
       {:yaml_elixir, "~> 2.8.0"},
       {:ecto_sql, "~> 3.14"},
-      {:postgrex, "~> 0.22"}
+      {:postgrex, "~> 0.22"},
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
     ]
   end
 end

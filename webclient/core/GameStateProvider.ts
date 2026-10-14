@@ -7,12 +7,20 @@ type InitialStateCallback = (gameState: GameState) => void;
 type StateUpdateCallback = (
   update: { players?: PlayerTuple[]; fauna?: PlayerTuple[] },
 ) => void;
+type TurnStartCallback = (
+  data: {
+    duration_ms?: number;
+    turn_ends_at_ms?: number;
+    turn_interval_ms?: number;
+  },
+) => void;
 
 export class GameStateProvider {
   private socket: any;
   private channel: any;
   private onInitialState: InitialStateCallback;
   private onStateUpdate: StateUpdateCallback;
+  private onTurnStart?: TurnStartCallback;
   private sectorId: string;
   public phase: string = 'lobby';
   public playerId: string | null = null;
@@ -22,10 +30,12 @@ export class GameStateProvider {
     sectorId: string,
     onInitialState: InitialStateCallback,
     onStateUpdate: StateUpdateCallback,
+    onTurnStart?: TurnStartCallback,
   ) {
     this.sectorId = sectorId;
     this.onInitialState = onInitialState;
     this.onStateUpdate = onStateUpdate;
+    this.onTurnStart = onTurnStart;
 
     const loc = window.location;
     const isHttps = loc.protocol === 'https:';
@@ -75,6 +85,10 @@ export class GameStateProvider {
 
     this.channel.on('fauna_update', (payload: any) => {
       this.onStateUpdate(payload);
+    });
+
+    this.channel.on('turn_start', (payload: any) => {
+      if (this.onTurnStart) this.onTurnStart(payload);
     });
   }
 

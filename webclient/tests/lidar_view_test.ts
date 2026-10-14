@@ -56,7 +56,13 @@ class MockMatrix4 {
 }
 
 class MockColor {
-  constructor(public hex: number) {}
+  constructor(public hex: number | string = 0) {}
+  set(val: any) {
+    if (typeof val === 'number' || typeof val === 'string') {
+      this.hex = val;
+    }
+    return this;
+  }
 }
 
 class MockScene {

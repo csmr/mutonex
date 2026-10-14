@@ -124,11 +124,12 @@ export function resolveFaunaStep(
   const dx = res.x - hit.pos.x;
   const dz = res.z - hit.pos.z;
   const dist = Math.sqrt(dx * dx + dz * dz) || 0.001;
-  const minDist = hit.radius + radius + 0.1;
+  const targetDist = hit.radius + radius + 0.01;
+  const pushDist = dist + (targetDist - dist) * 0.7;
   const nx = dx / dist;
   const nz = dz / dist;
 
-  res.x = hit.pos.x + nx * minDist;
-  res.z = hit.pos.z + nz * minDist;
+  res.x = hit.pos.x + nx * pushDist;
+  res.z = hit.pos.z + nz * pushDist;
   return res;
 }

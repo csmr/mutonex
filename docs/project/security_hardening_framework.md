@@ -35,7 +35,7 @@ generic defensive categories and industry-standard best practices.
   public internet.
 
 ## 4. Maintenance Itinerary (Recommended)
-- [ ] Establish automated SAST scanning with Sobelow.
+- [x] Establish automated SAST scanning with Sobelow.
 - [ ] Conduct a formal review of the Authentication module against
   OWASP Top 10 standards.
 - [ ] Implement a secrets rotation policy for production environments.

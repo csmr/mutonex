@@ -203,9 +203,7 @@ export class LidarView implements IView {
     }
 
     for (const mat of this.baseMaterials.values()) {
-      mat.uniforms.uProceduralMode.value = isProcedural
-        ? 1.0
-        : 0.0;
+      mat.uniforms.uProceduralMode.value = isProcedural ? 1.0 : 0.0;
     }
 
     if (this.isRebuildingBuffer) {
@@ -221,9 +219,7 @@ export class LidarView implements IView {
     const cur = u.shadeMode.value;
     const next = cur > 0.5 ? 0.0 : 1.0;
     u.shadeMode.value = next;
-    const modeName = next > 0.5
-      ? 'World Normal'
-      : 'Screen Space';
+    const modeName = next > 0.5 ? 'World Normal' : 'Screen Space';
     console.log(`LidarView shadeMode toggled to: ${modeName}`);
   }
 
