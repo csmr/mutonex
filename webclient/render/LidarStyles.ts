@@ -9,6 +9,12 @@ export interface OutlineConfig {
   gapMeters: number;
 }
 
+export interface BeamConfig {
+  mode?: number;
+  step?: number;
+  width?: number;
+}
+
 export interface LidarStyleConfig {
   name: string;
   scanMode: number;
@@ -19,6 +25,7 @@ export interface LidarStyleConfig {
   dotRadiusMax: number;
   geometryMode?: 'Points' | 'LineSegments';
   outline?: OutlineConfig;
+  beam?: BeamConfig;
 }
 
 export const LidarStyles: Record<string, LidarStyleConfig> = {
@@ -61,6 +68,11 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       farEdgeColor: '#331100',
       gapMeters: 0.5,
     },
+    beam: {
+      mode: 1.0,
+      step: 0.022,
+      width: 0.003,
+    },
   },
   legacy: {
     name: 'legacy',
@@ -100,6 +112,11 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
       gapMeters: 0.5,
+    },
+    beam: {
+      mode: 1.0,
+      step: 0.015,
+      width: 0.002,
     },
   },
   densePointGridHorizontal: {

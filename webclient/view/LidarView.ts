@@ -205,12 +205,14 @@ export class LidarView implements IView {
     this.dotRadiusMax = config.dotRadiusMax;
 
     if (this.lidarMaterial) {
-      this.lidarMaterial.uniforms.scanMode.value = config.scanMode;
-      this.lidarMaterial.uniforms.dotType.value = this.dotType;
-      this.lidarMaterial.uniforms.dotRadiusMin.value =
-        this.dotRadiusMin;
-      this.lidarMaterial.uniforms.dotRadiusMax.value =
-        this.dotRadiusMax;
+      const u = this.lidarMaterial.uniforms;
+      u.scanMode.value = config.scanMode;
+      u.dotType.value = this.dotType;
+      u.dotRadiusMin.value = this.dotRadiusMin;
+      u.dotRadiusMax.value = this.dotRadiusMax;
+      u.beamMode.value = config.beam?.mode ?? 0.0;
+      u.beamStep.value = config.beam?.step ?? 0.022;
+      u.beamWidth.value = config.beam?.width ?? 0.003;
     }
 
     this.updateOutlineUniforms(config.outline);
@@ -353,6 +355,7 @@ export class LidarView implements IView {
       window.innerWidth,
       window.innerHeight,
     );
+    const styleCfg = LidarStyles[this.currentStyleName];
     const uniforms = {
       tDepth: { value: null },
       cameraNear: { value: 0.1 },
@@ -362,13 +365,16 @@ export class LidarView implements IView {
       resolution: { value: resolution },
       time: { value: 0 },
       scanMode: {
-        value: LidarStyles[this.currentStyleName]?.scanMode ?? 1.0,
+        value: styleCfg?.scanMode ?? 1.0,
       },
       entropy: { value: this.entropy },
       diagMode: { value: 0.0 },
       dotType: { value: this.dotType },
       dotRadiusMin: { value: this.dotRadiusMin },
       dotRadiusMax: { value: this.dotRadiusMax },
+      beamMode: { value: styleCfg?.beam?.mode ?? 0.0 },
+      beamStep: { value: styleCfg?.beam?.step ?? 0.022 },
+      beamWidth: { value: styleCfg?.beam?.width ?? 0.003 },
     };
 
     return new THREE.ShaderMaterial({

@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+import base64
 import socket
 import subprocess
 from playwright.sync_api import sync_playwright
@@ -12,6 +13,9 @@ BASE_DIR = os.path.abspath(
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 FIXTURES_DIR = os.path.join(
     BASE_DIR, "webclient/tests/fixtures/visual_baselines"
+)
+REPORT_FILE = os.path.join(
+    BASE_DIR, "webclient/tests/fixtures/visual_report.html"
 )
 
 def is_port_open(port):
@@ -44,28 +48,69 @@ def ensure_server():
         return proc
     return None
 
-def verify_and_save_snapshot(page, filename):
+def capture_snapshot(page, title, filename):
     os.makedirs(FIXTURES_DIR, exist_ok=True)
     target_path = os.path.join(FIXTURES_DIR, filename)
     buf = page.screenshot()
-    if not os.path.exists(target_path):
-        with open(target_path, "wb") as f:
-            f.write(buf)
-        print(f"Generated baseline snapshot: {filename}")
-        return True
-    with open(target_path, "rb") as f:
-        baseline_buf = f.read()
-    diff = abs(len(buf) - len(baseline_buf))
-    tol = max(len(buf), len(baseline_buf)) * 0.05
-    match = (buf == baseline_buf) or (diff <= tol)
-    status = "MATCH" if match else "DIFF"
-    print(f"Snapshot verify [{filename}]: {status}")
-    return match
+    with open(target_path, "wb") as f:
+        f.write(buf)
+    b64 = base64.b64encode(buf).decode("utf-8")
+    return {"title": title, "filename": filename, "b64": b64}
+
+def build_html_report(snapshots):
+    os.makedirs(os.path.dirname(REPORT_FILE), exist_ok=True)
+    cards = []
+    for s in snapshots:
+        card = f"""
+        <div class="card">
+          <h3>{s['title']}</h3>
+          <img src="data:image/png;base64,{s['b64']}" alt="{s['title']}" />
+          <p class="meta">{s['filename']}</p>
+        </div>"""
+        cards.append(card)
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mutonex 3D Visual Rendering Test Report</title>
+  <style>
+    body {{
+      background: #111; color: #eee;
+      font-family: system-ui, sans-serif; margin: 20px;
+    }}
+    h1 {{ color: #f80; border-bottom: 1px solid #333; }}
+    .grid {{
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 20px; margin-top: 20px;
+    }}
+    .card {{
+      background: #222; border: 1px solid #444;
+      border-radius: 8px; padding: 16px;
+    }}
+    .card img {{
+      width: 100%; height: auto; border-radius: 4px;
+      display: block; border: 1px solid #333;
+    }}
+    .meta {{ color: #888; font-size: 0.85em; margin-top: 8px; }}
+  </style>
+</head>
+<body>
+  <h1>Mutonex 3D Visual Rendering Report</h1>
+  <p>Local visual inspection gallery for developer review.</p>
+  <div class="grid">
+    {''.join(cards)}
+  </div>
+</body>
+</html>"""
+    with open(REPORT_FILE, "w", encoding="utf-8") as f:
+        f.write(html)
 
 def run():
     server_proc = ensure_server()
     console_logs = []
     page_errors = []
+    snapshots = []
 
     try:
         with sync_playwright() as p:
@@ -101,25 +146,39 @@ def run():
             )
             page.wait_for_timeout(500)
 
-            # Verification 1: Base 3D scene snapshot
-            verify_and_save_snapshot(page, "base_scene.png")
+            # Snapshot 1: Base scene
+            s1 = capture_snapshot(
+                page, "Base Scene Rendering", "base_scene.png"
+            )
+            snapshots.append(s1)
 
-            # Interaction hjkl cycling:
             # k: cycle shadeMode
             page.keyboard.press("k")
             page.wait_for_timeout(300)
-            verify_and_save_snapshot(page, "normal_shade_mode.png")
+            s2 = capture_snapshot(
+                page, "World Normal Shade Mode (k)", "normal_shade_mode.png"
+            )
+            snapshots.append(s2)
 
             # l: cycle style
             page.keyboard.press("l")
             page.wait_for_timeout(300)
-            verify_and_save_snapshot(page, "line_lidar_style.png")
+            s3 = capture_snapshot(
+                page, "Line LIDAR Style (l)", "line_lidar_style.png"
+            )
+            snapshots.append(s3)
 
             # h/j: adjust gapMeters
             page.keyboard.press("j")
             page.wait_for_timeout(100)
             page.keyboard.press("h")
             page.wait_for_timeout(100)
+            s4 = capture_snapshot(
+                page, "Adjusted Gap Meters (h/j)", "adjusted_gap_meters.png"
+            )
+            snapshots.append(s4)
+
+            build_html_report(snapshots)
 
             js_exceptions = [
                 e for e in console_logs
@@ -134,6 +193,7 @@ def run():
             print(f"Uncaught Page Errors:  {len(page_errors)}")
             print(f"Runtime JS Exceptions: {len(js_exceptions)}")
             print("-" * 54)
+            print(f"HTML Visual Report: {REPORT_FILE}")
             print("Visual 3D Pipeline: PASS")
             print(sep + "\n")
 

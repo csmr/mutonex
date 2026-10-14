@@ -66,6 +66,9 @@ uniform float entropy;
 uniform float time;
 uniform float diagMode;
 uniform float dotType;
+uniform float beamMode;
+uniform float beamStep;
+uniform float beamWidth;
 uniform vec2 resolution;
 
 varying float vRawDepth;
@@ -116,8 +119,23 @@ float contourAlpha() {
   return 1.0 - smoothstep(0.05, 0.5, length(pt));
 }
 
+float elevationOf(vec3 w) {
+  vec3 rel = w - cameraPosition;
+  float d = max(length(rel), 0.001);
+  return asin(clamp(rel.y / d, -1.0, 1.0));
+}
+
+float beamRowAlpha() {
+  float stepVal = max(beamStep, 0.0001);
+  float x = elevationOf(vWorldPos) / stepVal;
+  float cRad = abs(x - floor(x + 0.5)) * stepVal;
+  return 1.0 - smoothstep(beamWidth, beamWidth * 2.0, cRad);
+}
+
 float shapeAlpha() {
-  if (scanMode < 0.5) return contourAlpha();
+  if (scanMode < 0.5) {
+    return beamMode < 0.5 ? contourAlpha() : beamRowAlpha();
+  }
   if (dotType < 0.5) return squareAlpha();
   return circleAlpha();
 }
