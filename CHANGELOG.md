@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.2.32 - LIDAR Outlines & Pipeline Refactoring
+- **Slope-Aware Outlines**: Refined post-process outlines in
+  `OutlineFragmentShader` using slope-aware depth jump prediction to
+  eliminate terrain horizon edge bleed and internal triangle artifacts.
+- **Perspective Scanlines**: Implemented angular elevation beam scan row
+  masking in `LidarShaders.ts` with distance-scaled point sizing and
+  circular sprite clipping.
+- **Pipeline Modularization**: Refactored `LidarStyles.ts` into a
+  discriminated `LidarPipeline` type, extracted `OutlinePass.ts` and
+  `ScanGrid.ts`, and streamlined `LidarView.ts` with pure `deriveUniforms()`.
+- **Profiles & Visual Suite**: Consolidated character/color maps into
+  `EntityProfiles.ts`, added explicit model cache disposal in
+  `EntityRenderer.ts`, and created an automated Playwright 3D visual
+  test suite (`test_visual.sh`).
+
 ## v0.2.29 - Turn Timer UI & Spatial Collision
 - **2D Spatial Collision**: Added webclient 2D circle collision
   detection (`CollisionEngine.ts`) with avatar WASD sliding and
