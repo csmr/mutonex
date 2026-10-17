@@ -53,23 +53,24 @@ Modifiers are items or buffs that units/buildings possess. They are not distinct
 ## 4. Implementation Plan for Remaining Features
 
 ### A. Active TODOs
-1.  **Building Verbs & Functions**: Implement engine verbs
-    (`build_powerstructure`, `build_conveyor`, `build_fiber`),
-    power projection sight radius, and resource conversion in
-    `Mutonex.Engine.Actions`.
-3.  **Action System**: Create a system to handle actions like
+1.  **Action System**: Create a system to handle actions like
     `charm`, `build`, `attack` triggered by clients, checking
     `is_charmable` flags.
 
 ### B. Completed & Archived Items
-1.  **Webclient 3D Building Entities**: 3D entity rendering for
+1.  **Building Verbs & Functions**: Engine building verbs
+    (`build_powerstructure`, `build_conveyor`, `build_fiber`),
+    power projection sight radius (100km), and stateful action
+    handlers in `Mutonex.Engine.Actions` and
+    `Mutonex.Engine.Systems.Actions` are complete.
+2.  **Webclient 3D Building Entities**: 3D entity rendering for
     in-game buildings (`Power Structure`, `Tent`, `Houses`,
     `Cityscape`, `Moyai`, `Solar Panel`) in `EntityRenderer.ts`
     and `GameStateManager.ts` is complete.
-2.  **Unit Differentiation**: Expand `Unit` struct or logic to
+3.  **Unit Differentiation**: Expand `Unit` struct or logic to
     handle `Activist` (attack) vs `Local` (work) behavior.
     Fauna and Octree integration is finalized.
-2.  **Building Modifiers & Persistence**: `install_lidar` modifier
+4.  **Building Modifiers & Persistence**: `install_lidar` modifier
     item attachment, 2km spatial perimeter checks, and relic
     persistence (manifesting persistent relics as dormant unowned
     NPC-buildings ready to be charmed) are complete in the engine.

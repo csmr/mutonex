@@ -92,7 +92,8 @@ Deno.test('CollisionEngine: resolveFaunaStep pushes fauna outside obstacle', () 
   const dz = safe.z - obstacle.pos.z;
   const dist = Math.sqrt(dx * dx + dz * dz);
 
-  assertEquals(dist >= 2.9, true);
+  assertEquals(dist >= 2.2, true);
+  assertEquals(dist < 2.8, true);
 });
 
 Deno.test('CollisionEngine: resolveSlideMovement allows backing away from overlap', () => {

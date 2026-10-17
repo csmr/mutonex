@@ -30,6 +30,10 @@ interface GameInitData {
   minerals?: any[];
   items?: any[];
   buildings?: any[];
+  duration_ms?: number;
+  turn_ends_at_ms?: number;
+  turn_interval_ms?: number;
+  turn_elapsed_ms?: number;
 }
 
 interface GameUpdateData {
@@ -105,8 +109,18 @@ function syncInitialPlayers(
 }
 
 function handleInit(
-  { players, fauna, terrain, minerals, items, buildings }:
-    GameInitData,
+  {
+    players,
+    fauna,
+    terrain,
+    minerals,
+    items,
+    buildings,
+    duration_ms,
+    turn_ends_at_ms,
+    turn_interval_ms,
+    turn_elapsed_ms,
+  }: GameInitData,
   viewSet: ViewSet,
   gsm: GameStateManager,
   hud: ActionHUD,
@@ -117,7 +131,13 @@ function handleInit(
 ): void {
   ShortcutEngine.printHelp();
   viewSet.turnTimer?.setRules(rulesStore.get());
-  viewSet.turnTimer?.startTimer();
+  const dur = turn_ends_at_ms
+    ? (duration_ms || turn_interval_ms)
+    : turn_interval_ms;
+  if (dur) {
+    const endOrElapsed = turn_ends_at_ms || (turn_elapsed_ms || 0);
+    viewSet.turnTimer?.startTimer(dur, endOrElapsed);
+  }
   gsm.handleInitState(
     { fauna, terrain, minerals, items, buildings },
     viewSet,
@@ -231,10 +251,20 @@ function bindSectorSelect(
       handleUpdate(update, gsm, hud, getProvider(), lobby);
       performSync();
     };
+    const onTurnStart = (data: {
+      duration_ms?: number;
+      turn_ends_at_ms?: number;
+      turn_interval_ms?: number;
+    }) => {
+      const dur = data.duration_ms || data.turn_interval_ms;
+      const endOrElapsed = data.turn_ends_at_ms || 0;
+      viewSet.turnTimer?.startTimer(dur, endOrElapsed);
+    };
     const provider = new GameStateProvider(
       sector.id,
       onInit,
       onUpdate,
+      onTurnStart,
     );
     provider.start();
     setProvider(provider);
@@ -283,7 +313,6 @@ function main() {
   lobby.renderSectorList(LOBBY_SECTORS);
   gameStateManager.bindActionHUD(hud, avatar, () => provider);
   viewSet.turnTimer.setRules(rulesStore.get());
-  viewSet.turnTimer.startTimer();
   performSync();
 
   bindSectorSelect(

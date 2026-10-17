@@ -108,11 +108,33 @@ Deno.test(
 );
 
 Deno.test(
+  'TurnTimer: startTimer with elapsedMs offset calculates initial progress',
+  () => {
+    const timer = new TurnTimer();
+    timer.startTimer(10000, 2500);
+    assertEquals(timer.isTimerActive, true);
+    assertEquals(timer.clockMat.uniforms.uProgress.value, 0.75);
+  },
+);
+
+Deno.test(
+  'TurnTimer: startTimer with absolute turnEndsAtMs epoch timestamp',
+  () => {
+    const timer = new TurnTimer();
+    const endsAt = Date.now() + 5000;
+    timer.startTimer(10000, endsAt);
+    assertEquals(timer.isTimerActive, true);
+    assertEquals(timer.clockMat.uniforms.uProgress.value, 0.5);
+  },
+);
+
+Deno.test(
   'TurnTimer: update updates progress uniform',
   () => {
     const timer = new TurnTimer();
     timer.startTimer(10000);
     timer.timerStart = performance.now() - 2500;
+    timer.turnEndsAtMs = Date.now() + 7500;
     timer.update();
     assertEquals(timer.isTimerActive, true);
     assertEquals(timer.clockMat.uniforms.uProgress.value, 0.75);

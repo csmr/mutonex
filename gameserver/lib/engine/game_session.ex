@@ -16,7 +16,10 @@ defmodule Mutonex.Engine.GameSession do
     "charm" => :charm,
     "pick_up" => :pick_up,
     "drop_item" => :drop,
-    "install_lidar" => :install_lidar
+    "install_lidar" => :install_lidar,
+    "build_powerstructure" => :build_powerstructure,
+    "build_conveyor" => :build_conveyor,
+    "build_fiber" => :build_fiber
   }
 
   # --- Client API ---
@@ -43,6 +46,7 @@ defmodule Mutonex.Engine.GameSession do
 
     state =
       Environment.initial_state(sid)
+      |> Map.put(:turn_start_time, System.os_time(:millisecond))
       |> Map.put(:cfg_cache, %{
         maint: cfg[:building_maintenance_cost] || 3.0,
         depletion: cfg[:player_energy_depletion] || 0.5,
@@ -59,8 +63,15 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   def handle_call(:get_initial_state, _from, s) do
+    now = System.os_time(:millisecond)
+    st = Map.get(s, :turn_start_time, now)
+    dur = s.cfg_cache.tick_ms
     resp = %{
       phase: Atom.to_string(s.phase),
+      duration_ms: dur,
+      turn_ends_at_ms: st + dur,
+      turn_interval_ms: dur,
+      turn_elapsed_ms: max(0, now - st),
       game_state: build_payload(s)
     }
 
@@ -139,12 +150,19 @@ defmodule Mutonex.Engine.GameSession do
       update_buildings_energy(s.buildings, s.sector_energy, maint)
 
     new_players = update_players_energy(s.players, depletion)
-    ns = %{s | buildings: new_buildings, players: new_players}
+    st = System.os_time(:millisecond)
+    ns = %{
+      s
+      | buildings: new_buildings,
+        players: new_players,
+        turn_start_time: st
+    }
 
     broadcast_state_update(ns, %{
       items: ns.items,
       buildings: ns.buildings,
-      fauna: ns.fauna
+      fauna: ns.fauna,
+      turn_start: true
     })
 
     schedule_sector_tick(s.cfg_cache.tick_ms)
@@ -418,6 +436,17 @@ defmodule Mutonex.Engine.GameSession do
         else: pld
 
     s.cfg_cache.notifier.broadcast("game:#{sid}", "state_update", pld)
+
+    if extra[:turn_start] do
+      st = Map.get(s, :turn_start_time, System.os_time(:millisecond))
+      dur = s.cfg_cache.tick_ms
+      s.cfg_cache.notifier.broadcast("game:#{sid}", "turn_start", %{
+        duration_ms: dur,
+        turn_ends_at_ms: st + dur,
+        turn_interval_ms: dur,
+        turn_start_time: st
+      })
+    end
   end
 
   defp add_player_if_missing(s, uid) do

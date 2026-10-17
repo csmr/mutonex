@@ -15,6 +15,32 @@
   `EntityRenderer.ts`, and created an automated Playwright 3D visual
   test suite (`test_visual.sh`).
 
+## v0.2.31 - LIDAR Screen-Space Outlines & Render Pipeline
+- **LIDAR Screen-Space Outlines**: Implemented post-processing shader pipeline
+  in `LidarShaders.ts`, `LidarStyles.ts`, and `LidarView.ts` for distance-scaled
+  LIDAR outlines and normal-map rendering pass.
+- **PostRender Lifecycle Pass**: Added `postRender(renderer)` lifecycle hook
+  to `IView` interface and `ViewManager` rendering loop.
+- **Entity Profile Safeguards**: Enhanced `getEntityProfile` and `getGlyphsForType`
+  in `EntityProfiles.ts` with explicit type guards against non-string keys.
+- **Turn Timer Clock Sync**: Synchronized server-authoritative turn boundaries
+  and epoch targets between gameserver `GameSession` and webclient `TurnTimer`.
+
+## v0.2.30 - Building Verbs & Tactical Action System
+- **Building Verbs**: Implemented in gameserver `build_conveyor`,
+  `build_powerstructure` (100km sight radius), and `build_fiber` pure
+  functions and stateful handlers in `Mutonex.Engine.Actions` and
+  `Mutonex.Engine.Systems.Actions`.
+- **Action Dispatching**: Dispatched building verbs via
+  `GameSession` in gameserver, enforcing 15m proximity and spatial
+  perimeter checks.
+- **Turn Timer Integration**: Synchronized gameserver turn timing
+  metadata (`turn_interval_ms`, `turn_elapsed_ms`) with webclient
+  `TurnTimer` HUD overlay for authoritative turn boundary alignment.
+- **SAST Security Hardening**: Added `sobelow` to gameserver
+  dependencies and resolved static analysis findings in test
+  environment config and `PageController`.
+
 ## v0.2.29 - Turn Timer UI & Spatial Collision
 - **2D Spatial Collision**: Added webclient 2D circle collision
   detection (`CollisionEngine.ts`) with avatar WASD sliding and
