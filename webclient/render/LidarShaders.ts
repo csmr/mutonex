@@ -333,8 +333,8 @@ float depthAt(vec2 uv) {
   return texture2D(tScene, uv).a;
 }
 
-bool skyPair(float a, float b) {
-  return a > SKY && b > SKY;
+bool isSky(float d) {
+  return d > SKY;
 }
 
 float widthAt(float d) {
@@ -342,20 +342,20 @@ float widthAt(float d) {
   return clamp(maxWidth / meters, minWidth, maxWidth);
 }
 
-float invDepth(float d) {
-  float meters = max(d * far, 0.001);
-  return 1.0 / meters;
-}
-
-float jumpOf(float d0, float dn, float w, float dt) {
-  if (skyPair(d0, dt)) return 0.0;
-  float r0 = invDepth(d0);
-  float rn = invDepth(dn);
-  float slope = rn - r0;
-  float rPred = r0 + slope * w;
-  float dPred = 1.0 / max(rPred, 0.00001);
-  float dTarget = max(dt * far, 0.001);
-  return abs(dTarget - dPred);
+float jumpOf(vec2 uv, float d0, float dn, float w, float dt) {
+  bool sky0 = isSky(d0);
+  bool skyT = isSky(dt);
+  if (sky0 && skyT) return 0.0;
+  if (sky0 != skyT) {
+    vec2 normUv = sky0 ? uv + (1.0 / resolution) * w : uv;
+    vec3 norm = texture2D(tNormal, normUv).rgb * 2.0 - 1.0;
+    if (norm.y > 0.80) return 0.0;
+    return gapMeters + 1.0;
+  }
+  if (isSky(dn)) return 0.0;
+  float slope = dn - d0;
+  float pred = d0 + slope * w;
+  return abs(dt - pred) * far;
 }
 
 float dirJump(vec2 uv, vec2 e, float w) {
@@ -363,7 +363,7 @@ float dirJump(vec2 uv, vec2 e, float w) {
   float d0 = depthAt(uv);
   float dn = depthAt(uv + texel);
   float dt = depthAt(uv + texel * w);
-  return jumpOf(d0, dn, w, dt);
+  return jumpOf(uv, d0, dn, w, dt);
 }
 
 float edgeMask(vec2 uv) {

@@ -20,7 +20,6 @@ import { ScanGrid } from '../render/ScanGrid.ts';
 
 const DebugKeys: Record<string, (v: LidarView) => void> = {
   k: (v) => v.outlinePass.cycleShaderMode(),
-  l: (v) => v.cycleStyle(),
   j: (v) => v.outlinePass.adjustGapMeters(-0.1),
   h: (v) => v.outlinePass.adjustGapMeters(0.1),
 };
