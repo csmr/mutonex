@@ -90,3 +90,83 @@ export const getGlyphChar = (p: EntityProfile | string): string => {
     : p.hex;
   return String.fromCodePoint(parseInt(hex, 16));
 };
+
+export const ENTITY_CHAR_MAP: Record<string, string[]> = {
+  'player': ['🧙', '𐇑', '𐇒', '👷', '🧕'],
+  'fauna': [
+    '🐀',
+    '🐂',
+    '🐆',
+    '🐈',
+    '🐊',
+    '🐦',
+    '🐜',
+    '🐝',
+    '🦗',
+    '🐢',
+    '🐕',
+    '🕊',
+    '🦔',
+  ],
+  'unit': ['🤖', '✈'],
+  'building': ['🏛'],
+  'building_tent': ['🎪'],
+  'building_houses': ['🏘'],
+  'building_cityscape': ['🏙'],
+  'building_power_structure': ['🏛'],
+  'building_spawn_hub': ['🏛'],
+  'building_moyai': ['🗿'],
+  'building_solar_panel': ['🎛'],
+  'society': ['🎪', '🏘', '🏙', '🏰', '🗿', '💩'],
+  'mineral': [
+    '⭓',
+    '⬠',
+    '💎',
+    '🌱',
+    '🌲',
+    '🌳',
+    '🌴',
+    '🌵',
+    '🌾',
+    '🍄',
+    '🌺',
+    '🌻',
+  ],
+  'item': ['💎', '📟', '🧴', '🤺'],
+  'item_gem': ['💎'],
+  'item_video_phone': ['📟'],
+};
+
+export const ENTITY_COLOR_MAP: Record<string, number> = {
+  'player': 0x1E90FF,
+  'fauna': 0x228B22,
+  'unit': 0xFFA500,
+  'building': 0x8B4513,
+  'building_tent': 0xE9967A,
+  'building_houses': 0xCD853F,
+  'building_cityscape': 0x708090,
+  'building_power_structure': 0xDAA520,
+  'building_spawn_hub': 0x8A2BE2,
+  'building_moyai': 0x808080,
+  'building_solar_panel': 0x4682B4,
+  'society': 0x00CED1,
+  'mineral': 0x800080,
+  'item': 0xFFFF00,
+  'item_gem': 0xFFFF00,
+  'item_video_phone': 0x00FF00,
+};
+
+export function getCharForEntity(type: string, id: string): string {
+  let chars = ENTITY_CHAR_MAP[type];
+  if (!chars && type.startsWith('building_')) {
+    chars = ENTITY_CHAR_MAP['building'];
+  }
+  if (!chars) return getGlyphChar(type);
+  const idLen = id.length;
+  const charIdx = id.charCodeAt(idLen - 1);
+  return chars[charIdx % chars.length];
+}
+
+export function getColorForEntity(type: string): number {
+  return ENTITY_COLOR_MAP[type] ?? 0xffffff;
+}

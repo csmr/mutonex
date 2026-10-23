@@ -6,6 +6,7 @@ uniform float scanMode;
 uniform float dotRadiusMin;
 uniform float dotRadiusMax;
 uniform float dotType;
+uniform float beamMode;
 
 varying float vRawDepth;
 varying float vDist;
@@ -32,8 +33,18 @@ vec4 project(vec3 w) {
   return projectionMatrix * modelViewMatrix * vec4(w, 1.0);
 }
 
+float beamPointSize() {
+  float meters = max(vDist, 3.0);
+  float px = dotRadiusMax * 1.5 * 3.0 / meters;
+  return max(px, max(dotRadiusMin, 0.5) * 2.0);
+}
+
 float pointSize() {
-  if (scanMode < 0.5) return dotRadiusMax * 1.5;
+  if (scanMode < 0.5) {
+    return beamMode > 0.5
+      ? beamPointSize()
+      : dotRadiusMax * 1.5;
+  }
   if (dotType < 0.5) return dotRadiusMax;
   float t = clamp(vDist / 30.0, 0.0, 1.0);
   return max(1.0, mix(dotRadiusMax, dotRadiusMin, t) * 2.0);
@@ -66,6 +77,9 @@ uniform float entropy;
 uniform float time;
 uniform float diagMode;
 uniform float dotType;
+uniform float beamMode;
+uniform float beamStep;
+uniform float beamWidth;
 uniform vec2 resolution;
 
 varying float vRawDepth;
@@ -116,8 +130,24 @@ float contourAlpha() {
   return 1.0 - smoothstep(0.05, 0.5, length(pt));
 }
 
+float elevationOf(vec3 w) {
+  vec3 rel = w - cameraPosition;
+  float d = max(length(rel), 0.001);
+  return asin(clamp(rel.y / d, -1.0, 1.0));
+}
+
+float beamRowAlpha() {
+  float stepVal = max(beamStep, 0.0001);
+  float x = elevationOf(vWorldPos) / stepVal;
+  float cRad = abs(x - floor(x + 0.5)) * stepVal;
+  return 1.0 - smoothstep(beamWidth, beamWidth * 2.0, cRad);
+}
+
 float shapeAlpha() {
-  if (scanMode < 0.5) return contourAlpha();
+  if (scanMode < 0.5) {
+    if (beamMode < 0.5) return contourAlpha();
+    return beamRowAlpha() * circleAlpha();
+  }
   if (dotType < 0.5) return squareAlpha();
   return circleAlpha();
 }
@@ -254,42 +284,22 @@ void emitDepthColor(vec3 base) {
   gl_FragColor = vec4(base, vViewZ / far);
 }
 
+void emitProcedural(vec3 base) {
+  float d = vViewZ / far;
+  if (stripeMask(vLidarTexCoord.x) < 0.5) {
+    gl_FragColor = vec4(vec3(0.0), d);
+    return;
+  }
+  gl_FragColor = vec4(hitColor(base), d);
+}
+
 void main() {
   vec3 base = mix(uColor, elevationColor(vWorldPosition.y), 0.7);
   if (uProceduralMode < 0.5) {
     emitDepthColor(base);
     return;
   }
-  float depthAlpha = clamp(vViewZ / far, 0.0, 1.0);
-  if (stripeMask(vLidarTexCoord.x) < 0.5) {
-    gl_FragColor = vec4(vec3(0.0), depthAlpha);
-    return;
-  }
-  gl_FragColor = vec4(hitColor(base), depthAlpha);
-}
-`;
-
-export const NormalMeshVertexShader = `
-varying vec3 vNormal;
-varying float vViewZ;
-
-void main() {
-  vec4 vPos = modelViewMatrix * vec4(position, 1.0);
-  vViewZ = -vPos.z;
-  vNormal = normalize(normalMatrix * normal);
-  gl_Position = projectionMatrix * vPos;
-}
-`;
-
-export const NormalMeshFragmentShader = `
-uniform float far;
-
-varying vec3 vNormal;
-varying float vViewZ;
-
-void main() {
-  vec3 n = normalize(vNormal) * 0.5 + 0.5;
-  gl_FragColor = vec4(n, vViewZ / far);
+  emitProcedural(base);
 }
 `;
 
@@ -312,7 +322,7 @@ uniform float far;
 uniform float shadeMode;
 uniform vec3 nearEdgeColor;
 uniform vec3 farEdgeColor;
-uniform float depthThreshold;
+uniform float gapMeters;
 uniform float outlineDebug;
 
 varying vec2 vUv;
@@ -323,12 +333,8 @@ float depthAt(vec2 uv) {
   return texture2D(tScene, uv).a;
 }
 
-vec3 colorAt(vec2 uv) {
-  return texture2D(tScene, uv).rgb;
-}
-
-bool skyPair(float a, float b) {
-  return a > SKY && b > SKY;
+bool isSky(float d) {
+  return d > SKY;
 }
 
 float widthAt(float d) {
@@ -336,34 +342,38 @@ float widthAt(float d) {
   return clamp(maxWidth / meters, minWidth, maxWidth);
 }
 
-float edgeOf(float a, float b) {
-  if (skyPair(a, b)) return 0.0;
-  float rel = abs(a - b) / max(max(a, b), 0.001);
-  return clamp(rel, 0.0, 1.0);
+float jumpOf(vec2 uv, float d0, float dn, float w, float dt) {
+  bool sky0 = isSky(d0);
+  bool skyT = isSky(dt);
+  if (sky0 && skyT) return 0.0;
+  if (sky0 != skyT) {
+    vec2 normUv = sky0 ? uv + (1.0 / resolution) * w : uv;
+    vec3 norm = texture2D(tNormal, normUv).rgb * 2.0 - 1.0;
+    if (norm.y > 0.80) return 0.0;
+    return gapMeters + 1.0;
+  }
+  if (isSky(dn)) return 0.0;
+  float slope = dn - d0;
+  float pred = d0 + slope * w;
+  return abs(dt - pred) * far;
 }
 
-float colorEdgeOf(vec3 a, vec3 b) {
-  return length(a - b);
+float dirJump(vec2 uv, vec2 e, float w) {
+  vec2 texel = e / resolution;
+  float d0 = depthAt(uv);
+  float dn = depthAt(uv + texel);
+  float dt = depthAt(uv + texel * w);
+  return jumpOf(uv, d0, dn, w, dt);
 }
 
 float edgeMask(vec2 uv) {
-  float d0 = depthAt(uv);
-  vec3 c0 = colorAt(uv);
-  vec2 t = (widthAt(d0) / resolution);
-
-  float d1 = depthAt(uv + vec2(t.x, 0.0));
-  float d2 = depthAt(uv - vec2(t.x, 0.0));
-  float d3 = depthAt(uv + vec2(0.0, t.y));
-  float d4 = depthAt(uv - vec2(0.0, t.y));
-
-  vec3 c1 = colorAt(uv + vec2(t.x, 0.0));
-  vec3 c2 = colorAt(uv - vec2(t.x, 0.0));
-
-  float depthEdge = edgeOf(d0, d1) + edgeOf(d0, d2) +
-                    edgeOf(d0, d3) + edgeOf(d0, d4);
-  float colorEdge = colorEdgeOf(c0, c1) + colorEdgeOf(c0, c2);
-
-  return step(depthThreshold, depthEdge + colorEdge * 0.5);
+  float w = widthAt(depthAt(uv));
+  float ex1 = dirJump(uv, vec2( 1.0, 0.0), w);
+  float ex2 = dirJump(uv, vec2(-1.0, 0.0), w);
+  float ey1 = dirJump(uv, vec2( 0.0, 1.0), w);
+  float ey2 = dirJump(uv, vec2( 0.0,-1.0), w);
+  float j = max(max(ex1, ex2), max(ey1, ey2));
+  return step(gapMeters, j);
 }
 
 vec3 computeShade(vec2 uv) {
@@ -385,7 +395,32 @@ void main() {
     gl_FragColor = vec4(vec3(m), 1.0);
     return;
   }
+  if (m < 0.01) discard;
   vec3 col = computeShade(vUv);
   gl_FragColor = vec4(col, m);
+}
+`;
+
+export const NormalMeshVertexShader = `
+varying vec3 vWorldNormal;
+varying float vViewZ;
+
+void main() {
+  vWorldNormal = normalize(mat3(modelMatrix) * normal);
+  vec4 vPos = modelViewMatrix * vec4(position, 1.0);
+  vViewZ = -vPos.z;
+  gl_Position = projectionMatrix * vPos;
+}
+`;
+
+export const NormalMeshFragmentShader = `
+uniform float far;
+
+varying vec3 vWorldNormal;
+varying float vViewZ;
+
+void main() {
+  vec3 n = normalize(vWorldNormal) * 0.5 + 0.5;
+  gl_FragColor = vec4(n, vViewZ / far);
 }
 `;

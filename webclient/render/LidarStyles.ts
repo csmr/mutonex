@@ -6,27 +6,38 @@ export interface OutlineConfig {
   color?: string;
   nearEdgeColor?: string;
   farEdgeColor?: string;
-  depthThreshold: number;
+  gapMeters: number;
 }
+
+export interface BeamConfig {
+  step?: number;
+  width?: number;
+}
+
+export type LidarPipeline =
+  | 'cloud'
+  | 'square'
+  | 'contour'
+  | 'beam'
+  | 'procedural';
 
 export interface LidarStyleConfig {
   name: string;
-  scanMode: number;
-  dotType: number;
+  pipeline: LidarPipeline;
   samplesH: number;
   samplesV: number;
   dotRadiusMin: number;
   dotRadiusMax: number;
   geometryMode?: 'Points' | 'LineSegments';
   outline?: OutlineConfig;
+  beam?: BeamConfig;
 }
 
 export const LidarStyles: Record<string, LidarStyleConfig> = {
   pointCloud: {
     name: 'pointCloud',
+    pipeline: 'cloud',
     geometryMode: 'Points',
-    scanMode: 1.0,
-    dotType: 1.0,
     samplesH: 480,
     samplesV: 300,
     dotRadiusMin: 1.0,
@@ -39,17 +50,16 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
   lineLidar: {
     name: 'lineLidar',
+    pipeline: 'beam',
     geometryMode: 'Points',
-    scanMode: 0.0,
-    dotType: 1.0,
     samplesH: 400,
     samplesV: 290,
-    dotRadiusMin: 0.0,
+    dotRadiusMin: 1.0,
     dotRadiusMax: 5.0,
     outline: {
       width: 2.0,
@@ -59,14 +69,17 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
+    },
+    beam: {
+      step: 0.022,
+      width: 0.003,
     },
   },
   legacy: {
     name: 'legacy',
+    pipeline: 'square',
     geometryMode: 'Points',
-    scanMode: 1.0,
-    dotType: 0.0,
     samplesH: 400,
     samplesV: 280,
     dotRadiusMin: 1.0,
@@ -79,14 +92,13 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.05,
+      gapMeters: 0.5,
     },
   },
   densePointGridVertical: {
     name: 'densePointGridVertical',
+    pipeline: 'beam',
     geometryMode: 'Points',
-    scanMode: 0.0,
-    dotType: 1.0,
     samplesH: 800,
     samplesV: 560,
     dotRadiusMin: 1.0,
@@ -99,14 +111,17 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.03,
+      gapMeters: 0.5,
+    },
+    beam: {
+      step: 0.015,
+      width: 0.002,
     },
   },
   densePointGridHorizontal: {
     name: 'densePointGridHorizontal',
+    pipeline: 'cloud',
     geometryMode: 'Points',
-    scanMode: 1.0,
-    dotType: 1.0,
     samplesH: 480,
     samplesV: 300,
     dotRadiusMin: 1.0,
@@ -119,14 +134,13 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
   proceduralLidar: {
     name: 'proceduralLidar',
+    pipeline: 'procedural',
     geometryMode: 'Points',
-    scanMode: 0.0,
-    dotType: 0.0,
     samplesH: 10,
     samplesV: 10,
     dotRadiusMin: 0.0,
@@ -139,7 +153,7 @@ export const LidarStyles: Record<string, LidarStyleConfig> = {
       color: '#ff6600',
       nearEdgeColor: '#ff7700',
       farEdgeColor: '#331100',
-      depthThreshold: 0.04,
+      gapMeters: 0.5,
     },
   },
 };
