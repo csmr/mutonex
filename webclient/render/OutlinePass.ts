@@ -141,13 +141,11 @@ export class OutlinePass {
     virtualScene.background = null;
     renderer.render(virtualScene, camera);
 
-    if (this.outlineMaterial?.uniforms.shadeMode.value > 0.5) {
-      renderer.setRenderTarget(this.normalRenderTarget);
-      renderer.clear();
-      virtualScene.overrideMaterial = this.normalMaterial;
-      renderer.render(virtualScene, camera);
-      virtualScene.overrideMaterial = null;
-    }
+    renderer.setRenderTarget(this.normalRenderTarget);
+    renderer.clear();
+    virtualScene.overrideMaterial = this.normalMaterial;
+    renderer.render(virtualScene, camera);
+    virtualScene.overrideMaterial = null;
 
     virtualScene.background = prevBg;
     renderer.setRenderTarget(currentRT);
