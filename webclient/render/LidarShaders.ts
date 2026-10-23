@@ -6,6 +6,7 @@ uniform float scanMode;
 uniform float dotRadiusMin;
 uniform float dotRadiusMax;
 uniform float dotType;
+uniform float beamMode;
 
 varying float vRawDepth;
 varying float vDist;
@@ -32,8 +33,18 @@ vec4 project(vec3 w) {
   return projectionMatrix * modelViewMatrix * vec4(w, 1.0);
 }
 
+float beamPointSize() {
+  float meters = max(vDist, 3.0);
+  float px = dotRadiusMax * 1.5 * 3.0 / meters;
+  return max(px, max(dotRadiusMin, 0.5) * 2.0);
+}
+
 float pointSize() {
-  if (scanMode < 0.5) return dotRadiusMax * 1.5;
+  if (scanMode < 0.5) {
+    return beamMode > 0.5
+      ? beamPointSize()
+      : dotRadiusMax * 1.5;
+  }
   if (dotType < 0.5) return dotRadiusMax;
   float t = clamp(vDist / 30.0, 0.0, 1.0);
   return max(1.0, mix(dotRadiusMax, dotRadiusMin, t) * 2.0);
@@ -134,7 +145,8 @@ float beamRowAlpha() {
 
 float shapeAlpha() {
   if (scanMode < 0.5) {
-    return beamMode < 0.5 ? contourAlpha() : beamRowAlpha();
+    if (beamMode < 0.5) return contourAlpha();
+    return beamRowAlpha() * circleAlpha();
   }
   if (dotType < 0.5) return squareAlpha();
   return circleAlpha();
@@ -330,11 +342,20 @@ float widthAt(float d) {
   return clamp(maxWidth / meters, minWidth, maxWidth);
 }
 
+float invDepth(float d) {
+  float meters = max(d * far, 0.001);
+  return 1.0 / meters;
+}
+
 float jumpOf(float d0, float dn, float w, float dt) {
   if (skyPair(d0, dt)) return 0.0;
-  float slope = dn - d0;
-  float pred = d0 + slope * w;
-  return abs(dt - pred) * far;
+  float r0 = invDepth(d0);
+  float rn = invDepth(dn);
+  float slope = rn - r0;
+  float rPred = r0 + slope * w;
+  float dPred = 1.0 / max(rPred, 0.00001);
+  float dTarget = max(dt * far, 0.001);
+  return abs(dTarget - dPred);
 }
 
 float dirJump(vec2 uv, vec2 e, float w) {
