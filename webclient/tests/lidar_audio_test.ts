@@ -23,8 +23,8 @@ class MockVector3 {
 const {
   calcPan,
   calcPitchAndVol,
+  calcDelaySec,
   evaluateAudioEntropy,
-  createNoiseBuffer,
   LidarAudio,
   LIDAR_AUDIO_CONFIG,
 } = await import('../core/LidarAudio.ts');
@@ -140,6 +140,12 @@ Deno.test(
   },
 );
 
+Deno.test('calcDelaySec: maps distance to ping delay seconds', () => {
+  assertAlmostEquals(calcDelaySec(3.0), 0.5, 0.01);
+  assertAlmostEquals(calcDelaySec(15.0), 2.5, 0.01);
+  assertAlmostEquals(calcDelaySec(30.0), 5.0, 0.01);
+});
+
 Deno.test('evaluateAudioEntropy: drops or mutates signal', () => {
   assertEquals(evaluateAudioEntropy(0, 0.1), 'normal');
   assertEquals(evaluateAudioEntropy(1.0, 0.1), 'drop');
@@ -147,10 +153,13 @@ Deno.test('evaluateAudioEntropy: drops or mutates signal', () => {
   assertEquals(evaluateAudioEntropy(1.0, 0.9), 'normal');
 });
 
-Deno.test('createNoiseBuffer: creates float32 audio buffer', () => {
+Deno.test('LidarAudio: caches generated noise buffer', () => {
   const ctx = createMockAudioCtx();
-  const buf = createNoiseBuffer(ctx, 0.1);
-  assertEquals(buf !== null, true);
+  const audio = new LidarAudio(ctx as any);
+  const buf1 = audio.getNoiseBuffer(ctx);
+  const buf2 = audio.getNoiseBuffer(ctx);
+  assertEquals(buf1 !== null, true);
+  assertEquals(buf1, buf2);
 });
 
 Deno.test(
