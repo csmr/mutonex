@@ -57,13 +57,11 @@ export function createNoiseBuffer(
 ): any {
   if (!ctx?.createBuffer) return null;
   const rate = ctx.sampleRate || 44100;
-  const count = Math.floor(rate * duration);
-  const buf = ctx.createBuffer(1, count, rate);
+  const buf = ctx.createBuffer(1, (rate * duration) | 0, rate);
   const data = buf.getChannelData(0);
-  let last = 0.0;
-  for (let i = 0; i < count; i++) {
-    const white = Math.random() * 2 - 1;
-    last = (last + 0.02 * white) / 1.02;
+  let last = 0;
+  for (let i = 0; i < data.length; i++) {
+    last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
     data[i] = last * 3.5;
   }
   return buf;
