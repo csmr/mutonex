@@ -17,6 +17,7 @@ import {
 import { deriveUniforms } from '../render/StyleUniforms.ts';
 import { OutlinePass } from '../render/OutlinePass.ts';
 import { ScanGrid } from '../render/ScanGrid.ts';
+import { LidarAudio } from '../core/LidarAudio.ts';
 
 const DebugKeys: Record<string, (v: LidarView) => void> = {
   k: (v) => v.outlinePass.cycleShaderMode(),
@@ -32,12 +33,14 @@ export class LidarView implements IView {
   public controls: any;
   public terrainMesh: any | null = null;
   public raycastEnabled = true;
+  public lidarAudio: LidarAudio;
 
   private virtualScene: any;
   private entityRenderer: EntityRenderer;
   public outlinePass: OutlinePass;
   private scanGrid: ScanGrid;
   private baseMaterials: Map<number, any> = new Map();
+  private cachedEntities: EntityData[] = [];
   public lidarMaterial: any;
 
   private boundResize: () => void;
@@ -55,6 +58,7 @@ export class LidarView implements IView {
       LidarStyles.pointCloud.outline,
     );
 
+    this.lidarAudio = new LidarAudio();
     this.lidarMaterial = this.createLidarShader();
     this.scanGrid = new ScanGrid(this.scene, this.lidarMaterial);
 
@@ -207,6 +211,7 @@ export class LidarView implements IView {
     const filtered = localPlayerId
       ? entities.filter((e) => e.id !== localPlayerId)
       : entities;
+    this.cachedEntities = filtered;
     this.entityRenderer.update(filtered);
   }
 
@@ -255,6 +260,20 @@ export class LidarView implements IView {
       mat.uniforms.time.value += deltaTime;
     }
     this.virtualScene.updateMatrixWorld(true);
+    this.updateAudio();
+  }
+
+  private updateAudio(): void {
+    const camPos = this.camera.position;
+    const camRight = new THREE.Vector3().setFromMatrixColumn(
+      this.camera.matrixWorld,
+      0,
+    );
+    this.lidarAudio.update(
+      camPos,
+      camRight,
+      this.cachedEntities,
+    );
   }
 
   public preRender(renderer: any): void {

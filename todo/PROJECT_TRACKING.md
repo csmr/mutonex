@@ -69,7 +69,7 @@ layer.
   `Moyai`, `Solar Panel`) in `EntityRenderer.ts` and
   `GameStateManager.ts`. (Ref:
   `feature_cards_implementation_20260127.md`)
-- [ ] **LIDAR Audio Pings**: Directional audio "echolocation" when
+- [x] **LIDAR Audio Pings**: Directional audio "echolocation" when
   the sensor beam hits charmable units. (Ref:
   `gameplay_07_lidar_audio_pings.md`)
 - [x] **GlobeView Earth Outlines**: Bright green country borders

@@ -47,6 +47,19 @@ class MockVector3 {
     this.y = v.y;
     this.z = v.z;
   }
+  setFromMatrixColumn(m: any, index: number) {
+    if (m?.elements) {
+      const offset = index * 4;
+      this.x = m.elements[offset];
+      this.y = m.elements[offset + 1];
+      this.z = m.elements[offset + 2];
+    } else {
+      this.x = index === 0 ? 1 : 0;
+      this.y = index === 1 ? 1 : 0;
+      this.z = index === 2 ? 1 : 0;
+    }
+    return this;
+  }
 }
 
 class MockMatrix4 {
