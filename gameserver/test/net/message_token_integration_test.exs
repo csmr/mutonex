@@ -21,6 +21,9 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
     Mox.stub(Mutonex.Engine.SimtellusClientMock, :is_available?, fn -> true end)
     Mox.stub(Mutonex.Engine.SimtellusClientMock, :get_artifacts, fn _, _ -> [] end)
     Mox.stub(Mutonex.Engine.SimtellusClientMock, :add_artifact, fn _, _, _ -> :ok end)
+    Mox.stub(Mutonex.Engine.SimtellusClientMock, :get_fair_spawn_points, fn _, _, count ->
+      Enum.map(1..count, fn i -> %{x: i * 20.0, y: 0.0, z: i * 20.0} end)
+    end)
 
     uid = "test_user_" <> Base.encode16(:crypto.strong_rand_bytes(4))
     {:ok, _, socket} =

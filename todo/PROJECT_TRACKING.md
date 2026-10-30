@@ -31,7 +31,7 @@ layer.
 ### C. Unit/Player Unification
 - [x] **Head Unit Full Integration**: Ensure all players spawn as
   `:head` Units with `charm`, `inventory`, and `energy` attributes.
-  (Ref: `gameplay_01_player_unit_unification.md`)
+  (Ref: `archive/gameplay_01_player_unit_unification.md`)
 - [ ] **Energy Lifecycle**: Implement energy depletion, collection
   (fauna), and "mummification" at 0 energy. (Ref:
   `gameplay_10_test_sector_fauna_units.md`)

@@ -41,6 +41,14 @@ defmodule Mutonex.Engine.RelicPersistenceTest do
       fn _, _, _ -> :ok end
     )
 
+    stub(
+      Mutonex.Engine.SimtellusClientMock,
+      :get_fair_spawn_points,
+      fn _, _, count ->
+        Enum.map(1..count, fn i -> %{x: i * 20.0, y: 0.0, z: i * 20.0} end)
+      end
+    )
+
     :ok
   end
 

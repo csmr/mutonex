@@ -7,5 +7,10 @@ defmodule Mutonex.Engine.SimtellusClientBehaviour do
               lon :: float(),
               art :: map()
             ) :: :ok
+  @callback get_fair_spawn_points(
+              lat :: float(),
+              lon :: float(),
+              count :: integer()
+            ) :: list()
   @callback is_available?() :: boolean()
 end

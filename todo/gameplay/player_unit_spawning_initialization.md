@@ -56,6 +56,10 @@ to domain building (Phase 2).
 - [ ] **Parity Verification**: A logic check during initialization
   that ensures the sum of "Movement Cost to Nearest 3 Buildings" is
   within a 10% variance for all session participants.
+- [ ] **Alpha Sector Phase 1 Testing Target**: Pivot `sector_alpha`
+  to test Kessler Sage guide NPC spawning, mineral node placement,
+  and geometric Phase 1 entity arrangements. (Ref:
+  `alpha-sector-phase-one-pivot-20260617.md`)
 
 ## Witty Observation
 *Ann, looking at the mountain range Jon used to hide his Power

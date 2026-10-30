@@ -63,6 +63,16 @@ defmodule Mutonex.Simtellus.PlanetTest do
     assert res > 870 and res < 1085
   end
 
+  test "get_fair_spawn_points returns equidistant stippling points" do
+    alias Mutonex.Simtellus.Simulation
+    start_supervised!({Simulation, [start_date: ~D[2026-01-01], years_before: 0]})
+    pts = Simulation.get_fair_spawn_points(10, 20, 3)
+    assert length(pts) == 3
+    [p1, p2 | _] = pts
+    dist = :math.sqrt(:math.pow(p1.x - p2.x, 2) + :math.pow(p1.z - p2.z, 2))
+    assert dist >= 15.0
+  end
+
   test "temp plausible values" do
     # 1. Equator warmer than pole
     t_equator = Planet.temp(80, 0, 0, 0)
