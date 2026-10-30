@@ -8,14 +8,6 @@ services:
       - ..:/app:Z
     working_dir: /app/webclient
     command: sh -c "./build-webclient.sh"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - ./data/.env.postgres
-      - ../.env
-    environment:
-      API_KEY_AUTH_ENABLE: ${API_KEY_AUTH_ENABLE}
 
   postgres:
     image: docker.io/library/postgres:latest
