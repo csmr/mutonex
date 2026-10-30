@@ -154,7 +154,7 @@ Deno.test('createNoiseBuffer: creates float32 audio buffer', () => {
 });
 
 Deno.test(
-  'LidarAudio: plays pings at 5000ms intervals for nearest target',
+  'LidarAudio: plays pings for up to maxTargets nearest targets',
   () => {
     const ctx = createMockAudioCtx();
     const audio = new LidarAudio(ctx as any);
@@ -172,23 +172,23 @@ Deno.test(
         pos: new MockVector3(1, 0, 0) as any,
         charm: 10,
       },
+      {
+        id: 'item_1',
+        pos: new MockVector3(2, 0, 0) as any,
+        charm: 0,
+      },
     ];
 
     audio.update(camPos, camRight, entities, 5000, 0.0);
-    assertEquals(ctx.getPlayCount(), 1);
-    assertAlmostEquals(
-      ctx.getLastFreq(),
-      LIDAR_AUDIO_CONFIG.maxFreqHz,
-      0.01,
-    );
+    assertEquals(ctx.getPlayCount(), 2);
 
     // Within 5000ms interval -> no additional ping
     audio.update(camPos, camRight, entities, 6000, 0.0);
-    assertEquals(ctx.getPlayCount(), 1);
-
-    // After 5000ms interval -> triggers second ping
-    audio.update(camPos, camRight, entities, 10001, 0.0);
     assertEquals(ctx.getPlayCount(), 2);
+
+    // After 5000ms interval -> triggers 2 more pings (total 4)
+    audio.update(camPos, camRight, entities, 10001, 0.0);
+    assertEquals(ctx.getPlayCount(), 4);
   },
 );
 

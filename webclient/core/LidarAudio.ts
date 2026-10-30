@@ -9,6 +9,7 @@ export const LIDAR_AUDIO_CONFIG = {
   minFreqHz: 783.99, // G5 note at dist >= 30m
   maxVolume: 0.15, // near volume
   minVolume: 0.02, // far volume
+  maxTargets: 2, // ping up to 2 nearest charmable targets
 };
 
 export function calcPan(
@@ -161,34 +162,38 @@ export class LidarAudio {
   ): void {
     if (!this.enabled) return;
     if (nowMs - this.lastPingMs < cfg.pingIntervalMs) return;
-    const target = this.findNearestCharmable(camPos, entities, cfg);
-    if (!target) return;
+    const targets = this.findNearestCharmables(
+      camPos,
+      entities,
+      cfg,
+    );
+    if (targets.length === 0) return;
     this.lastPingMs = nowMs;
-    const effect = evaluateAudioEntropy(entropy);
-    if (effect === 'drop') return;
-    const pan = calcPan(camPos, camRight, target.pos);
-    const { freq, vol } = calcPitchAndVol(target.dist, cfg);
-    if (effect === 'noise') {
-      this.playNoisePing(pan, vol);
-    } else {
-      this.playPing(pan, freq, vol);
-    }
+    targets.forEach((target) => {
+      const effect = evaluateAudioEntropy(entropy);
+      if (effect === 'drop') return;
+      const pan = calcPan(camPos, camRight, target.pos);
+      const { freq, vol } = calcPitchAndVol(target.dist, cfg);
+      if (effect === 'noise') {
+        this.playNoisePing(pan, vol);
+      } else {
+        this.playPing(pan, freq, vol);
+      }
+    });
   }
 
-  private findNearestCharmable(
+  private findNearestCharmables(
     camPos: THREE.Vector3,
     entities: { id: string; pos: THREE.Vector3; charm?: number }[],
     cfg: typeof LIDAR_AUDIO_CONFIG,
   ) {
-    let nearest: { pos: THREE.Vector3; dist: number } | null = null;
+    const list: { pos: THREE.Vector3; dist: number }[] = [];
     entities.forEach((e) => {
       if (!e.charm || e.charm <= 0) return;
       const dist = camPos.distanceTo(e.pos);
-      if (dist > cfg.maxRange) return;
-      if (!nearest || dist < nearest.dist) {
-        nearest = { pos: e.pos, dist };
-      }
+      if (dist <= cfg.maxRange) list.push({ pos: e.pos, dist });
     });
-    return nearest;
+    list.sort((a, b) => a.dist - b.dist);
+    return list.slice(0, cfg.maxTargets || 2);
   }
 }
