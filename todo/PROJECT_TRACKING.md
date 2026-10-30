@@ -71,7 +71,7 @@ layer.
   `feature_cards_implementation_20260127.md`)
 - [x] **LIDAR Audio Pings**: Directional audio "echolocation" when
   the sensor beam hits charmable units. (Ref:
-  `gameplay_07_lidar_audio_pings.md`)
+  `archive/gameplay_07_lidar_audio_pings.md`)
 - [x] **GlobeView Earth Outlines**: Bright green country borders
   for geographic tribe/ethnicity determination. (Ref:
   `earth_map_wireframe_20260228.md`)

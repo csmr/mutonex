@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.33 - Directional LIDAR Audio Echolocation & Pings
+- **LIDAR Audio Echolocation**: Implemented in webclient
+  `LidarAudio.ts` with stereo panning, distance-scaled pitch
+  (783.99Hz–987.77Hz), multi-target travel delay, and brown
+  noise entropy mutation.
+
 ## v0.2.32 - LIDAR Outlines & Pipeline Refactoring
 - **Slope-Aware Outlines**: Refined post-process outlines in
   `OutlineFragmentShader` using slope-aware depth jump prediction to

@@ -12,3 +12,17 @@ The core gameplay relies heavily on LIDAR visual representation, which can be di
 - The strategic Powerstructure view currently uses a bird's-eye downward scan.
 - Does a sweeping line/plane make sense here visually and acoustically? If a full 360-degree radial sweep occurs, it might result in too many simultaneous pings if the base is crowded.
 - *Open Question:* Should the birds-eye LIDAR ping at all, or should it remain a purely visual strategic map? If implemented, consider a different, perhaps deeper or more muffled ping sound to distinguish the sensor suite.
+
+## Implementation Summary
+- **LIDAR Audio Echolocation**: Implemented Web Audio API
+  directional echolocation in webclient `LidarAudio.ts`,
+  detecting nearby charmable units within 30m.
+- **Distance Pitch & Delay Scaling**: Added distance-scaled
+  sine pitch mapping (783.99Hz G5 to 987.77Hz B5) and
+  distance-proportional ping scheduling over a 5000ms cycle.
+- **Audio Entropy & Distortion**: Added audio entropy simulation
+  causing signal packet drops or brown noise static mutation
+  synchronized with view noise settings.
+- **Multi-Target Echolocation**: Supported staggered echolocation
+  pings for up to 2 nearest charmable targets with 2D horizontal
+  spatial stereo panning.
