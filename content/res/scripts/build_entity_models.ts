@@ -4,20 +4,20 @@
 // via opentype.js, and produces pre-baked
 // BufferGeometry JSON files for the webclient.
 //
-// Usage: deno run --allow-read --allow-write --allow-net res/scripts/build_entity_models.ts
-// Output: content/res/models/<CODEPOINT_HEX>.json
+// Usage: deno run --allow-read --allow-write --allow-net content/res/scripts/build_entity_models.ts
+// Output: content/res/entity_geometry/<CODEPOINT_HEX>.json
 
 import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 import opentype from "npm:opentype.js";
 import * as THREE from "npm:three";
 
-const DESIGN_DOC_PATH = "../docs/mutonex-design-document.html";
+const DESIGN_DOC_PATH = "docs/mutonex-design-document.html";
 const FONT_PATHS = [
   "/usr/share/fonts/opentype/unifont/unifont.otf",
   "/usr/share/fonts/opentype/unifont/unifont_upper.otf",
   "/usr/share/fonts/opentype/unifont/unifont_csur.otf",
 ];
-const OUTPUT_DIR = "res/entity_geometry";
+const OUTPUT_DIR = "content/res/entity_geometry";
 
 export interface GlyphProfile {
   name?: string;
@@ -63,7 +63,7 @@ export function convertOpentypePathToThreeShapes(
 }
 
 export async function loadGlyphRegistry(): Promise<GlyphRegistry> {
-  const file = await Deno.readTextFile("res/glyph_profiles.json");
+  const file = await Deno.readTextFile("content/res/glyph_profiles.json");
   const data = JSON.parse(file);
   const registry: GlyphRegistry = {};
   for (const [hex, entry] of Object.entries(data.glyphs)) {

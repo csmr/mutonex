@@ -7,7 +7,8 @@ defmodule Mutonex.Utils.Resource do
     "/app/res",
     "/res",
     "../../content/res",
-    "../../../content/res"
+    "../../../content/res",
+    "../../../../content/res"
   ]
 
   @roots Application.compile_env(

@@ -4,8 +4,11 @@ defmodule Mutonex.Engine.Systems.FactionResolver do
   and geological resources.
   """
 
-  @regions_path "../../../../res/regions.yaml"
-  @elements_path "../../../../res/elements.yml"
+  Code.ensure_compiled!(Mutonex.Utils.Resource)
+  alias Mutonex.Utils.Resource
+
+  @regions_path Resource.resolve_path("regions.yaml", __DIR__)
+  @elements_path Resource.resolve_path("elements.yml", __DIR__)
 
   def resolve_ethnicity(region_name \\ nil) do
     case load_yaml(@regions_path) do
@@ -45,7 +48,6 @@ defmodule Mutonex.Engine.Systems.FactionResolver do
   end
 
   def load_yaml(path) do
-    abs_path = Path.expand(path, __DIR__)
-    YamlElixir.read_from_file(abs_path)
+    YamlElixir.read_from_file(path)
   end
 end

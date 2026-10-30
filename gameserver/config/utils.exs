@@ -5,7 +5,8 @@ config :mutonex_server, Mutonex.Utils.Resource,
     "/app/res",
     "/res",
     "../../content/res",
-    "../../../content/res"
+    "../../../content/res",
+    "../../../../content/res"
   ]
 
 config :mutonex_server, Mutonex.Utils.MessageToken,
