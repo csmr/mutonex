@@ -36,6 +36,7 @@ export class GameStateManager {
   public faunaAnchors = new Map<string, THREE.Vector3>();
   public faunaTypes = new Map<string, string>();
   public faunaTargets = new Map<string, THREE.Vector3>();
+  public faunaRotations = new Map<string, number>();
   public mineralAnchors = new Map<string, THREE.Vector3>();
   public itemAnchors = new Map<string, ItemAnchorData>();
   public buildingAnchors = new Map<string, BuildingAnchorData>();
@@ -59,6 +60,7 @@ export class GameStateManager {
     this.faunaAnchors.clear();
     this.faunaTypes.clear();
     this.faunaTargets.clear();
+    this.faunaRotations.clear();
     this.mineralAnchors.clear();
     this.itemAnchors.clear();
     this.buildingAnchors.clear();
@@ -121,6 +123,7 @@ export class GameStateManager {
     pos: THREE.Vector3,
     terrain: Terrain | null,
     charm = 0,
+    rotY?: number,
   ): void {
     this.entities.push({
       id,
@@ -128,6 +131,7 @@ export class GameStateManager {
       pos: this.getEntityPos(terrain, pos),
       char: '',
       charm,
+      rotY,
     });
   }
 
@@ -225,6 +229,14 @@ export class GameStateManager {
     return list;
   }
 
+  private smoothAngle(cur: number, target: number, dt: number) {
+    let diff = target - cur;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    const step = Math.max(-5.0 * dt, Math.min(5.0 * dt, diff));
+    return cur + step;
+  }
+
   public updateFauna(
     dt: number,
     avatarPos?: THREE.Vector3,
@@ -245,6 +257,8 @@ export class GameStateManager {
         t = anch.clone();
         this.faunaTargets.set(id, t);
       }
+      const prevX = t.x;
+      const prevZ = t.z;
       const rawStep = this.stepFauna(anch, t, dt);
       const safeStep = resolveFaunaStep(
         rawStep,
@@ -252,7 +266,18 @@ export class GameStateManager {
         baseObs,
         id,
       );
+      t.copy(safeStep);
       this.interpMap.set(id, safeStep);
+      const dx = safeStep.x - prevX;
+      const dz = safeStep.z - prevZ;
+      if (dx * dx + dz * dz > 1e-6) {
+        const target = Math.atan2(dx, dz);
+        const cur = this.faunaRotations.get(id);
+        const next = cur === undefined
+          ? target
+          : this.smoothAngle(cur, target, dt);
+        this.faunaRotations.set(id, next);
+      }
     });
     return this.interpMap;
   }
@@ -268,7 +293,8 @@ export class GameStateManager {
     });
     this.faunaAnchors.forEach((p, id) => {
       const pos = interpolation?.get(id) || p;
-      this.pushEntity(id, 'fauna', pos, terrain);
+      const rotY = this.faunaRotations.get(id);
+      this.pushEntity(id, 'fauna', pos, terrain, 0, rotY);
     });
     this.mineralAnchors.forEach((p, id) =>
       this.pushEntity(id, 'mineral', p, terrain)

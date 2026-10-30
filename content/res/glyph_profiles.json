@@ -270,7 +270,7 @@
             "types": ["item"],
             "scale": 0.3
         },
-        "2600": {
+        "229E": {
             "name": "Solar Panel",
             "types": ["building", "solar_panel"],
             "scale": 1.0

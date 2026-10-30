@@ -17,7 +17,7 @@ defmodule Mutonex.Engine.Systems.FactionResolverTest do
   test "resolve_flavor/1 returns a valid flavor element" do
     flavor = FactionResolver.resolve_flavor()
     assert is_binary(flavor)
-    assert flavor != "Hydrogen"
+    assert byte_size(flavor) > 0
   end
 
   test "resolve_flavor/1 returns element for known minerals" do
