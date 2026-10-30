@@ -273,6 +273,8 @@ export class LidarView implements IView {
       camPos,
       camRight,
       this.cachedEntities,
+      performance.now(),
+      this.entropy,
     );
   }
 

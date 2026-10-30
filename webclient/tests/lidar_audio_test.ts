@@ -23,6 +23,8 @@ class MockVector3 {
 const {
   calcPan,
   calcPitchAndVol,
+  evaluateAudioEntropy,
+  createNoiseBuffer,
   LidarAudio,
   LIDAR_AUDIO_CONFIG,
 } = await import('../core/LidarAudio.ts');
@@ -34,6 +36,7 @@ function createMockAudioCtx() {
   };
   let lastFreq = 0;
   let lastVol = 0;
+  let isNoisePlayed = false;
   const osc = {
     type: 'sine',
     frequency: {
@@ -42,6 +45,12 @@ function createMockAudioCtx() {
       },
       exponentialRampToValueAtTime: () => {},
     },
+    connect: () => {},
+    start: () => {},
+    stop: () => {},
+  };
+  const src = {
+    buffer: null,
     connect: () => {},
     start: () => {},
     stop: () => {},
@@ -60,15 +69,25 @@ function createMockAudioCtx() {
   const ctx = {
     state: 'running',
     currentTime: 0,
+    sampleRate: 44100,
     destination: {},
     getPlayCount: () => playCount,
     getLastFreq: () => lastFreq,
     getLastVol: () => lastVol,
+    getIsNoisePlayed: () => isNoisePlayed,
     createOscillator: () => {
       playCount++;
       return osc;
     },
     createGain: () => gain,
+    createBuffer: (_ch: number, len: number, _rate: number) => {
+      return { getChannelData: () => new Float32Array(len) };
+    },
+    createBufferSource: () => {
+      playCount++;
+      isNoisePlayed = true;
+      return src;
+    },
     createStereoPanner: () => panner,
   };
   return ctx;
@@ -121,6 +140,19 @@ Deno.test(
   },
 );
 
+Deno.test('evaluateAudioEntropy: drops or mutates signal', () => {
+  assertEquals(evaluateAudioEntropy(0, 0.1), 'normal');
+  assertEquals(evaluateAudioEntropy(1.0, 0.1), 'drop');
+  assertEquals(evaluateAudioEntropy(1.0, 0.5), 'noise');
+  assertEquals(evaluateAudioEntropy(1.0, 0.9), 'normal');
+});
+
+Deno.test('createNoiseBuffer: creates float32 audio buffer', () => {
+  const ctx = createMockAudioCtx();
+  const buf = createNoiseBuffer(ctx, 0.1);
+  assertEquals(buf !== null, true);
+});
+
 Deno.test(
   'LidarAudio: plays pings at 5000ms intervals for nearest target',
   () => {
@@ -142,7 +174,7 @@ Deno.test(
       },
     ];
 
-    audio.update(camPos, camRight, entities, 5000);
+    audio.update(camPos, camRight, entities, 5000, 0.0);
     assertEquals(ctx.getPlayCount(), 1);
     assertAlmostEquals(
       ctx.getLastFreq(),
@@ -151,11 +183,11 @@ Deno.test(
     );
 
     // Within 5000ms interval -> no additional ping
-    audio.update(camPos, camRight, entities, 6000);
+    audio.update(camPos, camRight, entities, 6000, 0.0);
     assertEquals(ctx.getPlayCount(), 1);
 
     // After 5000ms interval -> triggers second ping
-    audio.update(camPos, camRight, entities, 10001);
+    audio.update(camPos, camRight, entities, 10001, 0.0);
     assertEquals(ctx.getPlayCount(), 2);
   },
 );
@@ -174,7 +206,7 @@ Deno.test('LidarAudio: respects maxRange and enabled state', () => {
     },
   ];
 
-  audio.update(camPos, camRight, farEntities, 5000);
+  audio.update(camPos, camRight, farEntities, 5000, 0.0);
   assertEquals(ctx.getPlayCount(), 0);
 
   audio.enabled = false;
@@ -185,6 +217,6 @@ Deno.test('LidarAudio: respects maxRange and enabled state', () => {
       charm: 10,
     },
   ];
-  audio.update(camPos, camRight, nearEntities, 5000);
+  audio.update(camPos, camRight, nearEntities, 5000, 0.0);
   assertEquals(ctx.getPlayCount(), 0);
 });

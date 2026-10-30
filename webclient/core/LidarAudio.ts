@@ -41,13 +41,66 @@ export function calcPitchAndVol(
   return { freq, vol };
 }
 
+export function evaluateAudioEntropy(
+  entropy: number,
+  roll = Math.random(),
+): 'normal' | 'drop' | 'noise' {
+  if (entropy <= 0) return 'normal';
+  if (roll < entropy * 0.35) return 'drop';
+  if (roll < entropy * 0.70) return 'noise';
+  return 'normal';
+}
+
+export function createNoiseBuffer(
+  ctx: any,
+  duration = 0.12,
+): any {
+  if (!ctx?.createBuffer) return null;
+  const rate = ctx.sampleRate || 44100;
+  const count = Math.floor(rate * duration);
+  const buf = ctx.createBuffer(1, count, rate);
+  const data = buf.getChannelData(0);
+  let last = 0.0;
+  for (let i = 0; i < count; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + 0.02 * white) / 1.02;
+    data[i] = last * 3.5;
+  }
+  return buf;
+}
+
+function connectAndStartNode(
+  ctx: any,
+  node: any,
+  gain: any,
+  pan: number,
+  t: number,
+  duration = 0.12,
+): void {
+  if (ctx.createStereoPanner) {
+    const panner = ctx.createStereoPanner();
+    panner.pan.setValueAtTime(pan, t);
+    node.connect(gain);
+    gain.connect(panner);
+    panner.connect(ctx.destination);
+  } else {
+    node.connect(gain);
+    gain.connect(ctx.destination);
+  }
+  node.start(t);
+  if (node.stop) node.stop(t + duration);
+}
+
 export interface AudioCtxLike {
   state: string;
   resume?: () => Promise<void>;
   currentTime: number;
+  sampleRate?: number;
   destination: any;
   createOscillator: () => any;
   createGain: () => any;
+  createBuffer?: (ch: number, len: number, rate: number) => any;
+  createBufferSource?: () => any;
   createStereoPanner?: () => any;
 }
 
@@ -81,29 +134,23 @@ export class LidarAudio {
     osc.frequency.setValueAtTime(freq, t);
     gain.gain.setValueAtTime(vol, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-    this.connectAndStart(osc, gain, pan, t);
+    connectAndStartNode(ctx, osc, gain, pan, t, 0.12);
   }
 
-  private connectAndStart(
-    osc: any,
-    gain: any,
-    pan: number,
-    t: number,
-  ): void {
-    const ctx = this.ctx;
+  public playNoisePing(pan: number, vol: number): void {
+    if (!this.enabled) return;
+    const ctx = this.initCtx();
     if (!ctx) return;
-    if (ctx.createStereoPanner) {
-      const panner = ctx.createStereoPanner();
-      panner.pan.setValueAtTime(pan, t);
-      osc.connect(gain);
-      gain.connect(panner);
-      panner.connect(ctx.destination);
-    } else {
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-    }
-    osc.start(t);
-    osc.stop(t + 0.12);
+    if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
+    const buf = createNoiseBuffer(ctx, 0.12);
+    if (!buf || !ctx.createBufferSource) return;
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    const t = ctx.currentTime;
+    src.buffer = buf;
+    gain.gain.setValueAtTime(vol * 0.8, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    connectAndStartNode(ctx, src, gain, pan, t, 0.12);
   }
 
   public update(
@@ -111,6 +158,7 @@ export class LidarAudio {
     camRight: THREE.Vector3,
     entities: { id: string; pos: THREE.Vector3; charm?: number }[],
     nowMs = performance.now(),
+    entropy = 0.0,
     cfg = LIDAR_AUDIO_CONFIG,
   ): void {
     if (!this.enabled) return;
@@ -118,9 +166,15 @@ export class LidarAudio {
     const target = this.findNearestCharmable(camPos, entities, cfg);
     if (!target) return;
     this.lastPingMs = nowMs;
+    const effect = evaluateAudioEntropy(entropy);
+    if (effect === 'drop') return;
     const pan = calcPan(camPos, camRight, target.pos);
     const { freq, vol } = calcPitchAndVol(target.dist, cfg);
-    this.playPing(pan, freq, vol);
+    if (effect === 'noise') {
+      this.playNoisePing(pan, vol);
+    } else {
+      this.playPing(pan, freq, vol);
+    }
   }
 
   private findNearestCharmable(
