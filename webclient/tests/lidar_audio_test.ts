@@ -1,6 +1,7 @@
 // webclient/tests/lidar_audio_test.ts
 import {
   assertEquals,
+  assertAlmostEquals,
 } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 class MockVector3 {
@@ -19,19 +20,26 @@ class MockVector3 {
 
 (globalThis as any).THREE = { Vector3: MockVector3 };
 
-const { calcPan, LidarAudio } = await import(
-  '../core/LidarAudio.ts'
-);
+const {
+  calcPan,
+  calcPitchAndVol,
+  LidarAudio,
+  LIDAR_AUDIO_CONFIG,
+} = await import('../core/LidarAudio.ts');
 
 function createMockAudioCtx() {
   const panner = {
     pan: { setValueAtTime: () => {} },
     connect: () => {},
   };
+  let lastFreq = 0;
+  let lastVol = 0;
   const osc = {
     type: 'sine',
     frequency: {
-      setValueAtTime: () => {},
+      setValueAtTime: (f: number) => {
+        lastFreq = f;
+      },
       exponentialRampToValueAtTime: () => {},
     },
     connect: () => {},
@@ -40,7 +48,9 @@ function createMockAudioCtx() {
   };
   const gain = {
     gain: {
-      setValueAtTime: () => {},
+      setValueAtTime: (v: number) => {
+        lastVol = v;
+      },
       exponentialRampToValueAtTime: () => {},
     },
     connect: () => {},
@@ -52,6 +62,8 @@ function createMockAudioCtx() {
     currentTime: 0,
     destination: {},
     getPlayCount: () => playCount,
+    getLastFreq: () => lastFreq,
+    getLastVol: () => lastVol,
     createOscillator: () => {
       playCount++;
       return osc;
@@ -89,7 +101,28 @@ Deno.test('calcPan: calculates spatial panning correctly', () => {
 });
 
 Deno.test(
-  'LidarAudio: updates and plays pings for charmable units',
+  'calcPitchAndVol: maps distance linearly to pitch and volume',
+  () => {
+    const near = calcPitchAndVol(1.0);
+    assertAlmostEquals(near.freq, LIDAR_AUDIO_CONFIG.maxFreqHz, 0.01);
+    assertAlmostEquals(
+      near.vol,
+      LIDAR_AUDIO_CONFIG.maxVolume,
+      0.001,
+    );
+
+    const far = calcPitchAndVol(30.0);
+    assertAlmostEquals(far.freq, LIDAR_AUDIO_CONFIG.minFreqHz, 0.01);
+    assertAlmostEquals(far.vol, LIDAR_AUDIO_CONFIG.minVolume, 0.001);
+
+    const mid = calcPitchAndVol(15.5);
+    const expectedFreq = (783.99 + 987.77) / 2;
+    assertAlmostEquals(mid.freq, expectedFreq, 1.0);
+  },
+);
+
+Deno.test(
+  'LidarAudio: plays pings at 5000ms intervals for nearest target',
   () => {
     const ctx = createMockAudioCtx();
     const audio = new LidarAudio(ctx as any);
@@ -98,26 +131,31 @@ Deno.test(
 
     const entities = [
       {
-        id: 'npc_1',
-        pos: new MockVector3(5, 0, 0) as any,
+        id: 'npc_far',
+        pos: new MockVector3(20, 0, 0) as any,
         charm: 10,
       },
       {
-        id: 'item_1',
-        pos: new MockVector3(2, 0, 0) as any,
-        charm: 0,
+        id: 'npc_near',
+        pos: new MockVector3(1, 0, 0) as any,
+        charm: 10,
       },
     ];
 
-    audio.update(camPos, camRight, entities, 1000);
+    audio.update(camPos, camRight, entities, 5000);
+    assertEquals(ctx.getPlayCount(), 1);
+    assertAlmostEquals(
+      ctx.getLastFreq(),
+      LIDAR_AUDIO_CONFIG.maxFreqHz,
+      0.01,
+    );
+
+    // Within 5000ms interval -> no additional ping
+    audio.update(camPos, camRight, entities, 6000);
     assertEquals(ctx.getPlayCount(), 1);
 
-    // Subsequent update within cooldown should not trigger ping
-    audio.update(camPos, camRight, entities, 1200);
-    assertEquals(ctx.getPlayCount(), 1);
-
-    // Update after cooldown triggers ping
-    audio.update(camPos, camRight, entities, 2000);
+    // After 5000ms interval -> triggers second ping
+    audio.update(camPos, camRight, entities, 10001);
     assertEquals(ctx.getPlayCount(), 2);
   },
 );
@@ -136,7 +174,7 @@ Deno.test('LidarAudio: respects maxRange and enabled state', () => {
     },
   ];
 
-  audio.update(camPos, camRight, farEntities, 1000);
+  audio.update(camPos, camRight, farEntities, 5000);
   assertEquals(ctx.getPlayCount(), 0);
 
   audio.enabled = false;
@@ -147,6 +185,6 @@ Deno.test('LidarAudio: respects maxRange and enabled state', () => {
       charm: 10,
     },
   ];
-  audio.update(camPos, camRight, nearEntities, 1000);
+  audio.update(camPos, camRight, nearEntities, 5000);
   assertEquals(ctx.getPlayCount(), 0);
 });
