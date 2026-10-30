@@ -1,8 +1,8 @@
 # Changelog
 
 ## v0.2.33 - Fauna Heading Orientation & Resource Fixes
-- **Fauna Orientation**: Oriented webclient fauna entities towards their movement direction with smooth turning and collision step persistence.
-- **Resource & Glyph Fixes**: Replaced duplicate gameserver resource candidate paths, fixed content script resource paths, and mapped building solar panel to Squared Plus ⊞ (U+229E).
+- **Fauna Orientation**: Turn webclient fauna entities to face movement direction with smooth interpolation.
+- **Resource & Glyph Fixes**: Unify gameserver resource candidate paths and map solar panel to Squared Plus ⊞ (U+229E).
 
 ## v0.2.32 - LIDAR Outlines & Pipeline Refactoring
 - **Slope-Aware Outlines**: Refined post-process outlines in
