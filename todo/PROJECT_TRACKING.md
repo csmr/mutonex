@@ -31,7 +31,12 @@ layer.
 ### C. Unit/Player Unification
 - [x] **Head Unit Full Integration**: Ensure all players spawn as
   `:head` Units with `charm`, `inventory`, and `energy` attributes.
-  (Ref: `gameplay_01_player_unit_unification.md`)
+  (Ref: `archive/gameplay_01_player_unit_unification.md`)
+- [x] **Unit Type Differentiation & Profiles**: Expand `Unit`
+  struct and `Mutonex.Engine.Unit` module to specify movement
+  speed, sight radius, and charmability for Head, Chief, Follower,
+  Local, Activist, and Air Power units per GDD 4.3. (Ref:
+  `feature_cards_implementation_20260127.md`)
 - [ ] **Energy Lifecycle**: Implement energy depletion, collection
   (fauna), and "mummification" at 0 energy. (Ref:
   `gameplay_10_test_sector_fauna_units.md`)

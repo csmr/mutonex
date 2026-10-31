@@ -65,6 +65,9 @@ defmodule Mutonex.Engine.GameSessionTest do
     assert unit.__struct__ == Mutonex.Engine.Entities.Unit
     assert unit.type == :head
     assert unit.attributes.charm == 1
+    assert unit.movement_speed == 120.0
+    assert unit.sight_radius == 10.0
+    assert unit.is_charmable == false
   end
 
   test "initial state payload includes full player unit attributes",

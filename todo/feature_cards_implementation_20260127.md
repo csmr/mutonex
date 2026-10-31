@@ -6,9 +6,15 @@ This document analyzes the implementation of Feature Cards from the Game Design 
 
 Entities are the core interactive objects in the game world. They are implemented as Elixir structs in `Mutonex.Engine.Entities`.
 
-*   **Unit**: Implemented as `Mutonex.Engine.Entities.Unit`. Covers `Head`, `Chief`, `Follower`.
-    *   *Status*: Stubbed. Needs expansion for specific behavior logic (movement speed, sight radius) which varies by type.
-    *   *Charmable*: Default `true`. Can be set to `false` for specific types (e.g., Heads, if implied).
+*   **Unit**: Implemented as `Mutonex.Engine.Entities.Unit` and
+    domain logic module `Mutonex.Engine.Unit`. Covers `Head`,
+    `Chief`, `Follower`, `Local`, `Activist`, and `Air Power`.
+    *   *Status*: Implemented. Type profiles define movement speed,
+        sight radius, work/rest schedule, and charmability per
+        GDD 4.3. Gameserver `GameSession` utilizes unit-level speed
+        and sight parameters.
+    *   *Charmable*: Follower, Chief, and Local defaults `true`;
+        Heads and Air Power defaults `false`.
 *   **Building**: Implemented as `Mutonex.Engine.Entities.Building`. Covers `Power Structure` and generic buildings.
     *   *Status*: Partial (In Progress). Gameserver supports
         `install_lidar` modifier items, perimeter spacing, and

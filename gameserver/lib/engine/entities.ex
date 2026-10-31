@@ -1,10 +1,10 @@
 defmodule Mutonex.Engine.Entities do
   @moduledoc """
-  This module defines the core data structures (structs) for game entities.
+  Core data structures (structs) for Mutonex game entities.
   """
 
   defmodule Player do
-    @moduledoc "Represents a player's avatar in the game world."
+    @moduledoc "Represents a player avatar in the game world."
     @derive Jason.Encoder
     defstruct id: nil,
               position: %{x: 0, y: 0, z: 0}
@@ -19,73 +19,74 @@ defmodule Mutonex.Engine.Entities do
   end
 
   defmodule GameState do
-    @moduledoc "Represents the state of the game world to be sent to the client."
+    @moduledoc "State of the game world broadcast to clients."
     @derive Jason.Encoder
     defstruct players: [],
               terrain: %Mutonex.Engine.Entities.Terrain{},
               fauna: [],
-              minerals: [], # Added minerals list
-              conveyors: [], # Added conveyors list
-              buildings: [], # Added buildings list
-              items: [], # Added items list
+              minerals: [],
+              conveyors: [],
+              buildings: [],
+              items: [],
               game_time: 0
   end
 
   defmodule Unit do
-    @moduledoc "Represents a mobile entity in the game, such as a player Head, NPC Chief, or follower."
+    @moduledoc "Represents a mobile entity (Head, Chief, Follower)."
     @derive Jason.Encoder
     defstruct id: nil,
-              type: nil, # :head, :chief, :follower
+              type: nil,
               position: %{x: 0, y: 0, z: 0},
               society_id: nil,
-              home_id: nil, # building_id
-              birthplace: nil, # building_id
+              home_id: nil,
+              birthplace: nil,
               sight_area: 0,
+              sight_radius: 10.0,
+              movement_speed: 80.0,
               is_charmable: true,
               attributes: %{
                 charm: 1,
-                tribe: nil, # ethnic faction like "Maori"
-                flavor: nil,  # element like "Neon"
+                tribe: nil,
+                flavor: nil,
                 scale: 1.0
               },
-              inventory: [], # Added inventory list
+              inventory: [],
               energy: 100.0,
-              status: :active, # :active, :mummified
+              status: :active,
               history: %{},
-              # TODO: Move token counts to browser client session
               invalid_token_count: 0,
               expired_token_count: 0
   end
 
   defmodule Building do
-    @moduledoc "Represents a stationary structure built by a society."
+    @moduledoc "Represents a stationary society structure."
     @derive Jason.Encoder
     defstruct id: nil,
-              type: nil, # :power_structure, :relic, etc.
+              type: nil,
               position: %{x: 0, y: 0, z: 0},
               society_id: nil,
               chief_id: nil,
               sight_area: 0,
               perimeter_radius: 2.0,
-              function: nil, # :resource_conversion, etc.
-              connected_mineral_ids: [], # List of mineral_ids connected via conveyor
+              function: nil,
+              connected_mineral_ids: [],
               attributes: %{
                 element: nil,
                 ethnicity: nil,
                 scale: 1.0
               },
               energy: 0,
-              status: :active, # :active, :ruined
-              history: %{} # {build_year, build_style}
+              status: :active,
+              history: %{}
   end
 
   defmodule Society do
     @moduledoc "Represents a player-controlled or NPC society."
     @derive Jason.Encoder
     defstruct id: nil,
-              home_id: nil, # building_id of the main power structure
-              locale: nil, # Replaces ethnicity
-              player_id: nil # nil for NPC societies
+              home_id: nil,
+              locale: nil,
+              player_id: nil
   end
 
   defmodule Fauna do
@@ -94,14 +95,14 @@ defmodule Mutonex.Engine.Entities do
     defstruct id: nil,
               sector_id: nil,
               position: %{x: 0, y: 0, z: 0},
-              society: nil, # Replaces ethnicity
+              society: nil,
               charm: 0,
               is_charmable: false,
               attributes: %{
                 scale: 1.0
               },
               energy: 0,
-              status: :active, # :active, :mummified
+              status: :active,
               last_spawn_time: 0
   end
 
@@ -110,25 +111,25 @@ defmodule Mutonex.Engine.Entities do
     @derive Jason.Encoder
     defstruct id: nil,
               position: %{x: 0, y: 0, z: 0},
-              type: nil, # :iron, :potassium, etc.
-              amount: 1000, # Default amount
-              size: 2.0 # Side length of the bounding cube (in km)
+              type: nil,
+              amount: 1000,
+              size: 2.0
   end
 
   defmodule ConveyorBelt do
-    @moduledoc "Represents a conveyor belt connecting a mineral to a building."
+    @moduledoc "Conveyor belt connecting mineral to building."
     @derive Jason.Encoder
     defstruct id: nil,
               mineral_id: nil,
               building_id: nil,
-              status: :building # :building, :active
+              status: :building
   end
 
   defmodule Item do
     @moduledoc "Represents a pickable item in the game world."
     @derive Jason.Encoder
     defstruct id: nil,
-              type: nil, # :video_phone, :sunspot_cream, etc.
+              type: nil,
               position: %{x: 0, y: 0, z: 0},
               metadata: %{}
   end

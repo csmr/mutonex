@@ -2,6 +2,7 @@ defmodule Mutonex.Engine.GameSession do
   use GenServer
   alias Mutonex.Engine.Entities.{Unit, GameState}
   alias Mutonex.Engine.Systems.{Environment, Actions}
+  alias Mutonex.Engine.Unit, as: UnitLogic
   alias Mutonex.Utils.MessageToken
   alias Mutonex.Engine.SimtellusClient
   alias Mutonex.Utils.ConfigReader
@@ -121,7 +122,8 @@ defmodule Mutonex.Engine.GameSession do
         t = MessageToken.generate()
         old = s.tokens[uid]
         if p = old[:pid], do: send(p, {:new_token, t})
-        {uid, %{current: t, previous: old[:current], pid: old[:pid]}}
+        rec = %{current: t, previous: old[:current], pid: old[:pid]}
+        {uid, rec}
       end)
 
     schedule_token_rotation(s.cfg_cache.rotation_ms)
@@ -135,7 +137,8 @@ defmodule Mutonex.Engine.GameSession do
 
   def handle_info({:tick_fauna, id}, s) do
     if s.phase == :gamein do
-      {f, o} = Mutonex.Engine.Systems.FaunaSystem.process_tick(s, id)
+      alias Mutonex.Engine.Systems.FaunaSystem
+      {f, o} = FaunaSystem.process_tick(s, id)
       {:noreply, %{s | fauna: f, octree: o}}
     else
       {:noreply, s}
@@ -171,35 +174,39 @@ defmodule Mutonex.Engine.GameSession do
 
   defp update_buildings_energy(buildings, sector_energy, maint) do
     Enum.map(buildings, fn b ->
-      if b.status == :active do
-        scale = Map.get(b.attributes, :scale, 1.0)
-        new_e = max(0, min(100.0, b.energy + scale * sector_energy - maint))
-        status = if new_e <= 0, do: :ruined, else: :active
-        %{b | energy: new_e, status: status}
-      else
-        b
-      end
+      calc_building_energy(b, sector_energy, maint)
     end)
   end
 
+  defp calc_building_energy(%{status: :active} = b, se, maint) do
+    scale = Map.get(b.attributes, :scale, 1.0)
+    delta = scale * se - maint
+    new_e = max(0.0, min(100.0, b.energy + delta))
+    status = if new_e <= 0, do: :ruined, else: :active
+    %{b | energy: new_e, status: status}
+  end
+
+  defp calc_building_energy(b, _se, _maint), do: b
+
   defp update_players_energy(players, depletion) do
     Enum.into(players, %{}, fn {uid, p} ->
-      new_unit = %{p.player | energy: max(0, p.player.energy - depletion)}
-
-      new_unit =
-        if new_unit.energy <= 0,
-          do: %{new_unit | status: :mummified},
-          else: new_unit
-
-      {uid, %{p | player: new_unit}}
+      u = calc_player_depletion(p.player, depletion)
+      {uid, %{p | player: u}}
     end)
+  end
+
+  defp calc_player_depletion(u, depletion) do
+    e = max(0.0, u.energy - depletion)
+    st = if e <= 0, do: :mummified, else: u.status
+    %{u | energy: e, status: st}
   end
 
   def handle_cast({:player_joined, uid, pid}, s) do
     s = add_player_if_missing(s, uid)
     t = MessageToken.generate()
     send(pid, {:new_token, t})
-    ts = Map.put(s.tokens, uid, %{current: t, previous: nil, pid: pid})
+    t_rec = %{current: t, previous: nil, pid: pid}
+    ts = Map.put(s.tokens, uid, t_rec)
     s = %{s | tokens: ts}
 
     case s.phase do
@@ -325,12 +332,7 @@ defmodule Mutonex.Engine.GameSession do
   end
 
   defp handle_player_update(nil, uid, pos, time, s) do
-    p = %Unit{
-      id: uid,
-      type: :head,
-      position: pos,
-      is_charmable: false
-    }
+    p = build_initial_head(uid, pos)
 
     update_and_broadcast(s, uid, %{player: p, last_update: time})
   end
@@ -353,7 +355,8 @@ defmodule Mutonex.Engine.GameSession do
 
   defp can_update?(p, pos, time) do
     dt = (time - p.last_update) / 1000.0
-    dist(p.player.position, pos) <= @max_speed_ms * dt
+    spd = UnitLogic.max_speed_ms(p.player) || @max_speed_ms
+    dist(p.player.position, pos) <= spd * dt
   end
 
   defp update_and_broadcast(s, uid, p) do
@@ -422,42 +425,54 @@ defmodule Mutonex.Engine.GameSession do
     sid = s.sector_id
     pld = %{players: players_to_list(s.players)}
 
-    pld =
-      if extra[:items], do: Map.put(pld, :items, extra.items), else: pld
+    pld = append_extra_payload(pld, extra)
+    topic = "game:#{sid}"
+    s.cfg_cache.notifier.broadcast(topic, "state_update", pld)
+    if extra[:turn_start], do: broadcast_turn_start(s, topic)
+  end
 
-    pld =
-      if extra[:buildings],
-        do: Map.put(pld, :buildings, buildings_to_list(extra.buildings)),
-        else: pld
+  defp append_extra_payload(pld, extra) do
+    b_fun = &buildings_to_list/1
+    pld
+    |> maybe_put(:items, extra[:items])
+    |> maybe_put_list(:buildings, extra[:buildings], b_fun)
+    |> maybe_put_list(:fauna, extra[:fauna], &fauna_to_list/1)
+  end
 
-    pld =
-      if extra[:fauna],
-        do: Map.put(pld, :fauna, fauna_to_list(extra.fauna)),
-        else: pld
+  defp maybe_put(map, _k, nil), do: map
+  defp maybe_put(map, k, val), do: Map.put(map, k, val)
 
-    s.cfg_cache.notifier.broadcast("game:#{sid}", "state_update", pld)
+  defp maybe_put_list(map, _k, nil, _f), do: map
+  defp maybe_put_list(map, k, val, f), do: Map.put(map, k, f.(val))
 
-    if extra[:turn_start] do
-      st = Map.get(s, :turn_start_time, System.os_time(:millisecond))
-      dur = s.cfg_cache.tick_ms
-      s.cfg_cache.notifier.broadcast("game:#{sid}", "turn_start", %{
-        duration_ms: dur,
-        turn_ends_at_ms: st + dur,
-        turn_interval_ms: dur,
-        turn_start_time: st
-      })
-    end
+  defp broadcast_turn_start(s, topic) do
+    st = Map.get(s, :turn_start_time, System.os_time(:millisecond))
+    dur = s.cfg_cache.tick_ms
+    s.cfg_cache.notifier.broadcast(topic, "turn_start", %{
+      duration_ms: dur,
+      turn_ends_at_ms: st + dur,
+      turn_interval_ms: dur,
+      turn_start_time: st
+    })
   end
 
   defp add_player_if_missing(s, uid) do
     if s.players[uid] do
       s
     else
-      def_pos = %{x: 0, y: 1, z: 0}
-      pos = ConfigReader.get(__MODULE__, :default_spawn_position, def_pos)
-      p = %Unit{id: uid, type: :head, position: pos, is_charmable: false}
-      %{s | players: Map.put(s.players, uid, %{player: p, last_update: nil})}
+      p = build_initial_head(uid, get_spawn_pos())
+      rec = %{player: p, last_update: nil}
+      %{s | players: Map.put(s.players, uid, rec)}
     end
+  end
+
+  defp build_initial_head(uid, pos) do
+    UnitLogic.build(:head, %{id: uid, position: pos})
+  end
+
+  defp get_spawn_pos do
+    def_pos = %{x: 0, y: 1, z: 0}
+    ConfigReader.get(__MODULE__, :default_spawn_position, def_pos)
   end
 
   defp should_process?(v, ph) do
