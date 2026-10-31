@@ -248,3 +248,20 @@ Deno.test(
     assertEquals(bEnt2?.isStationary, true);
   },
 );
+
+Deno.test(
+  'GameStateManager: updateFauna orients fauna towards movement',
+  () => {
+    const gsm = new GameStateManager();
+    gsm.faunaAnchors.set('f1', new MockVector3(0, 1, 0) as any);
+    gsm.faunaTargets.set('f1', new MockVector3(0, 1, 10) as any);
+
+    gsm.updateFauna(0.1);
+    const rot = gsm.faunaRotations.get('f1');
+    assertEquals(typeof rot, 'number');
+
+    const ents = gsm.computeEntities(null);
+    const faunaEnt = ents.find((e) => e.id === 'f1');
+    assertEquals(faunaEnt?.rotY, rot);
+  },
+);

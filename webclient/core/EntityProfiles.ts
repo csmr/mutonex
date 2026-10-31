@@ -116,7 +116,7 @@ export const ENTITY_CHAR_MAP: Record<string, string[]> = {
   'building_power_structure': ['🏛'],
   'building_spawn_hub': ['🏛'],
   'building_moyai': ['🗿'],
-  'building_solar_panel': ['🎛'],
+  'building_solar_panel': ['⊞'],
   'society': ['🎪', '🏘', '🏙', '🏰', '🗿', '💩'],
   'mineral': [
     '⭓',

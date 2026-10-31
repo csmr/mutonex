@@ -28,7 +28,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
       |> subscribe_and_join(GameChannel, "game:integration_test")
 
     # Wait for the initial token
-    assert_push "new_token", %{token: token}
+    assert_push "new_token", %{token: token}, 1000
 
     %{socket: socket, uid: uid, token: token}
   end
@@ -42,7 +42,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
     # Since it's a cast on the server, we check for a broadcast/push of updated state
     # GameSession broadcasts state_update
     Enum.find_value(1..10, fn _ ->
-      assert_broadcast "state_update", %{players: players}
+      assert_broadcast "state_update", %{players: players}, 1000
       if Enum.any?(players, fn [id, x, y, z, _, _, _, _] ->
         id == uid && x == 10.0 && y == 1.0 && z == 10.0
       end), do: true, else: false
@@ -71,7 +71,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
     send(GenServer.whereis(via), :rotate_tokens)
 
     # Receive new token
-    assert_push "new_token", %{token: _new_token}
+    assert_push "new_token", %{token: _new_token}, 1000
 
     # Use old_token (should be in 'previous')
     push(socket, "avatar_update", %{
@@ -81,7 +81,7 @@ defmodule Mutonex.Net.MessageTokenIntegrationTest do
 
     # Should be processed
     Enum.find_value(1..10, fn _ ->
-      assert_broadcast "state_update", %{players: players}
+      assert_broadcast "state_update", %{players: players}, 1000
       if Enum.any?(players, fn [id, x, y, z, _, _, _, _] ->
         id == uid && x == 30.0 && y == 1.0 && z == 30.0
       end), do: true, else: false

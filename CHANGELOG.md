@@ -1,10 +1,13 @@
 # Changelog
 
-## v0.2.33 - Directional LIDAR Audio Echolocation & Pings
-- **LIDAR Audio Echolocation**: Implemented in webclient
-  `LidarAudio.ts` with stereo panning, distance-scaled pitch
-  (783.99Hz–987.77Hz), multi-target travel delay, and brown
-  noise entropy mutation.
+## v0.2.33 - Fauna Orientation, LIDAR Audio & Resource Fixes
+- **Fauna Orientation**: Turn webclient fauna entities to face
+  movement direction with smooth interpolation.
+- **Resource & Glyph Fixes**: Unify gameserver resource candidate paths
+  and map solar panel to Squared Plus ⊞ (U+229E).
+- **LIDAR Audio Echolocation**: Implemented in webclient `LidarAudio.ts`
+  with stereo panning, distance-scaled pitch (783.99Hz–987.77Hz),
+  multi-target travel delay, and brown noise entropy mutation.
 
 ## v0.2.32 - LIDAR Outlines & Pipeline Refactoring
 - **Slope-Aware Outlines**: Refined post-process outlines in

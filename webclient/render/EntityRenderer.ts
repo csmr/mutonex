@@ -65,6 +65,9 @@ export class EntityRenderer {
         }
       } else {
         mesh.position.copy(ent.pos);
+        if (ent.rotY !== undefined) {
+          mesh.rotation.y = ent.rotY;
+        }
       }
     }
   }
@@ -149,6 +152,9 @@ export class EntityRenderer {
 
     const next = new THREE.Mesh(geo, ex.material);
     next.position.copy(ex.position);
+    if (next.rotation && ex.rotation) {
+      next.rotation.y = ex.rotation.y;
+    }
     next.userData = ex.userData;
 
     this.scene.add(next);

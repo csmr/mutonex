@@ -3,10 +3,10 @@ import * as YAML from "https://deno.land/std@0.188.0/yaml/mod.ts";
 
 //// Converts Debian 12 locale files to regions.yml ////
 // outputs hash with territory-keys, factions array value
-// Usage: `$ deno --allow-read --allow-write scripts/convertLocaleToUnitFactions.js`
+// Usage: `$ deno --allow-read --allow-write content/res/scripts/convertLocaleToUnitFactions.js`
 
 const LOCALE_DIR = "/usr/share/i18n/locales";
-const OUTPUT_FILE = "res/regions.yaml";
+const OUTPUT_FILE = "content/res/regions.yaml";
 
 const language_filters_arr = ["Bokm", "Literary Chinese"];
 const language_transforms = {
@@ -131,7 +131,7 @@ let elements;
 let territories;
 
 async function loadData() {
-  elements = YAML.parse(await Deno.readTextFile("res/elements.yml"));
+  elements = YAML.parse(await Deno.readTextFile("content/res/elements.yml"));
   territories = YAML.parse(await Deno.readTextFile(OUTPUT_FILE));
 }
 

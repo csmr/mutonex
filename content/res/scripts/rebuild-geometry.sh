@@ -3,10 +3,10 @@
 
 source scripts/app.config.sh
 
-if [ -d "res/entity_geometry" ]; then
+if [ -d "content/res/entity_geometry" ]; then
     log "Cleaning existing model cache..."
-    rm -rf res/entity_geometry/*
-    mkdir -p res/entity_geometry
+    rm -rf content/res/entity_geometry/*
+    mkdir -p content/res/entity_geometry
 fi
 
 if ! dpkg -l | grep -q fonts-unifont; then
@@ -16,5 +16,5 @@ fi
 
 log "Running Entity Model Builder..."
 deno run --allow-read --allow-write --allow-net="deno.land" \
-    res/scripts/build_entity_models.ts
+    content/res/scripts/build_entity_models.ts
 log "Rebuild complete."

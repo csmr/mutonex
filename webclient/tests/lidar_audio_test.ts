@@ -1,7 +1,7 @@
 // webclient/tests/lidar_audio_test.ts
 import {
-  assertEquals,
   assertAlmostEquals,
+  assertEquals,
 } from 'https://deno.land/std@0.224.0/assert/mod.ts';
 
 class MockVector3 {
@@ -123,7 +123,11 @@ Deno.test(
   'calcPitchAndVol: maps distance linearly to pitch and volume',
   () => {
     const near = calcPitchAndVol(1.0);
-    assertAlmostEquals(near.freq, LIDAR_AUDIO_CONFIG.maxFreqHz, 0.01);
+    assertAlmostEquals(
+      near.freq,
+      LIDAR_AUDIO_CONFIG.maxFreqHz,
+      0.01,
+    );
     assertAlmostEquals(
       near.vol,
       LIDAR_AUDIO_CONFIG.maxVolume,
@@ -131,8 +135,16 @@ Deno.test(
     );
 
     const far = calcPitchAndVol(30.0);
-    assertAlmostEquals(far.freq, LIDAR_AUDIO_CONFIG.minFreqHz, 0.01);
-    assertAlmostEquals(far.vol, LIDAR_AUDIO_CONFIG.minVolume, 0.001);
+    assertAlmostEquals(
+      far.freq,
+      LIDAR_AUDIO_CONFIG.minFreqHz,
+      0.01,
+    );
+    assertAlmostEquals(
+      far.vol,
+      LIDAR_AUDIO_CONFIG.minVolume,
+      0.001,
+    );
 
     const mid = calcPitchAndVol(15.5);
     const expectedFreq = (783.99 + 987.77) / 2;

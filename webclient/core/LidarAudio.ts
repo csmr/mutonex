@@ -207,7 +207,11 @@ export class LidarAudio {
     if (targets.length === 0) return;
     this.lastPingMs = nowMs;
     targets.forEach((target) => {
-      const effect = evaluateAudioEntropy(entropy, Math.random(), cfg);
+      const effect = evaluateAudioEntropy(
+        entropy,
+        Math.random(),
+        cfg,
+      );
       if (effect === 'drop') return;
       const pan = calcPan(camPos, camRight, target.pos);
       const { freq, vol } = calcPitchAndVol(target.dist, cfg);
