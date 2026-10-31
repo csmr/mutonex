@@ -87,7 +87,7 @@ layer.
   GlobeView Earth representation.
 - [x] **Keyboard Refactor**: Centralize shortcuts into data-driven
   config for binding and guides. (Ref:
-  `webclient_shortcuts_refactor_20260619.md`)
+  `archive/webclient_shortcuts_refactor_20260619.md`)
 - [ ] **Voxel Model Audit**: Fix incomplete fauna models (e.g.,
   floating heads). (Ref: `gameplay_08_incomplete_fauna_models.md`)
 
