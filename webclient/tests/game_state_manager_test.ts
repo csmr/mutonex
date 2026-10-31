@@ -263,5 +263,7 @@ Deno.test(
     const ents = gsm.computeEntities(null);
     const faunaEnt = ents.find((e) => e.id === 'f1');
     assertEquals(faunaEnt?.rotY, rot);
+    assertEquals(typeof faunaEnt?.breath, 'number');
+    assertEquals(faunaEnt!.breath! >= 1.0, true);
   },
 );
