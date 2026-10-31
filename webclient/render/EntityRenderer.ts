@@ -68,7 +68,20 @@ export class EntityRenderer {
         if (ent.rotY !== undefined) {
           mesh.rotation.y = ent.rotY;
         }
+        this.applyBreathScale(mesh, ent);
       }
+    }
+  }
+
+  private applyBreathScale(mesh: any, ent: EntityData): void {
+    if (ent.breath !== undefined) {
+      const baseScale = mesh.userData?.baseScale ?? 1.0;
+      const b = ent.breath;
+      mesh.scale.set(
+        baseScale * b,
+        baseScale * (2 - b),
+        baseScale * b,
+      );
     }
   }
 
@@ -91,7 +104,11 @@ export class EntityRenderer {
       const s = prof?.scale ?? 2.0;
       const box = new THREE.BoxGeometry(s, s, s);
       mesh = new THREE.Mesh(box, this.matFactory(color));
-      mesh.userData = { entityId: id, entityType: ent.type };
+      mesh.userData = {
+        entityId: id,
+        entityType: ent.type,
+        baseScale: 1.0,
+      };
       this.scene.add(mesh);
       this.meshes.set(id, mesh);
       this.fetchGeo(id, hex);
@@ -155,7 +172,10 @@ export class EntityRenderer {
     if (next.rotation && ex.rotation) {
       next.rotation.y = ex.rotation.y;
     }
-    next.userData = ex.userData;
+    next.userData = {
+      ...ex.userData,
+      baseScale: 1.0,
+    };
 
     this.scene.add(next);
     this.meshes.set(id, next);

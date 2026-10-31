@@ -27,6 +27,7 @@ export interface EntityData {
   facing?: 'front' | 'side' | 'top';
   charm?: number;
   rotY?: number;
+  breath?: number;
 }
 
 export interface Terrain {

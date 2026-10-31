@@ -3,17 +3,12 @@ import './global_types.ts';
 import { GameStateProvider } from './GameStateProvider.ts';
 import { EntityData, EntityType, Terrain } from './types.ts';
 import { sampleTerrainHeight } from '../render/TerrainMesh.ts';
-import {
-  getObstacleRadius,
-  Obstacle,
-  resolveFaunaStep,
-} from './CollisionEngine.ts';
+import { getObstacleRadius, Obstacle } from './CollisionEngine.ts';
+import { FaunaManager } from './FaunaManager.ts';
 import type {
   PlayerTuple,
 } from '../mocks/MockGameStateProvider.ts';
 
-const FAUNA_WIGGLE_THRESHOLD = 5.0;
-const FAUNA_CULL_DISTANCE = 100.0;
 const CHARM_MAX_DISTANCE = 20.0;
 const PICKUP_MAX_DISTANCE = 15.0;
 const RAYCAST_THROTTLE_MS = 32;
@@ -33,17 +28,13 @@ export class GameStateManager {
   public playerCharm = new Map<string, number>();
   public playerEnergy = new Map<string, number>();
   public playerStatus = new Map<string, string>();
-  public faunaAnchors = new Map<string, THREE.Vector3>();
-  public faunaTypes = new Map<string, string>();
-  public faunaTargets = new Map<string, THREE.Vector3>();
-  public faunaRotations = new Map<string, number>();
   public mineralAnchors = new Map<string, THREE.Vector3>();
   public itemAnchors = new Map<string, ItemAnchorData>();
   public buildingAnchors = new Map<string, BuildingAnchorData>();
   public staticObstacles: Obstacle[] = [];
   public entities: EntityData[] = [];
+  public fauna = new FaunaManager();
 
-  private interpMap = new Map<string, THREE.Vector3>();
   private lastHUDUpdate = 0;
   private cachedHUDData: {
     nearbyItem: { id: string; name: string } | null;
@@ -52,15 +43,35 @@ export class GameStateManager {
 
   constructor() {}
 
+  // Backwards-compatible accessors for fauna maps
+  public get faunaAnchors() {
+    return this.fauna.faunaAnchors;
+  }
+  public get faunaTypes() {
+    return this.fauna.faunaTypes;
+  }
+  public get faunaTargets() {
+    return this.fauna.faunaTargets;
+  }
+  public get faunaRotations() {
+    return this.fauna.faunaRotations;
+  }
+  public get faunaVel() {
+    return this.fauna.faunaVel;
+  }
+  public get faunaBreathTime() {
+    return this.fauna.faunaBreathTime;
+  }
+  public get faunaBreaths() {
+    return this.fauna.faunaBreaths;
+  }
+
   public clearSectorState(): void {
     this.playerAnchors.clear();
     this.playerCharm.clear();
     this.playerEnergy.clear();
     this.playerStatus.clear();
-    this.faunaAnchors.clear();
-    this.faunaTypes.clear();
-    this.faunaTargets.clear();
-    this.faunaRotations.clear();
+    this.fauna.clear();
     this.mineralAnchors.clear();
     this.itemAnchors.clear();
     this.buildingAnchors.clear();
@@ -78,32 +89,6 @@ export class GameStateManager {
       const radius = getObstacleRadius('mineral');
       this.staticObstacles.push({ id, pos, radius });
     });
-  }
-
-  private stepFaunaVector(
-    anch: THREE.Vector3,
-    t: THREE.Vector3,
-    dt: number,
-  ): THREE.Vector3 {
-    return t.add(
-      new THREE.Vector3()
-        .subVectors(anch, t)
-        .normalize()
-        .multiplyScalar(0.5 * dt),
-    );
-  }
-
-  private stepFauna(
-    anch: THREE.Vector3,
-    t: THREE.Vector3,
-    dt: number,
-  ): THREE.Vector3 {
-    if (t.distanceTo(anch) > FAUNA_WIGGLE_THRESHOLD) {
-      return this.stepFaunaVector(anch, t, dt);
-    }
-    t.x += (Math.random() - 0.5) * 0.25 * dt;
-    t.z += (Math.random() - 0.5) * 0.25 * dt;
-    return t;
   }
 
   private getEntityPos(
@@ -124,6 +109,7 @@ export class GameStateManager {
     terrain: Terrain | null,
     charm = 0,
     rotY?: number,
+    breath?: number,
   ): void {
     this.entities.push({
       id,
@@ -132,6 +118,7 @@ export class GameStateManager {
       char: '',
       charm,
       rotY,
+      breath,
     });
   }
 
@@ -189,20 +176,8 @@ export class GameStateManager {
     );
   }
 
-  private isFaunaCulled(
-    anch: THREE.Vector3,
-    avatarPos?: THREE.Vector3,
-  ): boolean {
-    return Boolean(
-      avatarPos && (
-        anch.distanceTo(avatarPos) > FAUNA_CULL_DISTANCE
-      ),
-    );
-  }
-
   public getFaunaRadius(id: string): number {
-    const type = this.faunaTypes.get(id) || id;
-    return getObstacleRadius(type);
+    return this.fauna.getRadius(id);
   }
 
   public getObstacles(excludeId?: string): Obstacle[] {
@@ -216,32 +191,24 @@ export class GameStateManager {
         });
       }
     });
-    this.faunaAnchors.forEach((anch, id) => {
+    this.fauna.faunaAnchors.forEach((anch, id) => {
       if (id !== excludeId) {
-        const pos = this.interpMap.get(id) || anch;
+        const target = this.fauna.faunaTargets.get(id);
+        const pos = target || anch;
         list.push({
           id,
           pos,
-          radius: this.getFaunaRadius(id),
+          radius: this.fauna.getRadius(id),
         });
       }
     });
     return list;
   }
 
-  private smoothAngle(cur: number, target: number, dt: number) {
-    let diff = target - cur;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    while (diff > Math.PI) diff -= Math.PI * 2;
-    const step = Math.max(-5.0 * dt, Math.min(5.0 * dt, diff));
-    return cur + step;
-  }
-
   public updateFauna(
     dt: number,
     avatarPos?: THREE.Vector3,
   ): Map<string, THREE.Vector3> {
-    this.interpMap.clear();
     const baseObs = this.getObstacles();
     if (avatarPos) {
       baseObs.push({
@@ -250,36 +217,7 @@ export class GameStateManager {
         radius: getObstacleRadius('player'),
       });
     }
-    this.faunaAnchors.forEach((anch, id) => {
-      if (this.isFaunaCulled(anch, avatarPos)) return;
-      let t = this.faunaTargets.get(id);
-      if (!t) {
-        t = anch.clone();
-        this.faunaTargets.set(id, t);
-      }
-      const prevX = t.x;
-      const prevZ = t.z;
-      const rawStep = this.stepFauna(anch, t, dt);
-      const safeStep = resolveFaunaStep(
-        rawStep,
-        this.getFaunaRadius(id),
-        baseObs,
-        id,
-      );
-      t.copy(safeStep);
-      this.interpMap.set(id, safeStep);
-      const dx = safeStep.x - prevX;
-      const dz = safeStep.z - prevZ;
-      if (dx * dx + dz * dz > 1e-6) {
-        const target = Math.atan2(dx, dz);
-        const cur = this.faunaRotations.get(id);
-        const next = cur === undefined
-          ? target
-          : this.smoothAngle(cur, target, dt);
-        this.faunaRotations.set(id, next);
-      }
-    });
-    return this.interpMap;
+    return this.fauna.update(dt, baseObs, avatarPos);
   }
 
   public computeEntities(
@@ -294,7 +232,8 @@ export class GameStateManager {
     this.faunaAnchors.forEach((p, id) => {
       const pos = interpolation?.get(id) || p;
       const rotY = this.faunaRotations.get(id);
-      this.pushEntity(id, 'fauna', pos, terrain, 0, rotY);
+      const breath = this.faunaBreaths.get(id);
+      this.pushEntity(id, 'fauna', pos, terrain, 0, rotY, breath);
     });
     this.mineralAnchors.forEach((p, id) =>
       this.pushEntity(id, 'mineral', p, terrain)
