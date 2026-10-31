@@ -116,7 +116,7 @@ export class FaunaManager {
     dt: number,
   ): void {
     if (vel.lengthSq() > FAUNA_HEADING_MIN_SPEED ** 2) {
-      const target = Math.atan2(-vel.x, -vel.z);
+      const target = Math.atan2(vel.x, vel.z);
       const cur = this.faunaRotations.get(id);
       const next = cur === undefined
         ? target
