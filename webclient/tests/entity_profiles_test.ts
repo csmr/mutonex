@@ -43,3 +43,21 @@ Deno.test(
     assertEquals(color, 0x4682B4);
   },
 );
+
+Deno.test(
+  'EntityProfiles: item entities resolve distinct non-tent glyphs',
+  () => {
+    const belt = getCharForEntity('item_conveyor_belt', 'i1');
+    assertEquals(belt, '🛤');
+    const phone = getCharForEntity('item_video_phone', 'i2');
+    assertEquals(phone, '📟');
+    const policy = getCharForEntity('item_society_policy', 'i3');
+    assertEquals(policy, '📰');
+    const cream = getCharForEntity('item_sunspot_cream', 'i4');
+    assertEquals(cream, '🍯');
+    const fiber = getCharForEntity('item_fiber_optic', 'i5');
+    assertEquals(fiber, '🧶');
+    const attack = getCharForEntity('item_attack_modifier', 'i6');
+    assertEquals(attack, '🤺');
+  },
+);
