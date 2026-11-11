@@ -170,6 +170,48 @@ defmodule Mutonex.Engine.GameSessionTest do
     assert item.position == %{x: 1.0, y: 1.0, z: 0.0}
   end
 
+  test "drop action with avatar moved in-game drops at avatar position",
+       %{sector_id: sid} do
+    Mutonex.Engine.SimtellusClientMock |> stub(:is_available?, fn -> true end)
+    {:ok, pid} = GameSession.start_link(sid)
+    wait_for_phase(pid, :lobby)
+
+    GenServer.cast(pid, {:player_joined, "runner", self()})
+    wait_for_phase(pid, :gamein)
+
+    # Move player to (10, 1, 10)
+    GenServer.cast(
+      pid,
+      {:avatar_update, "runner", [10.0, 1.0, 10.0], "mock_token"}
+    )
+    Process.sleep(50)
+
+    # Pickup item
+    GenServer.cast(pid, {:player_action, "runner", "pick_up", "item_gem_01", nil})
+    Process.sleep(50)
+
+    # Move further to (15, 1, 10)
+    GenServer.cast(
+      pid,
+      {:avatar_update, "runner", [15.0, 1.0, 10.0], "mock_token"}
+    )
+    Process.sleep(50)
+
+    # Drop with forward vector {0, 0, 1} and client pos
+    meta = %{
+      "x" => 0.0,
+      "y" => 0.0,
+      "z" => 1.0,
+      "pos" => %{"x" => 15.0, "y" => 1.0, "z" => 10.0}
+    }
+    GenServer.cast(pid, {:player_action, "runner", "drop_item", "item_gem_01", meta})
+    Process.sleep(50)
+
+    state = :sys.get_state(pid)
+    item = Enum.find(state.items, &(&1.id == "item_gem_01"))
+    assert item.position == %{x: 15.0, y: 1.0, z: 11.0}
+  end
+
   defp wait_for_phase(pid, expected_phase, retries \\ 10) do
     state = :sys.get_state(pid)
 

@@ -136,4 +136,23 @@ defmodule Mutonex.Engine.ActionsTest do
     assert List.first(ns.buildings).type == :fiber_optic
     assert "item_fiber_1" not in ns.players["u1"].player.inventory
   end
+
+  test "SystemActions.drop drops item using reported avatar position" do
+    unit = %Unit{id: "u1", position: %{x: 5, y: 0, z: 5}, inventory: ["item_gem_1"]}
+    state = %{
+      players: %{"u1" => %{player: unit, last_update: 0}},
+      items: []
+    }
+    meta = %{
+      "x" => 1.0,
+      "y" => 0.0,
+      "z" => 0.0,
+      "pos" => %{"x" => 8.0, "y" => 0.0, "z" => 5.0}
+    }
+
+    assert {:ok, ns} = SystemActions.drop("u1", "item_gem_1", meta, state)
+    assert "item_gem_1" not in ns.players["u1"].player.inventory
+    item = Enum.find(ns.items, &(&1.id == "item_gem_1"))
+    assert item.position == %{x: 9.0, y: 0.0, z: 5.0}
+  end
 end

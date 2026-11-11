@@ -157,6 +157,11 @@ export class GameStateManager {
       x: fwd.x,
       y: fwd.y,
       z: fwd.z,
+      pos: {
+        x: avatar.position.x,
+        y: avatar.position.y,
+        z: avatar.position.z,
+      },
     });
   }
 

@@ -123,15 +123,21 @@ defmodule Mutonex.Engine.Systems.Actions do
     %{s | items: [ni | s.items], players: ps}
   end
 
-  defp calculate_drop_pos(pos, %{
-         "x" => dx,
-         "y" => dy,
-         "z" => dz
-       }) do
-    %{x: pos.x + dx, y: pos.y + dy, z: pos.z + dz}
+  defp calculate_drop_pos(pos, %{"pos" => p} = meta) do
+    base = %{x: p["x"] * 1.0, y: p["y"] * 1.0, z: p["z"] * 1.0}
+    tgt = if dist(pos, base) <= 15.0, do: base, else: pos
+    apply_drop_offset(tgt, meta)
   end
 
-  defp calculate_drop_pos(pos, _), do: pos
+  defp calculate_drop_pos(pos, meta) do
+    apply_drop_offset(pos, meta)
+  end
+
+  defp apply_drop_offset(pos, %{"x" => dx, "y" => dy, "z" => dz}) do
+    %{x: pos.x + dx * 1.0, y: pos.y + dy * 1.0, z: pos.z + dz * 1.0}
+  end
+
+  defp apply_drop_offset(pos, _), do: pos
 
   # Utilities
   defp charm_valid?(u1, %Building{} = b) do

@@ -50,8 +50,9 @@ defmodule Mutonex.Engine.GameSession do
       |> Map.put(:cfg_cache, %{
         maint: cfg[:building_maintenance_cost] || 3.0,
         depletion: cfg[:player_energy_depletion] || 0.5,
-        tick_ms: cfg[:sector_tick_ms] || 5000,
+        tick_ms: cfg[:sector_tick_ms] || 17_000,
         rotation_ms: cfg[:token_rotation_ms] || 10_000,
+        max_speed_ms: cfg[:max_speed_ms] || @max_speed_ms,
         notifier: notifier
       })
 
@@ -352,8 +353,9 @@ defmodule Mutonex.Engine.GameSession do
   defp can_update?(%{last_update: nil}, _pos, _time), do: true
 
   defp can_update?(p, pos, time) do
-    dt = (time - p.last_update) / 1000.0
-    dist(p.player.position, pos) <= @max_speed_ms * dt
+    dt = max(0.001, (time - p.last_update) / 1000.0)
+    max_speed = @max_speed_ms
+    dist(p.player.position, pos) <= max_speed * dt
   end
 
   defp update_and_broadcast(s, uid, p) do

@@ -184,8 +184,16 @@ Deno.test(
     assertEquals(provider.lastAction.act, 'drop_item');
     assertEquals(provider.lastAction.targetId, 'item_2');
     assertEquals(
-      provider.lastAction.payload,
-      { x: 0, y: 0, z: 1 },
+      provider.lastAction.payload.x,
+      0,
+    );
+    assertEquals(
+      provider.lastAction.payload.z,
+      1,
+    );
+    assertEquals(
+      provider.lastAction.payload.pos,
+      { x: 0, y: 0, z: 0 },
     );
   },
 );
