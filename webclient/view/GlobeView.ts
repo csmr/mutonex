@@ -9,7 +9,8 @@ import { EntityData, Terrain } from '../core/types.ts';
 export const GLOBE_RADIUS = 5;
 export const UNIT_RADIUS = 0.05;
 export const OUTLINE_COLOR = 0x00ff00;
-export const OUTLINE_HALO_COLOR = 0x003300;
+export const OUTLINE_HALO_COLOR = 0x0088aa;
+export const OUTLINE_HALO_OPACITY = 0.5;
 export const GRID_COLOR = 0x00ff00;
 export const TARGET_SECTOR_SIZE = 0.6;
 
@@ -87,7 +88,11 @@ export class GlobeView implements IView {
 
   private createSphereMesh(): any {
     const geo = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x0a0a0a,
+      transparent: true,
+      opacity: 0.92,
+    });
     return new THREE.Mesh(geo, mat);
   }
 
@@ -468,11 +473,19 @@ export class GlobeView implements IView {
   private createUnitMesh(unit: Unit, pos: any): void {
     const color = this.playerColors[unit.owner] || 0xffffff;
     const geo = new THREE.SphereGeometry(UNIT_RADIUS, 16, 16);
-    const mat = new THREE.MeshBasicMaterial({ color });
+    const mat = this.createUnitMaterial(color);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(pos);
     this.unitMeshes[unit.id] = mesh;
     this.globeGroup.add(mesh);
+  }
+
+  private createUnitMaterial(color: any): any {
+    return new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.9,
+    });
   }
 
   private onWindowResize(): void {
@@ -494,67 +507,129 @@ export class GlobeView implements IView {
   }
 
   private drawFeatures(features: any[]): void {
-    const haloMat = this.createHaloMaterial();
-    const mainMat = this.createMainMaterial();
-    const draw = (f: any) =>
-      this.drawFeaturePolygons(f, haloMat, mainMat);
-    features.forEach(draw);
+    const haloPos: number[] = [];
+    const mainPos: number[] = [];
+    features.forEach((f) => {
+      this.collectFeatureVerts(f, haloPos, mainPos);
+    });
+    this.spawnOutlineMeshes(haloPos, mainPos);
   }
 
-  private createHaloMaterial(): any {
-    return new THREE.LineBasicMaterial({
-      color: OUTLINE_HALO_COLOR,
+  private spawnOutlineMeshes(
+    haloPos: number[],
+    mainPos: number[],
+  ): void {
+    const hColor = OUTLINE_HALO_COLOR;
+    const hAlpha = OUTLINE_HALO_OPACITY;
+    this.spawnRibbonMesh(haloPos, hColor, hAlpha, false);
+    this.spawnRibbonMesh(mainPos, OUTLINE_COLOR, 0.95, true);
+  }
+
+  private spawnRibbonMesh(
+    pos: number[],
+    color: number,
+    opacity: number,
+    depthWrite: boolean,
+  ): void {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(pos, 3),
+    );
+    const mat = new THREE.MeshBasicMaterial({
+      color,
       transparent: true,
-      opacity: 0.9,
+      opacity,
+      depthWrite,
+      side: THREE.DoubleSide,
     });
+    this.globeGroup.add(new THREE.Mesh(geo, mat));
   }
 
-  private createMainMaterial(): any {
-    return new THREE.LineBasicMaterial({
-      color: OUTLINE_COLOR,
-    });
-  }
-
-  private drawFeaturePolygons(
+  private collectFeatureVerts(
     feature: any,
-    haloMat: any,
-    mainMat: any,
+    haloPos: number[],
+    mainPos: number[],
   ): void {
     const geom = feature.geometry;
     if (geom.type === 'Polygon') {
-      this.drawPolygonPair(geom.coordinates, haloMat, mainMat);
+      this.collectPolygonPair(geom.coordinates, haloPos, mainPos);
       return;
     }
     if (geom.type === 'MultiPolygon') {
-      const render = (poly: any) =>
-        this.drawPolygonPair(poly, haloMat, mainMat);
-      geom.coordinates.forEach(render);
+      geom.coordinates.forEach((poly: any) =>
+        this.collectPolygonPair(poly, haloPos, mainPos)
+      );
     }
   }
 
-  private drawPolygonPair(
+  private collectPolygonPair(
     coords: number[][][],
-    haloMat: any,
-    mainMat: any,
+    haloPos: number[],
+    mainPos: number[],
   ): void {
-    // Outer halo outline
-    this.drawPolygon(coords, haloMat, GLOBE_RADIUS + 0.008);
-    // Inner bright neon outline
-    this.drawPolygon(coords, mainMat, GLOBE_RADIUS + 0.015);
+    // Outer cyan halo ribbon (width 0.028)
+    this.appendRibbonQuads(
+      coords[0],
+      GLOBE_RADIUS + 0.012,
+      0.028,
+      haloPos,
+    );
+    // Inner bright neon outline ribbon (width 0.012)
+    this.appendRibbonQuads(
+      coords[0],
+      GLOBE_RADIUS + 0.020,
+      0.012,
+      mainPos,
+    );
   }
 
-  private drawPolygon(
-    coords: number[][][],
-    material: any,
+  public appendRibbonQuads(
+    ring: number[][],
     radius: number,
+    halfWidth: number,
+    target: number[],
   ): void {
-    const points: any[] = [];
-    coords[0].forEach((p) =>
-      points.push(this.lonLatToVector3(p[0], p[1], radius))
-    );
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    const line = new THREE.Line(geo, material);
-    this.globeGroup.add(line);
+    for (let i = 0; i < ring.length - 1; i++) {
+      this.buildSegmentQuad(
+        ring[i],
+        ring[i + 1],
+        radius,
+        halfWidth,
+        target,
+      );
+    }
+  }
+
+  private buildSegmentQuad(
+    p1: number[],
+    p2: number[],
+    radius: number,
+    halfWidth: number,
+    target: number[],
+  ): void {
+    const v1 = this.lonLatToVector3(p1[0], p1[1], radius);
+    const v2 = this.lonLatToVector3(p2[0], p2[1], radius);
+    const norm = v1.clone().normalize();
+    const dir = new THREE.Vector3().subVectors(v2, v1).normalize();
+    const side = new THREE.Vector3()
+      .crossVectors(norm, dir)
+      .normalize()
+      .multiplyScalar(halfWidth);
+    this.pushQuadVerts(v1, v2, side, target);
+  }
+
+  private pushQuadVerts(
+    v1: any,
+    v2: any,
+    side: any,
+    target: number[],
+  ): void {
+    const a = [v1.x + side.x, v1.y + side.y, v1.z + side.z];
+    const b = [v1.x - side.x, v1.y - side.y, v1.z - side.z];
+    const c = [v2.x - side.x, v2.y - side.y, v2.z - side.z];
+    const d = [v2.x + side.x, v2.y + side.y, v2.z + side.z];
+    target.push(...a, ...b, ...c, ...a, ...c, ...d);
   }
 
   private drawGrid(): void {

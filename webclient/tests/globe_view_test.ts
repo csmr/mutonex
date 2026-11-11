@@ -15,6 +15,42 @@ class MockVector3 {
     this.y = v.y;
     this.z = v.z;
   }
+  clone(): MockVector3 {
+    return new MockVector3(this.x, this.y, this.z);
+  }
+  normalize(): this {
+    const len = Math.sqrt(
+      this.x * this.x + this.y * this.y + this.z * this.z,
+    ) || 1;
+    this.x /= len;
+    this.y /= len;
+    this.z /= len;
+    return this;
+  }
+  subVectors(a: MockVector3, b: MockVector3): this {
+    this.x = a.x - b.x;
+    this.y = a.y - b.y;
+    this.z = a.z - b.z;
+    return this;
+  }
+  crossVectors(a: MockVector3, b: MockVector3): this {
+    const ax = a.x, ay = a.y, az = a.z;
+    const bx = b.x, by = b.y, bz = b.z;
+    this.x = ay * bz - az * by;
+    this.y = az * bx - ax * bz;
+    this.z = ax * by - ay * bx;
+    return this;
+  }
+  multiplyScalar(s: number): this {
+    this.x *= s;
+    this.y *= s;
+    this.z *= s;
+    return this;
+  }
+}
+
+class MockBufferAttribute {
+  constructor(public array: any, public itemSize: number) {}
 }
 
 class MockColor {
@@ -131,11 +167,11 @@ class MockOrbitControls {
 };
 
 import {
-  GLOBE_RADIUS,
   GlobeView,
-  GRID_COLOR,
+  GLOBE_RADIUS,
   OUTLINE_COLOR,
   OUTLINE_HALO_COLOR,
+  GRID_COLOR,
 } from '../view/GlobeView.ts';
 
 Deno.test('GlobeView: initializes scene and constants', () => {
@@ -146,7 +182,7 @@ Deno.test('GlobeView: initializes scene and constants', () => {
   assertExists(view.globeGroup);
   assertEquals(GLOBE_RADIUS, 5);
   assertEquals(OUTLINE_COLOR, 0x00ff00);
-  assertEquals(OUTLINE_HALO_COLOR, 0x003300);
+  assertEquals(OUTLINE_HALO_COLOR, 0x0088aa);
   assertEquals(GRID_COLOR, 0x00ff00);
   view.dispose();
 });
@@ -204,4 +240,16 @@ Deno.test('GlobeView: rotate steps rotation angles', () => {
   view.rotate('left');
   assertEquals(view.globeGroup.rotation.y, rotY - 0.05);
   view.dispose();
+});
+
+Deno.test('GlobeView: appendRibbonQuads builds quads', () => {
+  const dom = {} as any;
+  const view = new GlobeView({}, dom);
+  const ring = [
+    [0, 0],
+    [10, 0],
+  ];
+  const target: number[] = [];
+  view.appendRibbonQuads(ring, 5.0, 0.02, target);
+  assertEquals(target.length, 18);
 });
