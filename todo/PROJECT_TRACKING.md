@@ -75,7 +75,7 @@ layer.
 - [x] **GlobeView Earth Outlines**: Bright green country borders
   for geographic tribe/ethnicity determination. (Ref:
   `earth_map_wireframe_20260228.md`)
-- [ ] **GlobeView Earth Outlines Part 2**: Align styling with game
+- [x] **GlobeView Earth Outlines Part 2**: Align styling with game
   graphics style (thicker map border outlines) and improve the view
   functionality for weather testing.
 - [x] **Weather Testing Facility**: Diagnostic GlobeView with

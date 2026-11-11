@@ -1,245 +1,355 @@
 // webclient/view/GlobeView.ts
 import { IView } from '../core/ViewManager.ts';
-import { GameState, Unit } from '../mocks/MockGameStateProvider.ts';
+import {
+  GameState,
+  Unit,
+} from '../mocks/MockGameStateProvider.ts';
 import { EntityData, Terrain } from '../core/types.ts';
 
-const GLOBE_RADIUS = 5;
-const UNIT_RADIUS = 0.05;
+export const GLOBE_RADIUS = 5;
+export const UNIT_RADIUS = 0.05;
+export const OUTLINE_COLOR = 0x00ff00;
+export const OUTLINE_HALO_COLOR = 0x003300;
+export const GRID_COLOR = 0x00ff00;
+export const TARGET_SECTOR_SIZE = 0.6;
 
 declare const THREE: typeof import('three');
-declare const OrbitControls:
-  typeof import('three/examples/jsm/controls/OrbitControls');
 
 /**
- * Manages the 3D globe view and its diagnostic weather interactions.
+ * 3D globe view: cyber-noir outlines & weather diag.
  */
 export class GlobeView implements IView {
-  public scene: THREE.Scene;
-  public camera: THREE.PerspectiveCamera;
-  public isGlobeView = true; // Marker for guards
+  public scene: any;
+  public camera: any;
+  public isGlobeView = true;
   public raycastEnabled = false;
+  public controls: any;
+  public globeGroup: any;
+  public unitMeshes: Record<string, any> = {};
+  public sectorMeshes: Record<string, any> = {};
+  public playerColors: Record<string, any> = {};
 
-  private controls: THREE.OrbitControls;
-  private globeGroup: THREE.Group;
-  private unitMeshes: Record<string, THREE.Mesh> = {};
-  private sectorMeshes: Record<string, THREE.Mesh> = {};
-  private playerColors: Record<string, THREE.Color> = {
-    'Player1': new THREE.Color(0x00ff00), // Green
-    'Player2': new THREE.Color(0xff00ff), // Magenta
-  };
-
-  // Weather Diagnostic State
-  public diagEnabled: boolean = false;
-  private diagOverlay: HTMLElement | null = null;
-  private currentLat: number = 60;
-  private currentLon: number = 20;
-  private weatherData: any = null;
+  public diagEnabled = false;
+  public diagOverlay: HTMLElement | null = null;
+  public targetSectorMesh: any = null;
+  public currentLat = 60;
+  public currentLon = 20;
+  public weatherData: any = null;
 
   constructor(_geoData: any, domElement: HTMLCanvasElement) {
+    this.initScene(domElement);
+    this.loadOutlines();
+    this.drawGrid();
+  }
+
+  private initScene(domElement: HTMLCanvasElement): void {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
+    this.initPlayerColors();
+    this.camera = this.createCamera();
+    this.controls = this.createControls(domElement);
+    this.globeGroup = new THREE.Group();
+    this.scene.add(this.globeGroup);
+    this.globeGroup.add(this.createSphereMesh());
+  }
 
-    this.camera = new THREE.PerspectiveCamera(
+  private initPlayerColors(): void {
+    this.playerColors['Player1'] = new THREE.Color(0x00ff00);
+    this.playerColors['Player2'] = new THREE.Color(0xff00ff);
+  }
+
+  private createCamera(): any {
+    const cam = new THREE.PerspectiveCamera(
       50,
       window.innerWidth / window.innerHeight,
       0.1,
       1000,
     );
-    this.camera.position.z = 15;
-
-    // Controls
-    this.controls = new THREE.OrbitControls(
-      this.camera,
-      domElement,
-    );
-    this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.enablePan = false;
-    this.controls.minDistance = 7;
-    this.controls.maxDistance = 30;
-    this.controls.autoRotate = true;
-    this.controls.autoRotateSpeed = 0.2;
-
-    // Group to hold the globe and its features
-    this.globeGroup = new THREE.Group();
-    this.scene.add(this.globeGroup);
-
-    // Create the base sphere
-    const sphereGeometry = new THREE.SphereGeometry(
-      GLOBE_RADIUS,
-      32,
-      32,
-    );
-    const sphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0x0a0a0a,
-    });
-    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-    this.globeGroup.add(sphere);
-
-    this.#loadOutlines();
-    this.#drawGrid();
+    cam.position.z = 15;
+    return cam;
   }
 
-  public setDiagMode(enabled: boolean) {
+  private createControls(domElement: HTMLCanvasElement): any {
+    const c = new THREE.OrbitControls(this.camera, domElement);
+    c.enableDamping = true;
+    c.dampingFactor = 0.05;
+    c.enablePan = false;
+    c.minDistance = 7;
+    c.maxDistance = 30;
+    this.configureOrbitSpeed(c);
+    return c;
+  }
+
+  private configureOrbitSpeed(c: any): void {
+    c.autoRotate = true;
+    c.autoRotateSpeed = 0.2;
+  }
+
+  private createSphereMesh(): any {
+    const geo = new THREE.SphereGeometry(GLOBE_RADIUS, 32, 32);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
+    return new THREE.Mesh(geo, mat);
+  }
+
+  public setDiagMode(enabled: boolean): void {
     this.diagEnabled = enabled;
     if (enabled) {
-      this.#showDiagOverlay();
-      this.#fetchWeatherData();
-    } else {
-      this.#hideDiagOverlay();
+      this.showDiagOverlay();
+      this.fetchWeatherData();
+      return;
     }
+    this.hideDiagOverlay();
+    this.clearTargetSectorMesh();
   }
 
-  async #loadOutlines() {
+  public async loadOutlines(): Promise<void> {
     try {
       const resp = await fetch('/assets/countries.geo.json');
       const data = await resp.json();
-      this.#drawFeatures(data.features);
+      this.drawFeatures(data.features);
     } catch (e) {
-      console.error(
-        '[GlobeView] Failed to load country outlines',
-        e,
-      );
+      console.error('[GlobeView] Outlines failed', e);
     }
   }
 
-  async #fetchWeatherData() {
+  public async fetchWeatherData(): Promise<void> {
     try {
-      const url =
-        `/weather-history?lat=${this.currentLat}&lon=${this.currentLon}`;
-      const resp = await fetch(url);
+      const resp = await fetch(this.getWeatherUrl());
       this.weatherData = await resp.json();
-      this.#updateDiagUI();
+      this.updateDiagUI();
+      this.updateTargetSectorMarker();
     } catch (e) {
-      console.error('[GlobeView] Failed to fetch weather data', e);
+      console.error('[GlobeView] Weather fetch failed', e);
     }
   }
 
-  #showDiagOverlay() {
+  private getWeatherUrl(): string {
+    const lat = this.currentLat;
+    const lon = this.currentLon;
+    return `/weather-history?lat=${lat}&lon=${lon}`;
+  }
+
+  public showDiagOverlay(): void {
     if (this.diagOverlay) return;
     this.diagOverlay = document.createElement('div');
     this.diagOverlay.id = 'globe-diag-overlay';
-    this.diagOverlay.style.position = 'absolute';
-    this.diagOverlay.style.top = '0';
-    this.diagOverlay.style.left = '0';
-    this.diagOverlay.style.width = '25%';
-    this.diagOverlay.style.height = '100%';
-    this.diagOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    this.diagOverlay.style.color = '#00ff00';
-    this.diagOverlay.style.fontFamily =
-      "'Courier New', Courier, monospace";
-    this.diagOverlay.style.fontSize = '16px';
-    this.diagOverlay.style.padding = '20px';
-    this.diagOverlay.style.overflowY = 'auto';
-    this.diagOverlay.style.textShadow = '2px 2px #000000';
-    this.diagOverlay.style.zIndex = '1000';
-
+    this.applyOverlayBoxStyles(this.diagOverlay);
+    this.applyOverlayFontStyles(this.diagOverlay);
     document.body.appendChild(this.diagOverlay);
-    this.#updateDiagUI();
+    this.updateDiagUI();
   }
 
-  #hideDiagOverlay() {
+  private applyOverlayBoxStyles(el: HTMLElement): void {
+    el.style.position = 'absolute';
+    el.style.top = '0';
+    el.style.left = '0';
+    el.style.width = '25%';
+    el.style.height = '100%';
+    el.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    el.style.padding = '20px';
+    el.style.overflowY = 'auto';
+  }
+
+  private applyOverlayFontStyles(el: HTMLElement): void {
+    el.style.color = '#00ff00';
+    el.style.fontFamily = "'Courier New', Courier, monospace";
+    el.style.fontSize = '16px';
+    el.style.textShadow = '2px 2px #000000';
+    el.style.zIndex = '1000';
+  }
+
+  public hideDiagOverlay(): void {
     if (this.diagOverlay) {
       document.body.removeChild(this.diagOverlay);
       this.diagOverlay = null;
     }
   }
 
-  #updateDiagUI() {
+  public updateDiagUI(): void {
     if (!this.diagOverlay) return;
     this.diagOverlay.innerHTML = '';
-
-    const title = document.createElement('h2');
-    title.textContent = 'WEATHER TESTING FACILITY';
-    title.style.borderBottom = '2px solid #00ff00';
-    this.diagOverlay.appendChild(title);
-
-    const selector = document.createElement('div');
-    selector.style.display = 'flex';
-    selector.style.justifyContent = 'space-between';
-    selector.style.alignItems = 'center';
-    selector.style.marginBottom = '20px';
-    selector.style.fontSize = '20px';
-
-    const btnL = document.createElement('button');
-    btnL.textContent = '◀';
-    btnL.style.background = 'none';
-    btnL.style.color = '#00ff00';
-    btnL.style.border = '1px solid #00ff00';
-    btnL.style.padding = '5px 10px';
-    btnL.style.cursor = 'pointer';
-    btnL.onclick = () => {
-      this.currentLon -= 10;
-      this.#fetchWeatherData();
-    };
-
-    const sectorText = document.createElement('span');
-    sectorText.textContent =
-      `LAT ${this.currentLat} LON ${this.currentLon}`;
-
-    const btnR = document.createElement('button');
-    btnR.textContent = '▶';
-    btnR.style.background = 'none';
-    btnR.style.color = '#00ff00';
-    btnR.style.border = '1px solid #00ff00';
-    btnR.style.padding = '5px 10px';
-    btnR.style.cursor = 'pointer';
-    btnR.onclick = () => {
-      this.currentLon += 10;
-      this.#fetchWeatherData();
-    };
-
-    selector.appendChild(btnL);
-    selector.appendChild(sectorText);
-    selector.appendChild(btnR);
-    this.diagOverlay.appendChild(selector);
-
-    if (this.weatherData) {
-      this.weatherData.history.forEach((year: any) => {
-        const yearTitle = document.createElement('h3');
-        yearTitle.textContent = `YEAR ${year.year}`;
-        this.diagOverlay?.appendChild(yearTitle);
-
-        const table = document.createElement('table');
-        table.style.width = '100%';
-        table.style.borderCollapse = 'collapse';
-        table.style.marginBottom = '20px';
-
-        const header = table.insertRow();
-        ['M', 'T', 'P', 'I'].forEach((h) => {
-          const cell = header.insertCell();
-          cell.textContent = h;
-          cell.style.borderBottom = '1px solid #00ff00';
-          cell.style.fontWeight = 'bold';
-        });
-
-        year.months.forEach((m: any) => {
-          const row = table.insertRow();
-          const mCell = row.insertCell();
-          mCell.textContent = m.month.toString();
-
-          const tCell = row.insertCell();
-          tCell.textContent = Math.round(m.temp).toString();
-          tCell.style.backgroundColor = this.#tempToColor(m.temp);
-          tCell.style.color = '#000';
-
-          const pCell = row.insertCell();
-          pCell.textContent = Math.round(m.pressure).toString();
-
-          const iCell = row.insertCell();
-          iCell.textContent = Math.round(m.insolation).toString();
-        });
-
-        this.diagOverlay?.appendChild(table);
-      });
+    this.appendDiagTitle();
+    this.diagOverlay.appendChild(this.createSectorSelector());
+    if (this.weatherData?.history) {
+      this.renderWeatherHistory(this.weatherData.history);
     }
   }
 
-  #tempToColor(temp: number): string {
+  private appendDiagTitle(): void {
+    const title = document.createElement('h2');
+    title.textContent = 'WEATHER TESTING FACILITY';
+    title.style.borderBottom = '2px solid #00ff00';
+    this.diagOverlay?.appendChild(title);
+  }
+
+  private createNavBtn(
+    text: string,
+    delta: number,
+  ): HTMLButtonElement {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    this.styleNavBtn(btn);
+    btn.onclick = () => {
+      this.currentLon += delta;
+      this.fetchWeatherData();
+    };
+    return btn;
+  }
+
+  private styleNavBtn(btn: HTMLButtonElement): void {
+    btn.style.background = 'none';
+    btn.style.color = '#00ff00';
+    btn.style.border = '1px solid #00ff00';
+    btn.style.padding = '5px 10px';
+    btn.style.cursor = 'pointer';
+  }
+
+  private createSectorSelector(): HTMLElement {
+    const sel = document.createElement('div');
+    this.styleSectorSelector(sel);
+    const span = this.createSectorLabel();
+    sel.appendChild(this.createNavBtn('◀', -10));
+    sel.appendChild(span);
+    sel.appendChild(this.createNavBtn('▶', 10));
+    return sel;
+  }
+
+  private createSectorLabel(): HTMLElement {
+    const text = document.createElement('span');
+    const lat = this.currentLat;
+    const lon = this.currentLon;
+    text.textContent = `LAT ${lat} ` + `LON ${lon}`;
+    return text;
+  }
+
+  private styleSectorSelector(sel: HTMLElement): void {
+    sel.style.display = 'flex';
+    sel.style.justifyContent = 'space-between';
+    sel.style.alignItems = 'center';
+    sel.style.marginBottom = '20px';
+    sel.style.fontSize = '20px';
+  }
+
+  private renderWeatherHistory(history: any[]): void {
+    history.forEach((year: any) => {
+      const yearTitle = document.createElement('h3');
+      yearTitle.textContent = `YEAR ${year.year}`;
+      this.diagOverlay?.appendChild(yearTitle);
+      const table = this.createWeatherTable(year.months);
+      this.diagOverlay?.appendChild(table);
+    });
+  }
+
+  private createWeatherTable(months: any[]): HTMLTableElement {
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginBottom = '20px';
+    this.appendTableHeader(table);
+    months.forEach((m: any) => this.appendMonthRow(table, m));
+    return table;
+  }
+
+  private appendTableHeader(table: HTMLTableElement): void {
+    const header = table.insertRow();
+    ['M', 'T', 'P', 'I'].forEach((h) => {
+      const cell = header.insertCell();
+      cell.textContent = h;
+      cell.style.borderBottom = '1px solid #00ff00';
+      cell.style.fontWeight = 'bold';
+    });
+  }
+
+  private appendMonthRow(table: HTMLTableElement, m: any): void {
+    const row = table.insertRow();
+    row.insertCell().textContent = m.month.toString();
+    const tCell = row.insertCell();
+    tCell.textContent = Math.round(m.temp).toString();
+    tCell.style.backgroundColor = this.tempToColorHex(m.temp);
+    tCell.style.color = '#000';
+    this.appendPressureInsolation(row, m);
+  }
+
+  private appendPressureInsolation(row: any, m: any) {
+    row.insertCell().textContent = Math.round(m.pressure);
+    row.insertCell().textContent = Math.round(m.insolation);
+  }
+
+  public tempToColorHex(temp: number): string {
     if (temp < 0) return '#00ffff';
     if (temp < 10) return '#00ff00';
     if (temp < 25) return '#ffff00';
     return '#ff0000';
+  }
+
+  public tempToColorVal(temp: number): number {
+    if (temp < 0) return 0x00ffff;
+    if (temp < 10) return 0x00ff00;
+    if (temp < 25) return 0xffff00;
+    return 0xff0000;
+  }
+
+  public updateTargetSectorMarker(): void {
+    if (!this.diagEnabled) return;
+    const avgTemp = this.computeAvgTemp();
+    const color = this.tempToColorVal(avgTemp);
+    this.syncTargetSectorMesh(color);
+    this.positionTargetSectorMesh();
+  }
+
+  private syncTargetSectorMesh(color: number): void {
+    if (!this.targetSectorMesh) {
+      this.createTargetSectorMesh(color);
+      return;
+    }
+    this.targetSectorMesh.material.color.set(color);
+  }
+
+  private computeAvgTemp(): number {
+    if (!this.weatherData?.history?.length) return 15;
+    const latest = this.weatherData.history[0];
+    if (!latest?.months?.length) return 15;
+    const sum = latest.months.reduce(
+      (acc: number, m: any) => acc + (m.temp || 0),
+      0,
+    );
+    return sum / latest.months.length;
+  }
+
+  private createTargetSectorMesh(color: number): void {
+    const s = TARGET_SECTOR_SIZE;
+    const geo = new THREE.BoxGeometry(s, s, 0.15);
+    const mat = this.createTargetSectorMaterial(color);
+    this.targetSectorMesh = new THREE.Mesh(geo, mat);
+    this.globeGroup.add(this.targetSectorMesh);
+  }
+
+  private createTargetSectorMaterial(color: number): any {
+    return new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.8,
+    });
+  }
+
+  private positionTargetSectorMesh(): void {
+    const pos = this.lonLatToVector3(
+      this.currentLon,
+      this.currentLat,
+      GLOBE_RADIUS + 0.08,
+    );
+    this.targetSectorMesh.position.copy(pos);
+    this.targetSectorMesh.lookAt(this.globeGroup.position);
+  }
+
+  public clearTargetSectorMesh(): void {
+    if (this.targetSectorMesh) {
+      this.globeGroup.remove(this.targetSectorMesh);
+      if (this.targetSectorMesh.geometry) {
+        this.targetSectorMesh.geometry.dispose();
+      }
+      this.targetSectorMesh = null;
+    }
   }
 
   public onActivate(): void {
@@ -254,7 +364,8 @@ export class GlobeView implements IView {
       'resize',
       this.onWindowResize.bind(this),
     );
-    this.#hideDiagOverlay();
+    this.hideDiagOverlay();
+    this.clearTargetSectorMesh();
   }
 
   public update(_deltaTime: number): void {
@@ -264,108 +375,104 @@ export class GlobeView implements IView {
   public updateEntities(
     _entities: EntityData[],
     _localPlayerId?: string,
-  ): void {
-    // GlobeView renders large-scale sectors and units separately
-    // from tactical entities. This satisfies IView.
-  }
+  ): void {}
 
-  public updateTerrain(_terrain: Terrain): void {
-    // Static globe for now.
-  }
+  public updateTerrain(_terrain: Terrain): void {}
 
-  public rotate(direction: 'up' | 'down' | 'left' | 'right'): void {
+  public rotate(dir: 'up' | 'down' | 'left' | 'right'): void {
     if (this.controls.autoRotate) {
       this.controls.autoRotate = false;
     }
-    const rotationSpeed = 0.05;
-    switch (direction) {
-      case 'up':
-        this.globeGroup.rotation.x -= rotationSpeed;
-        break;
-      case 'down':
-        this.globeGroup.rotation.x += rotationSpeed;
-        break;
-      case 'left':
-        this.globeGroup.rotation.y -= rotationSpeed;
-        break;
-      case 'right':
-        this.globeGroup.rotation.y += rotationSpeed;
-        break;
-    }
+    const speed = 0.05;
+    this.applyRotationStep(dir, speed);
+  }
+
+  private applyRotationStep(dir: string, speed: number): void {
+    const map: Record<string, () => void> = {
+      up: () => (this.globeGroup.rotation.x -= speed),
+      down: () => (this.globeGroup.rotation.x += speed),
+      left: () => (this.globeGroup.rotation.y -= speed),
+      right: () => (this.globeGroup.rotation.y += speed),
+    };
+    map[dir]?.();
   }
 
   public updateGameState(state: GameState): void {
-    this.#updateUnits(state.units);
-    this.#updateSectors(state.sectors);
+    this.updateUnits(state.units);
+    this.updateSectors(state.sectors);
   }
 
-  #updateSectors(sectors: Record<string, any>): void {
+  private updateSectors(sectors: Record<string, any>): void {
     Object.values(sectors).forEach((sector) => {
-      const parts = sector.id.split('_');
-      const lat = parseInt(parts[1]);
-      const lon = parseInt(parts[3]);
-
-      if (this.sectorMeshes[sector.id]) {
-        const color = this.playerColors[sector.owner] || 0xdddddd;
-        (this.sectorMeshes[sector.id]
-          .material as THREE.MeshBasicMaterial).color
-          .set(color);
-      } else {
-        const color = this.playerColors[sector.owner] || 0xdddddd;
-        const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.1);
-        const material = new THREE.MeshBasicMaterial({
-          color,
-          transparent: true,
-          opacity: 0.5,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        const position = this.lonLatToVector3(
-          lon,
-          lat,
-          GLOBE_RADIUS,
-        );
-        mesh.position.copy(position);
-        mesh.lookAt(this.globeGroup.position);
-
-        this.sectorMeshes[sector.id] = mesh;
-        this.globeGroup.add(mesh);
-      }
+      this.syncSectorInstance(sector);
     });
   }
 
-  #updateUnits(units: Unit[]): void {
-    const currentUnitIds = new Set(units.map((u) => u.id));
+  private syncSectorInstance(sector: any): void {
+    const color = this.playerColors[sector.owner] || 0xdddddd;
+    if (this.sectorMeshes[sector.id]) {
+      this.sectorMeshes[sector.id].material.color.set(color);
+      return;
+    }
+    this.spawnNewSectorMesh(sector, color);
+  }
 
-    units.forEach((unit) => {
-      const position = this.lonLatToVector3(
-        unit.lon,
-        unit.lat,
-        GLOBE_RADIUS + UNIT_RADIUS,
-      );
-      if (this.unitMeshes[unit.id]) {
-        this.unitMeshes[unit.id].position.copy(position);
-      } else {
-        const color = this.playerColors[unit.owner] || 0xffffff;
-        const geometry = new THREE.SphereGeometry(
-          UNIT_RADIUS,
-          16,
-          16,
-        );
-        const material = new THREE.MeshBasicMaterial({ color });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.copy(position);
-        this.unitMeshes[unit.id] = mesh;
-        this.globeGroup.add(mesh);
-      }
+  private spawnNewSectorMesh(sector: any, color: any): void {
+    const parts = sector.id.split('_');
+    const lon = parseInt(parts[3]);
+    const lat = parseInt(parts[1]);
+    this.createSectorMesh(sector.id, lon, lat, color);
+  }
+
+  private createSectorMesh(
+    id: string,
+    lon: number,
+    lat: number,
+    color: any,
+  ): void {
+    const geo = new THREE.BoxGeometry(0.5, 0.5, 0.1);
+    const mat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.5,
     });
+    const mesh = new THREE.Mesh(geo, mat);
+    const pos = this.lonLatToVector3(lon, lat, GLOBE_RADIUS);
+    mesh.position.copy(pos);
+    mesh.lookAt(this.globeGroup.position);
+    this.sectorMeshes[id] = mesh;
+    this.globeGroup.add(mesh);
+  }
 
+  private updateUnits(units: Unit[]): void {
+    const currentUnitIds = new Set(units.map((u) => u.id));
+    units.forEach((unit) => this.syncUnitMesh(unit));
     Object.keys(this.unitMeshes).forEach((unitId) => {
       if (!currentUnitIds.has(unitId)) {
-        const mesh = this.unitMeshes[unitId];
-        this.globeGroup.remove(mesh);
+        this.globeGroup.remove(this.unitMeshes[unitId]);
         delete this.unitMeshes[unitId];
       }
     });
+  }
+
+  private syncUnitMesh(unit: Unit): void {
+    const r = GLOBE_RADIUS + UNIT_RADIUS;
+    const pos = this.lonLatToVector3(unit.lon, unit.lat, r);
+    if (this.unitMeshes[unit.id]) {
+      this.unitMeshes[unit.id].position.copy(pos);
+      return;
+    }
+    this.createUnitMesh(unit, pos);
+  }
+
+  private createUnitMesh(unit: Unit, pos: any): void {
+    const color = this.playerColors[unit.owner] || 0xffffff;
+    const geo = new THREE.SphereGeometry(UNIT_RADIUS, 16, 16);
+    const mat = new THREE.MeshBasicMaterial({ color });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    this.unitMeshes[unit.id] = mesh;
+    this.globeGroup.add(mesh);
   }
 
   private onWindowResize(): void {
@@ -373,11 +480,11 @@ export class GlobeView implements IView {
     this.camera.updateProjectionMatrix();
   }
 
-  private lonLatToVector3(
+  public lonLatToVector3(
     lon: number,
     lat: number,
     radius: number,
-  ): THREE.Vector3 {
+  ): any {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lon + 180) * (Math.PI / 180);
     const x = -(radius * Math.sin(phi) * Math.cos(theta));
@@ -386,68 +493,105 @@ export class GlobeView implements IView {
     return new THREE.Vector3(x, y, z);
   }
 
-  #drawFeatures(features: any[]): void {
-    const material = new THREE.LineBasicMaterial({
-      color: 0x00ff00,
-    }); // Bright Green
-    features.forEach((feature) => {
-      const geom = feature.geometry;
-      if (geom.type === 'Polygon') {
-        this.#drawPolygon(geom.coordinates, material);
-      } else if (geom.type === 'MultiPolygon') {
-        geom.coordinates.forEach((polygon: any) =>
-          this.#drawPolygon(polygon, material)
-        );
-      }
+  private drawFeatures(features: any[]): void {
+    const haloMat = this.createHaloMaterial();
+    const mainMat = this.createMainMaterial();
+    const draw = (f: any) =>
+      this.drawFeaturePolygons(f, haloMat, mainMat);
+    features.forEach(draw);
+  }
+
+  private createHaloMaterial(): any {
+    return new THREE.LineBasicMaterial({
+      color: OUTLINE_HALO_COLOR,
+      transparent: true,
+      opacity: 0.9,
     });
   }
 
-  #drawPolygon(
-    coords: number[][][],
-    material: THREE.LineBasicMaterial,
+  private createMainMaterial(): any {
+    return new THREE.LineBasicMaterial({
+      color: OUTLINE_COLOR,
+    });
+  }
+
+  private drawFeaturePolygons(
+    feature: any,
+    haloMat: any,
+    mainMat: any,
   ): void {
-    const points: THREE.Vector3[] = [];
+    const geom = feature.geometry;
+    if (geom.type === 'Polygon') {
+      this.drawPolygonPair(geom.coordinates, haloMat, mainMat);
+      return;
+    }
+    if (geom.type === 'MultiPolygon') {
+      const render = (poly: any) =>
+        this.drawPolygonPair(poly, haloMat, mainMat);
+      geom.coordinates.forEach(render);
+    }
+  }
+
+  private drawPolygonPair(
+    coords: number[][][],
+    haloMat: any,
+    mainMat: any,
+  ): void {
+    // Outer halo outline
+    this.drawPolygon(coords, haloMat, GLOBE_RADIUS + 0.008);
+    // Inner bright neon outline
+    this.drawPolygon(coords, mainMat, GLOBE_RADIUS + 0.015);
+  }
+
+  private drawPolygon(
+    coords: number[][][],
+    material: any,
+    radius: number,
+  ): void {
+    const points: any[] = [];
     coords[0].forEach((p) =>
-      points.push(
-        this.lonLatToVector3(p[0], p[1], GLOBE_RADIUS + 0.01),
-      )
+      points.push(this.lonLatToVector3(p[0], p[1], radius))
     );
-    const geometry = new THREE.BufferGeometry().setFromPoints(
-      points,
-    );
-    const line = new THREE.Line(geometry, material);
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const line = new THREE.Line(geo, material);
     this.globeGroup.add(line);
   }
 
-  #drawGrid(): void {
+  private drawGrid(): void {
     const gridMaterial = new THREE.LineBasicMaterial({
-      color: 0x00ff00, // Bright Green
+      color: GRID_COLOR,
       transparent: true,
       opacity: 0.1,
     });
+    this.drawLatitudeLines(gridMaterial);
+    this.drawLongitudeLines(gridMaterial);
+  }
 
+  private drawLatitudeLines(material: any): void {
     for (let lat = -80; lat <= 80; lat += 10) {
       const points = [];
       for (let lon = -180; lon <= 180; lon += 5) {
         points.push(this.lonLatToVector3(lon, lat, GLOBE_RADIUS));
       }
-      const geometry = new THREE.BufferGeometry().setFromPoints(
-        points,
-      );
-      const line = new THREE.Line(geometry, gridMaterial);
-      this.globeGroup.add(line);
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      this.globeGroup.add(new THREE.Line(geo, material));
     }
+  }
 
+  private drawLongitudeLines(material: any): void {
     for (let lon = -180; lon < 180; lon += 10) {
       const points = [];
       for (let lat = -90; lat <= 90; lat += 5) {
         points.push(this.lonLatToVector3(lon, lat, GLOBE_RADIUS));
       }
-      const geometry = new THREE.BufferGeometry().setFromPoints(
-        points,
-      );
-      const line = new THREE.Line(geometry, gridMaterial);
-      this.globeGroup.add(line);
+      const geo = new THREE.BufferGeometry().setFromPoints(points);
+      this.globeGroup.add(new THREE.Line(geo, material));
     }
+  }
+
+  public dispose(): void {
+    if (this.controls) this.controls.dispose();
+    this.hideDiagOverlay();
+    this.clearTargetSectorMesh();
   }
 }
