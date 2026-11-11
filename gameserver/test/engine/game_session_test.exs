@@ -22,6 +22,15 @@ defmodule Mutonex.Engine.GameSessionTest do
 
     stub(Mutonex.Engine.SimtellusClientMock, :get_artifacts, fn _, _ -> [] end)
     stub(Mutonex.Engine.SimtellusClientMock, :add_artifact, fn _, _, _ -> :ok end)
+    stub(
+      Mutonex.Engine.SimtellusClientMock,
+      :get_fair_spawn_points,
+      fn _, _, count ->
+        Enum.map(1..count, fn i ->
+          %{x: i * 20.0, y: 0.0, z: i * 20.0}
+        end)
+      end
+    )
 
     sector_id = "test_sector_#{System.unique_integer()}"
     {:ok, sector_id: sector_id}
@@ -45,7 +54,8 @@ defmodule Mutonex.Engine.GameSessionTest do
     wait_for_phase(pid, :lobby)
   end
 
-  test "transitions to :gamein on join", %{sector_id: sid} do
+  test "transitions to :gamein on join and spawns starter triad",
+       %{sector_id: sid} do
     Mutonex.Engine.SimtellusClientMock
     |> stub(:is_available?, fn -> true end)
 
@@ -65,6 +75,15 @@ defmodule Mutonex.Engine.GameSessionTest do
     assert unit.__struct__ == Mutonex.Engine.Entities.Unit
     assert unit.type == :head
     assert unit.attributes.charm == 1
+
+    # Verify starter triad buildings generated for player
+    starters =
+      Enum.filter(
+        state.buildings,
+        &String.starts_with?(&1.id, "starter_user1_")
+      )
+
+    assert length(starters) == 3
   end
 
   test "initial state payload includes full player unit attributes",
@@ -154,19 +173,31 @@ defmodule Mutonex.Engine.GameSessionTest do
     GenServer.cast(pid, {:player_joined, "dropper", self()})
     wait_for_phase(pid, :gamein)
 
+    # Force dropper position for predictable drop offset
+    pos = %{x: 0.0, y: 1.0, z: 0.0}
+    pos_list = [pos.x, pos.y, pos.z]
+    avatar_msg = {:avatar_update, "dropper", pos_list, "tok"}
+    GenServer.cast(pid, avatar_msg)
+
     # Initial pickup to put item in inventory
-    GenServer.cast(pid, {:player_action, "dropper", "pick_up", "item_gem_01", nil})
+    pick_msg =
+      {:player_action, "dropper", "pick_up", "item_gem_01", nil}
+
+    GenServer.cast(pid, pick_msg)
     Process.sleep(50)
 
     # Drop with forward vector {1, 0, 0}
     meta = %{"x" => 1.0, "y" => 0.0, "z" => 0.0}
-    GenServer.cast(pid, {:player_action, "dropper", "drop_item", "item_gem_01", meta})
+    drop_msg =
+      {:player_action, "dropper", "drop_item", "item_gem_01", meta}
+
+    GenServer.cast(pid, drop_msg)
     Process.sleep(50)
 
     state = :sys.get_state(pid)
     item = Enum.find(state.items, &(&1.id == "item_gem_01"))
-    
-    # Player initial pos is (0, 1, 0). With offset (1, 0, 0) -> (1, 1, 0)
+
+    # Player pos is (0, 1, 0) + (1, 0, 0) -> (1, 1, 0)
     assert item.position == %{x: 1.0, y: 1.0, z: 0.0}
   end
 

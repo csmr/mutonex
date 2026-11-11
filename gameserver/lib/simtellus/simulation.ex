@@ -42,6 +42,11 @@ defmodule Mutonex.Simtellus.Simulation do
     GenServer.call(__MODULE__, :advance_date)
   end
 
+  def get_fair_spawn_points(lat, lon, count) do
+    msg = {:get_fair_spawn_points, lat, lon, count}
+    GenServer.call(__MODULE__, msg)
+  end
+
   # --- GenServer Callbacks ---
 
   @impl true
@@ -123,6 +128,13 @@ defmodule Mutonex.Simtellus.Simulation do
   def handle_call(:advance_date, _from, state) do
     new_state = advance_simulation_day(state)
     {:reply, new_state.current_date, new_state}
+  end
+
+  @impl true
+  def handle_call({:get_fair_spawn_points, _, _, cnt}, _from, s) do
+    opts = [min_dist: 20.0, k: 30]
+    points = Mutonex.Engine.Stippling.generate_points(opts)
+    {:reply, Enum.take(points, cnt), s}
   end
 
   @max_sector_artifacts 20

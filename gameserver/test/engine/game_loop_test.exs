@@ -1,5 +1,5 @@
 defmodule Mutonex.Engine.GameLoopTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   import Mox
 

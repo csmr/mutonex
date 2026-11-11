@@ -48,6 +48,13 @@ defmodule Mutonex.Engine.SimtellusClient do
   end
 
   @doc """
+  Fetches fair spawn points for lat/lon in local Simulation.
+  """
+  def get_fair_spawn_points(lat, lon, count) do
+    Simulation.get_fair_spawn_points(lat, lon, count)
+  end
+
+  @doc """
   Checks if the Simtellus Simulation is available.
   """
   def is_available? do

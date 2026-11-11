@@ -44,7 +44,9 @@ defmodule Mutonex.Engine.Systems.Environment do
         players: add_dummies(s.players),
         pending_start: false
     }
+    s = assign_fair_player_spawns(s)
     s = %{s | buildings: load_relics(s.buildings, s.sector_id)}
+    s = spawn_starter_triad(s)
     if String.contains?(s.sector_id, "test") do
       apply_test_layout(s)
     else
@@ -247,6 +249,83 @@ defmodule Mutonex.Engine.Systems.Environment do
       _ ->
         {0, 0}
     end
+  end
+
+  def assign_fair_player_spawns(s) do
+    rp = filter_real_players(s.players)
+    if Enum.empty?(rp), do: s, else: apply_fair_spawns(s, rp)
+  end
+
+  defp filter_real_players(ps) do
+    Enum.filter(ps, fn {id, _} ->
+      not String.starts_with?(id, "dummy_") and
+        not String.starts_with?(id, "npc_") and
+        not String.starts_with?(id, "test_")
+    end)
+  end
+
+  defp apply_fair_spawns(s, real_players) do
+    {lat, lon} = parse_sector_coords(s.sector_id)
+    pts = fetch_spawn_points(lat, lon, length(real_players))
+    init = {s.players, pts}
+    {upd, _} = Enum.reduce(real_players, init, &assign_one_spawn/2)
+    %{s | players: upd}
+  end
+
+  defp fetch_spawn_points(lat, lon, count) do
+    client = simtellus_client()
+    client.get_fair_spawn_points(lat, lon, count) || []
+  end
+
+  defp assign_one_spawn({uid, p_data}, {acc, pts}) do
+    {pos, rest} = pop_spawn_pos(pts, p_data.player.position)
+    upd_unit = %{p_data.player | position: pos}
+    {Map.put(acc, uid, %{p_data | player: upd_unit}), rest}
+  end
+
+  defp pop_spawn_pos([pt | tail], _def), do: {pt, tail}
+  defp pop_spawn_pos([], def_pos), do: {def_pos, []}
+
+  def spawn_starter_triad(s) do
+    b_acc = s.buildings
+    new_b = Enum.reduce(s.players, b_acc, &build_player_triad/2)
+    %{s | buildings: new_b}
+  end
+
+  defp build_player_triad({uid, %{player: u}}, b_acc) do
+    bs = generate_triad_buildings(uid, u.position, b_acc)
+    bs ++ b_acc
+  end
+
+  defp generate_triad_buildings(uid, pos, existing) do
+    b_types = [:tent, :houses, :power_structure]
+    angles = [0.0, 2.0944, 4.1888]
+
+    Enum.zip(b_types, angles)
+    |> Enum.map(&build_triad_building(&1, uid, pos))
+    |> Enum.filter(&valid_triad_bld?(&1, existing))
+  end
+
+  defp valid_triad_bld?(bld, existing) do
+    valid_building_perimeter?(existing, bld.position, bld.type)
+  end
+
+  defp build_triad_building({type, angle}, uid, pos) do
+    r = 3.0
+    bpos = %{
+      x: pos.x + r * :math.cos(angle),
+      y: 0.0,
+      z: pos.z + r * :math.sin(angle)
+    }
+
+    %Mutonex.Engine.Entities.Building{
+      id: "starter_#{uid}_#{type}",
+      type: type,
+      position: bpos,
+      energy: 50.0,
+      perimeter_radius: 2.0,
+      attributes: %{scale: 1.0}
+    }
   end
 
   def load_relics(buildings, sid) do
