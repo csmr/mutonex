@@ -16,6 +16,11 @@ export type EntityType =
   | 'item'
   | 'item_gem'
   | 'item_video_phone'
+  | 'item_conveyor_belt'
+  | 'item_society_policy'
+  | 'item_sunspot_cream'
+  | 'item_fiber_optic'
+  | 'item_attack_modifier'
   | 'mineral';
 
 export interface EntityData {

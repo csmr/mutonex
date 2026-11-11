@@ -243,31 +243,31 @@
         },
         "1F4DF": {
             "name": "Video-phone",
-            "types": ["item", "videophone"],
+            "types": ["item", "video_phone", "videophone"],
             "scale": 0.3
         },
         "1F6E4": {
             "name": "Conveyor Belt",
-            "types": ["item"],
+            "types": ["item", "conveyor_belt"],
             "scale": 4.0
         },
         "1F4F0": {
             "name": "Society Policy",
-            "types": ["item"],
+            "types": ["item", "society_policy"],
             "scale": 0.3
         },
         "1F36F": {
             "name": "Sunspot Cream",
-            "types": ["item"],
+            "types": ["item", "sunspot_cream"],
             "scale": 0.3
         },
         "1F9F6": {
             "name": "Fiber Optic",
-            "types": ["item"]
+            "types": ["item", "fiber_optic"]
         },
         "1F93A": {
             "name": "Attack Modifier",
-            "types": ["item"],
+            "types": ["item", "attack_modifier"],
             "scale": 0.3
         },
         "229E": {

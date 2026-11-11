@@ -135,6 +135,11 @@ export const ENTITY_CHAR_MAP: Record<string, string[]> = {
   'item': ['💎', '📟', '🧴', '🤺'],
   'item_gem': ['💎'],
   'item_video_phone': ['📟'],
+  'item_conveyor_belt': ['🛤'],
+  'item_society_policy': ['📰'],
+  'item_sunspot_cream': ['🍯'],
+  'item_fiber_optic': ['🧶'],
+  'item_attack_modifier': ['🤺'],
 };
 
 export const ENTITY_COLOR_MAP: Record<string, number> = {
@@ -154,16 +159,30 @@ export const ENTITY_COLOR_MAP: Record<string, number> = {
   'item': 0xFFFF00,
   'item_gem': 0xFFFF00,
   'item_video_phone': 0x00FF00,
+  'item_conveyor_belt': 0x808080,
+  'item_society_policy': 0xFFFFFF,
+  'item_sunspot_cream': 0xFFA500,
+  'item_fiber_optic': 0x00FFFF,
+  'item_attack_modifier': 0xFF4500,
 };
 
-export function getCharForEntity(type: string, id: string): string {
-  let chars = ENTITY_CHAR_MAP[type];
-  if (!chars && type.startsWith('building_')) {
-    chars = ENTITY_CHAR_MAP['building'];
+const fallbackCharList = (type: string): string[] | undefined => {
+  if (type.startsWith('building_')) {
+    return ENTITY_CHAR_MAP['building'];
   }
+  if (type.startsWith('item_')) {
+    return ENTITY_CHAR_MAP['item'];
+  }
+  return undefined;
+};
+
+export function getCharForEntity(
+  type: string,
+  id: string,
+): string {
+  const chars = ENTITY_CHAR_MAP[type] ?? fallbackCharList(type);
   if (!chars) return getGlyphChar(type);
-  const idLen = id.length;
-  const charIdx = id.charCodeAt(idLen - 1);
+  const charIdx = id.charCodeAt(id.length - 1);
   return chars[charIdx % chars.length];
 }
 
